@@ -1,0 +1,237 @@
+import { PageHeader } from '@/components/common/PageHeader';
+import { StatCard } from '@/components/common/StatCard';
+import { ProgressBar } from '@/components/common/ProgressBar';
+import { StatusBadge } from '@/components/common/StatusBadge';
+import { PriorityBadge } from '@/components/common/PriorityBadge';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import {
+  ListTodo,
+  Clock,
+  CheckCircle2,
+  AlertTriangle,
+  ArrowRight,
+  Calendar,
+} from 'lucide-react';
+
+const myTasks = [
+  {
+    id: '1',
+    title: 'Soạn giáo án bài 15 - Phương trình bậc 2',
+    project: 'Chương trình Hè 2024',
+    status: 'in-progress' as const,
+    priority: 'high' as const,
+    progress: 60,
+    deadline: '2024-01-15',
+  },
+  {
+    id: '2',
+    title: 'Chuẩn bị slide bài giảng',
+    project: 'Chương trình Hè 2024',
+    status: 'pending' as const,
+    priority: 'medium' as const,
+    progress: 0,
+    deadline: '2024-01-16',
+  },
+  {
+    id: '3',
+    title: 'Review bài tập chương 4',
+    project: 'Nâng cấp hệ thống CNTT',
+    status: 'waiting-approval' as const,
+    priority: 'low' as const,
+    progress: 100,
+    deadline: '2024-01-14',
+  },
+];
+
+const upcomingDeadlines = [
+  { id: '1', title: 'Hoàn thành đề cương', deadline: '2024-01-12', daysLeft: 1 },
+  { id: '2', title: 'Nộp báo cáo tuần', deadline: '2024-01-14', daysLeft: 3 },
+  { id: '3', title: 'Cập nhật tiến độ dự án', deadline: '2024-01-15', daysLeft: 4 },
+];
+
+const overdueTasks = [
+  {
+    id: '1',
+    title: 'Họp tổng kết tháng',
+    deadline: '2024-01-08',
+    daysOverdue: 3,
+    priority: 'high' as const,
+  },
+];
+
+export function StaffDashboard() {
+  return (
+    <div>
+      <PageHeader
+        title="Tổng quan - Công việc của tôi"
+        description="Theo dõi và cập nhật tiến độ công việc được giao"
+      />
+
+      {/* Stats Grid */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+        <StatCard
+          title="Công việc của tôi"
+          value={5}
+          icon={ListTodo}
+          variant="primary"
+        />
+        <StatCard
+          title="Sắp đến hạn (3 ngày)"
+          value={3}
+          icon={Clock}
+          variant="warning"
+        />
+        <StatCard
+          title="Trễ hạn"
+          value={1}
+          icon={AlertTriangle}
+          variant="danger"
+        />
+        <StatCard
+          title="Hoàn thành tháng này"
+          value={12}
+          icon={CheckCircle2}
+          variant="success"
+        />
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* My Tasks */}
+        <div className="lg:col-span-2 space-y-6">
+          {/* Overdue Warning */}
+          {overdueTasks.length > 0 && (
+            <Card className="border-status-overdue/30 bg-status-overdue-bg">
+              <CardHeader className="pb-3">
+                <CardTitle className="text-lg flex items-center gap-2 text-status-overdue">
+                  <AlertTriangle className="w-5 h-5" />
+                  Công việc trễ hạn
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-2">
+                  {overdueTasks.map((task) => (
+                    <div
+                      key={task.id}
+                      className="flex items-center justify-between p-3 rounded-lg bg-card border border-status-overdue/20"
+                    >
+                      <div className="flex items-center gap-2">
+                        <span className="font-medium">{task.title}</span>
+                        <PriorityBadge priority={task.priority} />
+                      </div>
+                      <span className="text-sm text-status-overdue font-medium">
+                        Trễ {task.daysOverdue} ngày
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Current Tasks */}
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between">
+              <CardTitle className="text-lg flex items-center gap-2">
+                <ListTodo className="w-5 h-5 text-primary" />
+                Công việc của tôi
+              </CardTitle>
+              <Button variant="ghost" size="sm" className="text-primary">
+                Xem tất cả <ArrowRight className="w-4 h-4 ml-1" />
+              </Button>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                {myTasks.map((task) => (
+                  <div
+                    key={task.id}
+                    className="p-4 rounded-lg border hover:bg-muted/50 transition-colors cursor-pointer"
+                  >
+                    <div className="flex items-start justify-between mb-3">
+                      <div>
+                        <div className="flex items-center gap-2 mb-1">
+                          <span className="font-medium">{task.title}</span>
+                        </div>
+                        <p className="text-sm text-muted-foreground">{task.project}</p>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <PriorityBadge priority={task.priority} />
+                        <StatusBadge status={task.status} />
+                      </div>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <div className="flex-1 mr-4">
+                        <ProgressBar value={task.progress} size="sm" />
+                      </div>
+                      <span className="text-sm text-muted-foreground">
+                        Hạn: {new Date(task.deadline).toLocaleDateString('vi-VN')}
+                      </span>
+                    </div>
+                    {task.status === 'in-progress' && (
+                      <div className="flex gap-2 mt-3 pt-3 border-t">
+                        <Button size="sm" variant="outline" className="flex-1">
+                          Cập nhật tiến độ
+                        </Button>
+                        <Button size="sm" className="flex-1">
+                          Gửi duyệt
+                        </Button>
+                      </div>
+                    )}
+                    {task.status === 'pending' && (
+                      <div className="flex gap-2 mt-3 pt-3 border-t">
+                        <Button size="sm" className="flex-1">
+                          Nhận việc
+                        </Button>
+                        <Button size="sm" variant="outline" className="flex-1">
+                          Từ chối
+                        </Button>
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Upcoming Deadlines */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-lg flex items-center gap-2">
+              <Calendar className="w-5 h-5 text-status-pending" />
+              Sắp đến hạn
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-3">
+              {upcomingDeadlines.map((item) => (
+                <div
+                  key={item.id}
+                  className="p-3 rounded-lg border hover:bg-muted/50 transition-colors cursor-pointer"
+                >
+                  <p className="font-medium text-sm mb-1">{item.title}</p>
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs text-muted-foreground">
+                      {new Date(item.deadline).toLocaleDateString('vi-VN')}
+                    </span>
+                    <span
+                      className={`text-xs font-medium ${
+                        item.daysLeft <= 1
+                          ? 'text-status-overdue'
+                          : item.daysLeft <= 3
+                          ? 'text-status-pending'
+                          : 'text-muted-foreground'
+                      }`}
+                    >
+                      Còn {item.daysLeft} ngày
+                    </span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    </div>
+  );
+}
