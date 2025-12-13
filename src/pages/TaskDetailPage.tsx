@@ -9,7 +9,7 @@ import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Separator } from '@/components/ui/separator';
 import { Textarea } from '@/components/ui/textarea';
-import { useAuth } from '@/contexts/AuthContext';
+import { useAuth, usePermissions } from '@/contexts/AuthContext';
 import {
   Dialog,
   DialogContent,
@@ -21,7 +21,6 @@ import {
 import {
   ArrowLeft,
   Calendar,
-  Users,
   FileText,
   Upload,
   Send,
@@ -44,7 +43,7 @@ const mockTask: {
   projectName: string;
   department: string;
   cooperatingDepts: string[];
-  assignee: { id: string; name: string; department: string };
+  leader: { id: string; name: string; department: string };
   priority: TaskPriority;
   status: TaskStatus;
   startDate: string;
@@ -58,7 +57,7 @@ const mockTask: {
   projectName: 'Chương trình Hè 2024',
   department: 'Bộ môn Toán',
   cooperatingDepts: ['Bộ môn Lý', 'Phòng đào tạo'],
-  assignee: { id: '1', name: 'Nguyễn Văn A', department: 'Bộ môn Toán' },
+  leader: { id: '1', name: 'Phạm Thị Leader', department: 'Bộ môn Toán' },
   priority: 'high',
   status: 'in-progress',
   startDate: '2024-05-01',
@@ -66,12 +65,12 @@ const mockTask: {
   progress: 80,
 };
 
-const mockSubtasks = [
-  { id: '1', title: 'Soạn giáo án chương 1', assignee: 'Nguyễn Văn A', status: 'completed' as const, deadline: '2024-05-03' },
-  { id: '2', title: 'Soạn giáo án chương 2', assignee: 'Nguyễn Văn A', status: 'completed' as const, deadline: '2024-05-05' },
-  { id: '3', title: 'Soạn giáo án chương 3', assignee: 'Nguyễn Văn A', status: 'completed' as const, deadline: '2024-05-08' },
-  { id: '4', title: 'Soạn giáo án chương 4', assignee: 'Nguyễn Văn A', status: 'completed' as const, deadline: '2024-05-10' },
-  { id: '5', title: 'Soạn giáo án chương 5', assignee: 'Nguyễn Văn A', status: 'in-progress' as const, deadline: '2024-05-15' },
+const mockSubtasks: { id: string; title: string; assignee: string; status: TaskStatus; deadline: string }[] = [
+  { id: '1', title: 'Soạn giáo án chương 1', assignee: 'Hoàng Văn Nhân Viên', status: 'completed', deadline: '2024-05-03' },
+  { id: '2', title: 'Soạn giáo án chương 2', assignee: 'Hoàng Văn Nhân Viên', status: 'completed', deadline: '2024-05-05' },
+  { id: '3', title: 'Soạn giáo án chương 3', assignee: 'Hoàng Văn Nhân Viên', status: 'completed', deadline: '2024-05-08' },
+  { id: '4', title: 'Soạn giáo án chương 4', assignee: 'Hoàng Văn Nhân Viên', status: 'completed', deadline: '2024-05-10' },
+  { id: '5', title: 'Soạn giáo án chương 5', assignee: 'Hoàng Văn Nhân Viên', status: 'in-progress', deadline: '2024-05-15' },
 ];
 
 const mockFiles = [
@@ -81,17 +80,18 @@ const mockFiles = [
 ];
 
 const mockActivityLog = [
-  { id: '1', user: 'Nguyễn Văn A', action: 'Cập nhật tiến độ 60% → 80%', time: '2 giờ trước' },
-  { id: '2', user: 'Nguyễn Văn A', action: 'Upload file "Giao_an_chuong_4.docx"', time: '1 ngày trước' },
-  { id: '3', user: 'Trần Thị B', action: 'Phê duyệt subtask "Soạn giáo án chương 3"', time: '3 ngày trước' },
-  { id: '4', user: 'Nguyễn Văn A', action: 'Hoàn thành subtask "Soạn giáo án chương 3"', time: '3 ngày trước' },
-  { id: '5', user: 'Admin', action: 'Tạo công việc', time: '14 ngày trước' },
+  { id: '1', user: 'Hoàng Văn Nhân Viên', action: 'Cập nhật tiến độ 60% → 80%', time: '2 giờ trước' },
+  { id: '2', user: 'Hoàng Văn Nhân Viên', action: 'Upload file "Giao_an_chuong_4.docx"', time: '1 ngày trước' },
+  { id: '3', user: 'Phạm Thị Leader', action: 'Phê duyệt subtask "Soạn giáo án chương 3"', time: '3 ngày trước' },
+  { id: '4', user: 'Hoàng Văn Nhân Viên', action: 'Hoàn thành subtask "Soạn giáo án chương 3"', time: '3 ngày trước' },
+  { id: '5', user: 'Lê Văn PMO', action: 'Tạo công việc', time: '14 ngày trước' },
 ];
 
 export default function TaskDetailPage() {
   const navigate = useNavigate();
   const { id } = useParams();
   const { user } = useAuth();
+  const permissions = usePermissions();
   
   const [showAcceptDialog, setShowAcceptDialog] = useState(false);
   const [showRejectDialog, setShowRejectDialog] = useState(false);
@@ -103,7 +103,6 @@ export default function TaskDetailPage() {
 
   const isStaff = user?.role === 'staff';
   const isLeader = user?.role === 'leader';
-  const canApprove = isLeader || user?.role === 'pmo' || user?.role === 'director';
 
   return (
     <div>
@@ -157,7 +156,7 @@ export default function TaskDetailPage() {
           <Card>
             <CardHeader className="flex flex-row items-center justify-between">
               <CardTitle className="text-lg">Subtasks ({mockSubtasks.length})</CardTitle>
-              {isLeader && (
+              {permissions?.canCreateSubtask && (
                 <Button size="sm" variant="outline">
                   <Plus className="w-4 h-4 mr-1" />
                   Thêm Subtask
@@ -206,10 +205,12 @@ export default function TaskDetailPage() {
                 <Paperclip className="w-5 h-5" />
                 File đính kèm ({mockFiles.length})
               </CardTitle>
-              <Button size="sm" variant="outline">
-                <Upload className="w-4 h-4 mr-1" />
-                Upload
-              </Button>
+              {isStaff && (
+                <Button size="sm" variant="outline">
+                  <Upload className="w-4 h-4 mr-1" />
+                  Upload
+                </Button>
+              )}
             </CardHeader>
             <CardContent>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
@@ -266,7 +267,8 @@ export default function TaskDetailPage() {
               <CardTitle className="text-lg">Hành động</CardTitle>
             </CardHeader>
             <CardContent className="space-y-2">
-              {isStaff && mockTask.status === 'pending' && (
+              {/* Staff actions */}
+              {isStaff && mockTask.status === 'not-assigned' && (
                 <>
                   <Button className="w-full" onClick={() => setShowAcceptDialog(true)}>
                     <CheckCircle2 className="w-4 h-4 mr-2" />
@@ -292,7 +294,8 @@ export default function TaskDetailPage() {
                 </>
               )}
 
-              {canApprove && mockTask.status === 'waiting-approval' && (
+              {/* Leader actions */}
+              {isLeader && mockTask.status === 'waiting-approval' && (
                 <>
                   <Button className="w-full" onClick={() => setShowApproveDialog(true)}>
                     <CheckCircle2 className="w-4 h-4 mr-2" />
@@ -311,6 +314,13 @@ export default function TaskDetailPage() {
                   Chuyển giao
                 </Button>
               )}
+
+              {/* No actions available message */}
+              {!isStaff && !isLeader && (
+                <p className="text-sm text-muted-foreground text-center py-4">
+                  Bạn chỉ có quyền xem công việc này
+                </p>
+              )}
             </CardContent>
           </Card>
 
@@ -321,16 +331,16 @@ export default function TaskDetailPage() {
             </CardHeader>
             <CardContent className="space-y-4">
               <div>
-                <p className="text-sm text-muted-foreground mb-1">Người phụ trách</p>
+                <p className="text-sm text-muted-foreground mb-1">Trưởng nhóm phụ trách</p>
                 <div className="flex items-center gap-2">
                   <Avatar className="h-8 w-8">
                     <AvatarFallback className="bg-primary/10 text-primary text-sm">
-                      {mockTask.assignee.name.charAt(0)}
+                      {mockTask.leader.name.charAt(0)}
                     </AvatarFallback>
                   </Avatar>
                   <div>
-                    <p className="text-sm font-medium">{mockTask.assignee.name}</p>
-                    <p className="text-xs text-muted-foreground">{mockTask.assignee.department}</p>
+                    <p className="text-sm font-medium">{mockTask.leader.name}</p>
+                    <p className="text-xs text-muted-foreground">{mockTask.leader.department}</p>
                   </div>
                 </div>
               </div>
@@ -421,7 +431,7 @@ export default function TaskDetailPage() {
           <DialogHeader>
             <DialogTitle>Gửi duyệt công việc</DialogTitle>
             <DialogDescription>
-              Xác nhận gửi công việc để Leader phê duyệt?
+              Xác nhận gửi công việc để Trưởng nhóm phê duyệt?
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
@@ -436,7 +446,7 @@ export default function TaskDetailPage() {
           <DialogHeader>
             <DialogTitle>Phê duyệt công việc</DialogTitle>
             <DialogDescription>
-              Xác nhận phê duyệt công việc này đã hoàn thành?
+              Xác nhận phê duyệt công việc này?
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
@@ -451,7 +461,7 @@ export default function TaskDetailPage() {
           <DialogHeader>
             <DialogTitle>Trả lại công việc</DialogTitle>
             <DialogDescription>
-              Vui lòng nhập lý do trả lại công việc.
+              Vui lòng nhập lý do trả lại công việc này.
             </DialogDescription>
           </DialogHeader>
           <Textarea

@@ -5,14 +5,15 @@ import { StatusBadge } from '@/components/common/StatusBadge';
 import { PriorityBadge } from '@/components/common/PriorityBadge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { TaskStatus } from '@/types';
 import {
   FolderKanban,
   ListTodo,
   AlertTriangle,
   Eye,
   Clock,
-  CheckCircle2,
   ArrowRight,
+  Plus,
 } from 'lucide-react';
 import {
   BarChart,
@@ -61,10 +62,10 @@ const overdueItems = [
   },
 ];
 
-const watchedProjects = [
-  { id: '1', name: 'Chương trình Hè 2024', progress: 75, status: 'in-progress' as const, taskCount: 24 },
-  { id: '2', name: 'Nâng cấp hệ thống CNTT', progress: 45, status: 'in-progress' as const, taskCount: 18 },
-  { id: '3', name: 'Chuẩn bị năm học mới', progress: 20, status: 'pending' as const, taskCount: 32 },
+const watchedProjects: { id: string; name: string; progress: number; status: TaskStatus; taskCount: number }[] = [
+  { id: '1', name: 'Chương trình Hè 2024', progress: 75, status: 'in-progress', taskCount: 24 },
+  { id: '2', name: 'Nâng cấp hệ thống CNTT', progress: 45, status: 'in-progress', taskCount: 18 },
+  { id: '3', name: 'Chuẩn bị năm học mới', progress: 20, status: 'not-assigned', taskCount: 32 },
 ];
 
 export function PMODashboard() {
@@ -72,7 +73,7 @@ export function PMODashboard() {
     <div>
       <PageHeader
         title="Tổng quan - PMO"
-        description="Theo dõi và điều phối tiến độ các dự án"
+        description="Tạo và quản lý dự án, gán Leader, theo dõi tiến độ và cảnh báo trễ hạn"
       />
 
       {/* Stats Grid */}
@@ -96,11 +97,23 @@ export function PMODashboard() {
           variant="danger"
         />
         <StatCard
-          title="Chờ phê duyệt"
+          title="Chờ xử lý"
           value={12}
           icon={Clock}
           variant="warning"
         />
+      </div>
+
+      {/* Quick Actions */}
+      <div className="flex gap-3 mb-6">
+        <Button>
+          <Plus className="w-4 h-4 mr-2" />
+          Tạo dự án mới
+        </Button>
+        <Button variant="outline">
+          <Plus className="w-4 h-4 mr-2" />
+          Tạo Main Task
+        </Button>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">

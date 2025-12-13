@@ -7,8 +7,9 @@ import { StatusBadge } from '@/components/common/StatusBadge';
 import { PriorityBadge } from '@/components/common/PriorityBadge';
 import { ProgressBar } from '@/components/common/ProgressBar';
 import { Button } from '@/components/ui/button';
-import { MainTask, statusLabels, priorityLabels } from '@/types';
-import { Plus, Eye, ChevronRight } from 'lucide-react';
+import { MainTask, statusLabels, priorityLabels, TaskStatus, TaskPriority, User } from '@/types';
+import { Plus, ChevronRight } from 'lucide-react';
+import { usePermissions } from '@/contexts/AuthContext';
 
 const mockTasks: MainTask[] = [
   {
@@ -18,14 +19,16 @@ const mockTasks: MainTask[] = [
     projectId: '1',
     projectName: 'Chương trình Hè 2024',
     department: 'Bộ môn Toán',
-    assignee: { id: '1', name: 'Nguyễn Văn A', email: '', role: 'staff', department: 'Bộ môn Toán', status: 'active' },
-    priority: 'high',
-    status: 'in-progress',
+    leader: { id: '4', name: 'Phạm Thị Leader', email: 'leader@trungtam.edu.vn', role: 'leader', department: 'Bộ môn Toán', status: 'active' },
+    priority: 'high' as TaskPriority,
+    status: 'in-progress' as TaskStatus,
     startDate: '2024-05-01',
     deadline: '2024-05-15',
     progress: 80,
     subtaskCount: 5,
     completedSubtasks: 4,
+    createdBy: 'pmo@trungtam.edu.vn',
+    createdAt: '2024-04-25',
   },
   {
     id: '2',
@@ -34,14 +37,16 @@ const mockTasks: MainTask[] = [
     projectId: '1',
     projectName: 'Chương trình Hè 2024',
     department: 'Bộ môn Lý',
-    assignee: { id: '2', name: 'Trần Thị B', email: '', role: 'staff', department: 'Bộ môn Lý', status: 'active' },
-    priority: 'high',
-    status: 'completed',
+    leader: { id: '4', name: 'Phạm Thị Leader', email: 'leader@trungtam.edu.vn', role: 'leader', department: 'Bộ môn Lý', status: 'active' },
+    priority: 'high' as TaskPriority,
+    status: 'completed' as TaskStatus,
     startDate: '2024-05-01',
     deadline: '2024-05-10',
     progress: 100,
     subtaskCount: 4,
     completedSubtasks: 4,
+    createdBy: 'pmo@trungtam.edu.vn',
+    createdAt: '2024-04-25',
   },
   {
     id: '3',
@@ -50,14 +55,16 @@ const mockTasks: MainTask[] = [
     projectId: '1',
     projectName: 'Chương trình Hè 2024',
     department: 'Bộ môn Hóa',
-    assignee: { id: '3', name: 'Lê Văn C', email: '', role: 'staff', department: 'Bộ môn Hóa', status: 'active' },
-    priority: 'medium',
-    status: 'waiting-approval',
+    leader: { id: '4', name: 'Phạm Thị Leader', email: 'leader@trungtam.edu.vn', role: 'leader', department: 'Bộ môn Hóa', status: 'active' },
+    priority: 'medium' as TaskPriority,
+    status: 'waiting-approval' as TaskStatus,
     startDate: '2024-05-10',
     deadline: '2024-05-20',
     progress: 100,
     subtaskCount: 3,
     completedSubtasks: 3,
+    createdBy: 'pmo@trungtam.edu.vn',
+    createdAt: '2024-05-05',
   },
   {
     id: '4',
@@ -65,15 +72,17 @@ const mockTasks: MainTask[] = [
     description: 'Xây dựng thời khóa biểu cho tháng 6',
     projectId: '1',
     projectName: 'Chương trình Hè 2024',
-    department: 'Ban điều hành',
-    assignee: { id: '4', name: 'Phạm Thị D', email: '', role: 'pmo', department: 'Ban điều hành', status: 'active' },
-    priority: 'low',
-    status: 'pending',
+    department: 'Phòng Điều phối',
+    leader: { id: '4', name: 'Phạm Thị Leader', email: 'leader@trungtam.edu.vn', role: 'leader', department: 'Phòng Điều phối', status: 'active' },
+    priority: 'low' as TaskPriority,
+    status: 'not-assigned' as TaskStatus,
     startDate: '2024-05-20',
     deadline: '2024-05-25',
     progress: 0,
     subtaskCount: 2,
     completedSubtasks: 0,
+    createdBy: 'pmo@trungtam.edu.vn',
+    createdAt: '2024-05-15',
   },
   {
     id: '5',
@@ -82,14 +91,16 @@ const mockTasks: MainTask[] = [
     projectId: '2',
     projectName: 'Đào tạo giáo viên mới',
     department: 'Phòng CNTT',
-    assignee: { id: '5', name: 'Hoàng Văn E', email: '', role: 'leader', department: 'Phòng CNTT', status: 'active' },
-    priority: 'high',
-    status: 'overdue',
+    leader: { id: '4', name: 'Phạm Thị Leader', email: 'leader@trungtam.edu.vn', role: 'leader', department: 'Phòng CNTT', status: 'active' },
+    priority: 'high' as TaskPriority,
+    status: 'overdue' as TaskStatus,
     startDate: '2024-01-01',
     deadline: '2024-01-08',
     progress: 30,
     subtaskCount: 6,
     completedSubtasks: 2,
+    createdBy: 'pmo@trungtam.edu.vn',
+    createdAt: '2023-12-20',
   },
 ];
 
@@ -105,6 +116,7 @@ const priorityOptions = Object.entries(priorityLabels).map(([value, label]) => (
 
 export default function TaskListPage() {
   const navigate = useNavigate();
+  const permissions = usePermissions();
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [priorityFilter, setPriorityFilter] = useState('all');
@@ -128,15 +140,15 @@ export default function TaskListPage() {
       ),
     },
     {
-      key: 'assignee',
-      header: 'Người phụ trách',
+      key: 'leader',
+      header: 'Trưởng nhóm',
       render: (task) => (
         <div className="flex items-center gap-2">
           <div className="w-7 h-7 rounded-full bg-primary/10 flex items-center justify-center text-primary font-medium text-xs">
-            {task.assignee.name.charAt(0)}
+            {task.leader.name.charAt(0)}
           </div>
           <div>
-            <p className="text-sm">{task.assignee.name}</p>
+            <p className="text-sm">{task.leader.name}</p>
             <p className="text-xs text-muted-foreground">{task.department}</p>
           </div>
         </div>
@@ -199,10 +211,12 @@ export default function TaskListPage() {
         title="Danh sách Công việc"
         description="Quản lý Main Task và Subtask của tất cả dự án"
         actions={
-          <Button onClick={() => navigate('/tasks/create')}>
-            <Plus className="w-4 h-4 mr-2" />
-            Tạo Main Task
-          </Button>
+          permissions?.canCreateMainTask && (
+            <Button onClick={() => navigate('/tasks/create')}>
+              <Plus className="w-4 h-4 mr-2" />
+              Tạo Main Task
+            </Button>
+          )
         }
       />
 

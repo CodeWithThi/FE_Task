@@ -7,11 +7,12 @@ interface StatusBadgeProps {
 }
 
 const statusStyles: Record<TaskStatus, string> = {
-  pending: 'badge-pending',
+  'not-assigned': 'badge-pending',
   'in-progress': 'badge-in-progress',
   'waiting-approval': 'badge-waiting',
-  completed: 'badge-completed',
-  overdue: 'badge-overdue',
+  'returned': 'badge-warning',
+  'completed': 'badge-completed',
+  'overdue': 'badge-overdue',
 };
 
 export function StatusBadge({ status, className }: StatusBadgeProps) {
