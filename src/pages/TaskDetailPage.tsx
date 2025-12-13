@@ -34,7 +34,23 @@ import {
   Plus,
 } from 'lucide-react';
 
-const mockTask = {
+import { TaskStatus, TaskPriority } from '@/types';
+
+const mockTask: {
+  id: string;
+  title: string;
+  description: string;
+  projectId: string;
+  projectName: string;
+  department: string;
+  cooperatingDepts: string[];
+  assignee: { id: string; name: string; department: string };
+  priority: TaskPriority;
+  status: TaskStatus;
+  startDate: string;
+  deadline: string;
+  progress: number;
+} = {
   id: '1',
   title: 'Chuẩn bị giáo án môn Toán chương 1-5',
   description: 'Soạn giáo án chi tiết cho 5 chương đầu tiên của chương trình học hè. Bao gồm:\n- Mục tiêu học tập\n- Nội dung bài giảng\n- Bài tập thực hành\n- Đánh giá và kiểm tra',
@@ -43,8 +59,8 @@ const mockTask = {
   department: 'Bộ môn Toán',
   cooperatingDepts: ['Bộ môn Lý', 'Phòng đào tạo'],
   assignee: { id: '1', name: 'Nguyễn Văn A', department: 'Bộ môn Toán' },
-  priority: 'high' as const,
-  status: 'in-progress' as const,
+  priority: 'high',
+  status: 'in-progress',
   startDate: '2024-05-01',
   deadline: '2024-05-15',
   progress: 80,
