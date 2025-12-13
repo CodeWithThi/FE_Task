@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { NavLink } from '@/components/NavLink';
 import { useAuth } from '@/contexts/AuthContext';
-import { UserRole } from '@/types';
+import { UserRole, roleLabels } from '@/types';
 import { cn } from '@/lib/utils';
 import {
   LayoutDashboard,
@@ -16,6 +16,7 @@ import {
   ChevronRight,
   LogOut,
   FileText,
+  Shield,
 } from 'lucide-react';
 
 interface MenuItem {
@@ -23,64 +24,92 @@ interface MenuItem {
   label: string;
   path: string;
   roles: UserRole[];
+  section?: string;
 }
 
+// Menu items theo đúng phân quyền role
 const menuItems: MenuItem[] = [
+  // Tổng quan - Tất cả role đều xem được
   {
     icon: LayoutDashboard,
     label: 'Tổng quan',
     path: '/dashboard',
     roles: ['admin', 'director', 'pmo', 'leader', 'staff'],
+    section: 'main',
   },
+  
+  // Nghiệp vụ dự án - Admin KHÔNG tham gia
   {
     icon: FolderKanban,
     label: 'Dự án',
     path: '/projects',
-    roles: ['admin', 'director', 'pmo', 'leader', 'staff'],
+    roles: ['director', 'pmo', 'leader', 'staff'],  // Admin không có quyền
+    section: 'project',
   },
   {
     icon: ListTodo,
     label: 'Công việc',
     path: '/tasks',
-    roles: ['admin', 'director', 'pmo', 'leader', 'staff'],
+    roles: ['director', 'pmo', 'leader', 'staff'],  // Admin không có quyền
+    section: 'project',
   },
   {
     icon: Bell,
     label: 'Nhắc việc',
     path: '/reminders',
-    roles: ['admin', 'director', 'pmo', 'leader', 'staff'],
+    roles: ['pmo', 'leader', 'staff'],  // Director chỉ xem, không cần nhắc việc
+    section: 'project',
   },
+  
+  // Báo cáo - Staff không xem được
   {
     icon: BarChart3,
     label: 'Báo cáo',
     path: '/reports',
-    roles: ['admin', 'director', 'pmo', 'leader'],
+    roles: ['director', 'pmo', 'leader'],  // Admin và Staff không có quyền
+    section: 'report',
   },
+  
+  // Quản lý nhân sự - Admin và PMO
   {
     icon: Users,
     label: 'Nhân sự',
     path: '/users',
-    roles: ['admin', 'director', 'pmo'],
+    roles: ['admin', 'pmo'],
+    section: 'management',
   },
   {
     icon: Building2,
     label: 'Phòng ban',
     path: '/departments',
-    roles: ['admin', 'director', 'pmo'],
+    roles: ['admin', 'pmo'],
+    section: 'management',
   },
+  
+  // Hệ thống - Chỉ Admin
   {
     icon: FileText,
     label: 'Nhật ký hệ thống',
     path: '/logs',
     roles: ['admin'],
+    section: 'system',
   },
   {
     icon: Settings,
     label: 'Cấu hình',
     path: '/settings',
     roles: ['admin'],
+    section: 'system',
   },
 ];
+
+const sectionLabels: Record<string, string> = {
+  main: '',
+  project: 'Quản lý dự án',
+  report: 'Báo cáo',
+  management: 'Quản lý',
+  system: 'Hệ thống',
+};
 
 export function AppSidebar() {
   const [collapsed, setCollapsed] = useState(false);
@@ -89,6 +118,14 @@ export function AppSidebar() {
   const filteredMenuItems = menuItems.filter(
     (item) => user && item.roles.includes(user.role)
   );
+
+  // Group items by section
+  const groupedItems = filteredMenuItems.reduce((acc, item) => {
+    const section = item.section || 'main';
+    if (!acc[section]) acc[section] = [];
+    acc[section].push(item);
+    return acc;
+  }, {} as Record<string, MenuItem[]>);
 
   return (
     <aside
@@ -117,23 +154,32 @@ export function AppSidebar() {
 
       {/* Menu */}
       <nav className="flex-1 py-4 px-2 overflow-y-auto scrollbar-thin">
-        <ul className="space-y-1">
-          {filteredMenuItems.map((item) => (
-            <li key={item.path}>
-              <NavLink
-                to={item.path}
-                className="sidebar-item"
-                activeClassName="sidebar-item-active"
-              >
-                <item.icon className="w-5 h-5 flex-shrink-0" />
-                {!collapsed && <span>{item.label}</span>}
-              </NavLink>
-            </li>
-          ))}
-        </ul>
+        {Object.entries(groupedItems).map(([section, items]) => (
+          <div key={section} className="mb-4">
+            {!collapsed && sectionLabels[section] && (
+              <p className="px-3 mb-2 text-xs font-medium text-sidebar-muted uppercase tracking-wider">
+                {sectionLabels[section]}
+              </p>
+            )}
+            <ul className="space-y-1">
+              {items.map((item) => (
+                <li key={item.path}>
+                  <NavLink
+                    to={item.path}
+                    className="sidebar-item"
+                    activeClassName="sidebar-item-active"
+                  >
+                    <item.icon className="w-5 h-5 flex-shrink-0" />
+                    {!collapsed && <span>{item.label}</span>}
+                  </NavLink>
+                </li>
+              ))}
+            </ul>
+          </div>
+        ))}
       </nav>
 
-      {/* User */}
+      {/* User Info */}
       <div className="p-2 border-t border-sidebar-border">
         {user && (
           <div className={cn(
@@ -148,9 +194,12 @@ export function AppSidebar() {
                 <p className="text-sm font-medium text-sidebar-foreground truncate">
                   {user.name}
                 </p>
-                <p className="text-xs text-sidebar-muted truncate">
-                  {user.department}
-                </p>
+                <div className="flex items-center gap-1">
+                  <Shield className="w-3 h-3 text-sidebar-muted" />
+                  <p className="text-xs text-sidebar-muted truncate">
+                    {roleLabels[user.role]}
+                  </p>
+                </div>
               </div>
             )}
           </div>

@@ -24,17 +24,23 @@ import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
 
-// Define which roles can access each route
+// Define route permissions based on role requirements
+// ADMIN: Quản lý user, phân quyền, cấu hình hệ thống, xem log. KHÔNG tham gia nghiệp vụ dự án
+// DIRECTOR: Xem Dashboard tổng hợp, xem báo cáo. KHÔNG chỉnh sửa dữ liệu, KHÔNG giao task
+// PMO: Tạo/quản lý Dự án, tạo Main Task, gán Leader, theo dõi tiến độ, cảnh báo trễ hạn, tổng hợp báo cáo
+// LEADER: Nhận Main Task, tạo Subtask, phân công Nhân viên, duyệt/trả lại Subtask, đánh giá tiến độ
+// STAFF: Nhận/từ chối Subtask, cập nhật tiến độ, upload tài liệu, gửi trình duyệt
+
 const routePermissions: Record<string, UserRole[]> = {
   '/dashboard': ['admin', 'director', 'pmo', 'leader', 'staff'],
-  '/projects': ['admin', 'director', 'pmo', 'leader', 'staff'],
-  '/tasks': ['admin', 'director', 'pmo', 'leader', 'staff'],
-  '/reminders': ['admin', 'director', 'pmo', 'leader', 'staff'],
-  '/reports': ['admin', 'director', 'pmo', 'leader'],
-  '/users': ['admin', 'director', 'pmo'],
-  '/departments': ['admin', 'director', 'pmo'],
-  '/settings': ['admin'],
-  '/logs': ['admin'],
+  '/projects': ['director', 'pmo', 'leader', 'staff'],      // Admin không tham gia dự án
+  '/tasks': ['director', 'pmo', 'leader', 'staff'],         // Admin không tham gia công việc
+  '/reminders': ['pmo', 'leader', 'staff'],                 // Director chỉ xem báo cáo
+  '/reports': ['director', 'pmo', 'leader'],                // Staff không xem báo cáo
+  '/users': ['admin', 'pmo'],                               // Admin và PMO quản lý user
+  '/departments': ['admin', 'pmo'],                         // Admin và PMO quản lý phòng ban
+  '/settings': ['admin'],                                   // Chỉ Admin cấu hình hệ thống
+  '/logs': ['admin'],                                       // Chỉ Admin xem nhật ký
 };
 
 function LoadingScreen() {

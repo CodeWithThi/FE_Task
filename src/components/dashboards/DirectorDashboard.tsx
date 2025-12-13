@@ -1,8 +1,8 @@
 import { PageHeader } from '@/components/common/PageHeader';
 import { StatCard } from '@/components/common/StatCard';
 import { ProgressBar } from '@/components/common/ProgressBar';
-import { StatusBadge } from '@/components/common/StatusBadge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
 import {
   FolderKanban,
   ListTodo,
@@ -52,19 +52,34 @@ const progressData = [
   { month: 'T6', progress: 82 },
 ];
 
-const recentProjects = [
-  { id: '1', name: 'Chương trình Hè 2024', progress: 75, status: 'in-progress' as const },
-  { id: '2', name: 'Đào tạo giáo viên mới', progress: 100, status: 'completed' as const },
-  { id: '3', name: 'Nâng cấp hệ thống CNTT', progress: 45, status: 'in-progress' as const },
-  { id: '4', name: 'Chuẩn bị năm học mới', progress: 20, status: 'pending' as const },
+// Project status for Director Dashboard
+type ProjectStatus = 'active' | 'completed' | 'on-hold';
+
+const projectStatusLabels: Record<ProjectStatus, string> = {
+  'active': 'Đang thực hiện',
+  'completed': 'Hoàn thành',
+  'on-hold': 'Tạm dừng',
+};
+
+const projectStatusStyles: Record<ProjectStatus, string> = {
+  'active': 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400',
+  'completed': 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400',
+  'on-hold': 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400',
+};
+
+const recentProjects: { id: string; name: string; progress: number; status: ProjectStatus }[] = [
+  { id: '1', name: 'Chương trình Hè 2024', progress: 75, status: 'active' },
+  { id: '2', name: 'Đào tạo giáo viên mới', progress: 100, status: 'completed' },
+  { id: '3', name: 'Nâng cấp hệ thống CNTT', progress: 45, status: 'active' },
+  { id: '4', name: 'Chuẩn bị năm học mới', progress: 20, status: 'on-hold' },
 ];
 
 export function DirectorDashboard() {
   return (
     <div>
       <PageHeader
-        title="Tổng quan - Giám đốc"
-        description="Xem tổng quan hoạt động dự án và công việc của trung tâm"
+        title="Tổng quan - Ban Giám đốc"
+        description="Xem tổng quan hoạt động dự án và công việc của trung tâm (chỉ xem, không chỉnh sửa)"
       />
 
       {/* Stats Grid */}
@@ -206,7 +221,9 @@ export function DirectorDashboard() {
                     <span className="text-sm font-medium truncate flex-1 mr-2">
                       {project.name}
                     </span>
-                    <StatusBadge status={project.status} />
+                    <Badge className={projectStatusStyles[project.status]}>
+                      {projectStatusLabels[project.status]}
+                    </Badge>
                   </div>
                   <ProgressBar value={project.progress} size="sm" />
                 </div>

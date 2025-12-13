@@ -6,6 +6,7 @@ import { PriorityBadge } from '@/components/common/PriorityBadge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { TaskStatus } from '@/types';
 import {
   ListTodo,
   Users,
@@ -13,7 +14,7 @@ import {
   CheckCircle2,
   UserCheck,
   ArrowRight,
-  AlertCircle,
+  Plus,
 } from 'lucide-react';
 
 const teamMembers = [
@@ -47,12 +48,12 @@ const pendingApprovals = [
   },
 ];
 
-const teamTasks = [
+const teamTasks: { id: string; title: string; assignee: string; status: TaskStatus; progress: number; deadline: string }[] = [
   {
     id: '1',
     title: 'Soạn giáo án bài 15',
     assignee: 'Nguyễn Văn A',
-    status: 'in-progress' as const,
+    status: 'in-progress',
     progress: 60,
     deadline: '2024-01-15',
   },
@@ -60,7 +61,7 @@ const teamTasks = [
     id: '2',
     title: 'Chuẩn bị đề kiểm tra',
     assignee: 'Trần Thị B',
-    status: 'waiting-approval' as const,
+    status: 'waiting-approval',
     progress: 100,
     deadline: '2024-01-14',
   },
@@ -68,7 +69,7 @@ const teamTasks = [
     id: '3',
     title: 'Review tài liệu tham khảo',
     assignee: 'Lê Văn C',
-    status: 'pending' as const,
+    status: 'not-assigned',
     progress: 0,
     deadline: '2024-01-16',
   },
@@ -76,7 +77,7 @@ const teamTasks = [
     id: '4',
     title: 'Họp tổng kết tháng',
     assignee: 'Phạm Thị D',
-    status: 'overdue' as const,
+    status: 'overdue',
     progress: 30,
     deadline: '2024-01-08',
   },
@@ -87,7 +88,7 @@ export function LeaderDashboard() {
     <div>
       <PageHeader
         title="Tổng quan - Trưởng nhóm"
-        description="Quản lý công việc và nhân sự của đội nhóm"
+        description="Quản lý công việc và nhân sự của đội nhóm, duyệt công việc từ nhân viên"
       />
 
       {/* Stats Grid */}
@@ -206,7 +207,8 @@ export function LeaderDashboard() {
             Công việc đội nhóm
           </CardTitle>
           <Button variant="outline" size="sm">
-            + Tạo công việc mới
+            <Plus className="w-4 h-4 mr-1" />
+            Tạo Subtask mới
           </Button>
         </CardHeader>
         <CardContent>

@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, ReactNode, useEffect } from 'react';
-import { User, UserRole } from '@/types';
+import { User, UserRole, roleLabels } from '@/types';
 
 interface AuthContextType {
   user: User | null;
@@ -15,10 +15,10 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 const mockUsersDatabase: User[] = [
   {
     id: '1',
-    name: 'Nguyễn Văn Admin',
+    name: 'Nguyễn Văn Quản Trị',
     email: 'admin@trungtam.edu.vn',
     role: 'admin',
-    department: 'Công nghệ thông tin',
+    department: 'Phòng CNTT',
     status: 'active',
   },
   {
@@ -26,7 +26,7 @@ const mockUsersDatabase: User[] = [
     name: 'Trần Thị Giám Đốc',
     email: 'giamdoc@trungtam.edu.vn',
     role: 'director',
-    department: 'Ban giám đốc',
+    department: 'Ban Giám đốc',
     status: 'active',
   },
   {
@@ -34,7 +34,7 @@ const mockUsersDatabase: User[] = [
     name: 'Lê Văn PMO',
     email: 'pmo@trungtam.edu.vn',
     role: 'pmo',
-    department: 'Phòng điều phối',
+    department: 'Phòng Điều phối',
     status: 'active',
   },
   {
@@ -47,7 +47,7 @@ const mockUsersDatabase: User[] = [
   },
   {
     id: '5',
-    name: 'Hoàng Văn Staff',
+    name: 'Hoàng Văn Nhân Viên',
     email: 'staff@trungtam.edu.vn',
     role: 'staff',
     department: 'Bộ môn Toán',
@@ -117,4 +117,46 @@ export function useAuth() {
     throw new Error('useAuth must be used within an AuthProvider');
   }
   return context;
+}
+
+// Helper hook to check permissions
+export function usePermissions() {
+  const { user } = useAuth();
+  
+  if (!user) return null;
+  
+  const role = user.role;
+  
+  return {
+    // Dashboard & Overview
+    canViewDashboard: true,
+    
+    // Projects
+    canViewProjects: role !== 'admin',
+    canCreateProject: role === 'pmo',
+    canEditProject: role === 'pmo',
+    
+    // Tasks
+    canViewTasks: role !== 'admin',
+    canCreateMainTask: role === 'pmo',
+    canCreateSubtask: role === 'leader',
+    canAssignTask: role === 'pmo' || role === 'leader',
+    canApproveTask: role === 'leader',
+    canAcceptTask: role === 'staff',
+    canRejectTask: role === 'staff',
+    canUpdateProgress: role === 'staff',
+    canSubmitForApproval: role === 'staff',
+    
+    // Reports
+    canViewReports: role !== 'admin' && role !== 'staff',
+    canExportReports: role === 'pmo' || role === 'director',
+    
+    // User Management
+    canManageUsers: role === 'admin' || role === 'pmo',
+    canManageDepartments: role === 'admin' || role === 'pmo',
+    
+    // System
+    canViewSystemLogs: role === 'admin',
+    canConfigureSystem: role === 'admin',
+  };
 }

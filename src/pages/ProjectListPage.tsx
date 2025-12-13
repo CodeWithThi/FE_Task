@@ -3,11 +3,25 @@ import { useNavigate } from 'react-router-dom';
 import { PageHeader } from '@/components/common/PageHeader';
 import { FilterBar } from '@/components/common/FilterBar';
 import { DataTable, Column } from '@/components/common/DataTable';
-import { StatusBadge } from '@/components/common/StatusBadge';
 import { ProgressBar } from '@/components/common/ProgressBar';
 import { Button } from '@/components/ui/button';
-import { Project, statusLabels, TaskStatus } from '@/types';
+import { Badge } from '@/components/ui/badge';
+import { Project } from '@/types';
 import { Plus, Eye } from 'lucide-react';
+import { useAuth, usePermissions } from '@/contexts/AuthContext';
+
+// Project status labels (different from TaskStatus)
+const projectStatusLabels = {
+  'active': 'Đang thực hiện',
+  'completed': 'Hoàn thành',
+  'on-hold': 'Tạm dừng',
+};
+
+const projectStatusStyles = {
+  'active': 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400',
+  'completed': 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400',
+  'on-hold': 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400',
+};
 
 const mockProjects: Project[] = [
   {
@@ -16,11 +30,13 @@ const mockProjects: Project[] = [
     description: 'Tổ chức các lớp học hè cho học sinh các cấp',
     startDate: '2024-05-01',
     endDate: '2024-08-31',
-    manager: { id: '1', name: 'Trần Thị B', email: '', role: 'leader', department: 'Bộ môn Toán', status: 'active' },
+    manager: { id: '1', name: 'Lê Văn PMO', email: 'pmo@trungtam.edu.vn', role: 'pmo', department: 'Phòng Điều phối', status: 'active' },
     departments: ['Bộ môn Toán', 'Bộ môn Lý', 'Bộ môn Hóa'],
-    status: 'in-progress',
+    status: 'active',
     progress: 75,
     mainTaskCount: 24,
+    createdBy: 'pmo@trungtam.edu.vn',
+    createdAt: '2024-04-15',
   },
   {
     id: '2',
@@ -28,11 +44,13 @@ const mockProjects: Project[] = [
     description: 'Chương trình đào tạo và hướng dẫn cho giáo viên mới',
     startDate: '2024-01-01',
     endDate: '2024-03-31',
-    manager: { id: '2', name: 'Nguyễn Văn A', email: '', role: 'leader', department: 'Phòng đào tạo', status: 'active' },
+    manager: { id: '1', name: 'Lê Văn PMO', email: 'pmo@trungtam.edu.vn', role: 'pmo', department: 'Phòng Điều phối', status: 'active' },
     departments: ['Phòng đào tạo'],
     status: 'completed',
     progress: 100,
     mainTaskCount: 12,
+    createdBy: 'pmo@trungtam.edu.vn',
+    createdAt: '2023-12-01',
   },
   {
     id: '3',
@@ -40,11 +58,13 @@ const mockProjects: Project[] = [
     description: 'Nâng cấp phòng máy và hệ thống mạng',
     startDate: '2024-02-01',
     endDate: '2024-06-30',
-    manager: { id: '3', name: 'Lê Văn C', email: '', role: 'leader', department: 'Phòng CNTT', status: 'active' },
+    manager: { id: '1', name: 'Lê Văn PMO', email: 'pmo@trungtam.edu.vn', role: 'pmo', department: 'Phòng Điều phối', status: 'active' },
     departments: ['Phòng CNTT'],
-    status: 'in-progress',
+    status: 'active',
     progress: 45,
     mainTaskCount: 18,
+    createdBy: 'pmo@trungtam.edu.vn',
+    createdAt: '2024-01-15',
   },
   {
     id: '4',
@@ -52,15 +72,17 @@ const mockProjects: Project[] = [
     description: 'Các công việc chuẩn bị cho năm học mới',
     startDate: '2024-07-01',
     endDate: '2024-09-01',
-    manager: { id: '4', name: 'Phạm Thị D', email: '', role: 'pmo', department: 'Ban điều hành', status: 'active' },
+    manager: { id: '1', name: 'Lê Văn PMO', email: 'pmo@trungtam.edu.vn', role: 'pmo', department: 'Phòng Điều phối', status: 'active' },
     departments: ['Tất cả bộ môn'],
-    status: 'pending',
+    status: 'on-hold',
     progress: 20,
     mainTaskCount: 32,
+    createdBy: 'pmo@trungtam.edu.vn',
+    createdAt: '2024-06-01',
   },
 ];
 
-const statusOptions = Object.entries(statusLabels).map(([value, label]) => ({
+const statusOptions = Object.entries(projectStatusLabels).map(([value, label]) => ({
   value,
   label,
 }));
@@ -75,6 +97,7 @@ const departmentOptions = [
 
 export default function ProjectListPage() {
   const navigate = useNavigate();
+  const permissions = usePermissions();
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [departmentFilter, setDepartmentFilter] = useState('all');
@@ -94,7 +117,7 @@ export default function ProjectListPage() {
     },
     {
       key: 'manager',
-      header: 'Người phụ trách',
+      header: 'Người quản lý',
       render: (project) => (
         <div className="flex items-center gap-2">
           <div className="w-7 h-7 rounded-full bg-primary/10 flex items-center justify-center text-primary font-medium text-xs">
@@ -130,7 +153,11 @@ export default function ProjectListPage() {
     {
       key: 'status',
       header: 'Trạng thái',
-      render: (project) => <StatusBadge status={project.status} />,
+      render: (project) => (
+        <Badge className={projectStatusStyles[project.status]}>
+          {projectStatusLabels[project.status]}
+        </Badge>
+      ),
     },
     {
       key: 'actions',
@@ -160,10 +187,12 @@ export default function ProjectListPage() {
         title="Danh sách Dự án"
         description="Quản lý và theo dõi tất cả dự án của trung tâm"
         actions={
-          <Button onClick={() => navigate('/projects/create')}>
-            <Plus className="w-4 h-4 mr-2" />
-            Tạo dự án mới
-          </Button>
+          permissions?.canCreateProject && (
+            <Button onClick={() => navigate('/projects/create')}>
+              <Plus className="w-4 h-4 mr-2" />
+              Tạo dự án mới
+            </Button>
+          )
         }
       />
 

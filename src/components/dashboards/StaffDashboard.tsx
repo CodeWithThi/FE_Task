@@ -5,6 +5,7 @@ import { StatusBadge } from '@/components/common/StatusBadge';
 import { PriorityBadge } from '@/components/common/PriorityBadge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { TaskStatus } from '@/types';
 import {
   ListTodo,
   Clock,
@@ -14,13 +15,13 @@ import {
   Calendar,
 } from 'lucide-react';
 
-const myTasks = [
+const myTasks: { id: string; title: string; project: string; status: TaskStatus; priority: 'high' | 'medium' | 'low'; progress: number; deadline: string }[] = [
   {
     id: '1',
     title: 'Soạn giáo án bài 15 - Phương trình bậc 2',
     project: 'Chương trình Hè 2024',
-    status: 'in-progress' as const,
-    priority: 'high' as const,
+    status: 'in-progress',
+    priority: 'high',
     progress: 60,
     deadline: '2024-01-15',
   },
@@ -28,8 +29,8 @@ const myTasks = [
     id: '2',
     title: 'Chuẩn bị slide bài giảng',
     project: 'Chương trình Hè 2024',
-    status: 'pending' as const,
-    priority: 'medium' as const,
+    status: 'not-assigned',
+    priority: 'medium',
     progress: 0,
     deadline: '2024-01-16',
   },
@@ -37,8 +38,8 @@ const myTasks = [
     id: '3',
     title: 'Review bài tập chương 4',
     project: 'Nâng cấp hệ thống CNTT',
-    status: 'waiting-approval' as const,
-    priority: 'low' as const,
+    status: 'waiting-approval',
+    priority: 'low',
     progress: 100,
     deadline: '2024-01-14',
   },
@@ -65,7 +66,7 @@ export function StaffDashboard() {
     <div>
       <PageHeader
         title="Tổng quan - Công việc của tôi"
-        description="Theo dõi và cập nhật tiến độ công việc được giao"
+        description="Nhận việc, cập nhật tiến độ và gửi trình duyệt"
       />
 
       {/* Stats Grid */}
@@ -177,7 +178,7 @@ export function StaffDashboard() {
                         </Button>
                       </div>
                     )}
-                    {task.status === 'pending' && (
+                    {task.status === 'not-assigned' && (
                       <div className="flex gap-2 mt-3 pt-3 border-t">
                         <Button size="sm" className="flex-1">
                           Nhận việc
@@ -198,7 +199,7 @@ export function StaffDashboard() {
         <Card>
           <CardHeader>
             <CardTitle className="text-lg flex items-center gap-2">
-              <Calendar className="w-5 h-5 text-status-pending" />
+              <Calendar className="w-5 h-5 text-primary" />
               Sắp đến hạn
             </CardTitle>
           </CardHeader>
@@ -219,7 +220,7 @@ export function StaffDashboard() {
                         item.daysLeft <= 1
                           ? 'text-status-overdue'
                           : item.daysLeft <= 3
-                          ? 'text-status-pending'
+                          ? 'text-yellow-600 dark:text-yellow-400'
                           : 'text-muted-foreground'
                       }`}
                     >
