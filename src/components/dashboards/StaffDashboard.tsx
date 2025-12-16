@@ -1,3 +1,5 @@
+import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { PageHeader } from '@/components/common/PageHeader';
 import { StatCard } from '@/components/common/StatCard';
 import { ProgressBar } from '@/components/common/ProgressBar';
@@ -6,6 +8,8 @@ import { PriorityBadge } from '@/components/common/PriorityBadge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { TaskStatus } from '@/types';
+import { ConfirmActionModal, ActionType } from '@/components/modals/ConfirmActionModal';
+import { toast } from 'sonner';
 import {
   ListTodo,
   Clock,
@@ -62,6 +66,29 @@ const overdueTasks = [
 ];
 
 export function StaffDashboard() {
+  const navigate = useNavigate();
+  const [actionModal, setActionModal] = useState<{ open: boolean; type: ActionType; taskTitle: string }>({
+    open: false,
+    type: 'accept',
+    taskTitle: '',
+  });
+
+  const handleAction = (type: ActionType, taskTitle: string) => {
+    setActionModal({ open: true, type, taskTitle });
+  };
+
+  const handleConfirmAction = (reason?: string) => {
+    const messages: Record<ActionType, string> = {
+      accept: 'Đã nhận việc thành công',
+      reject: 'Đã từ chối công việc',
+      submit: 'Đã gửi duyệt thành công',
+      approve: 'Đã phê duyệt công việc',
+      return: 'Đã trả lại công việc',
+      transfer: 'Đã chuyển giao công việc',
+    };
+    toast.success(messages[actionModal.type]);
+  };
+
   return (
     <div>
       <PageHeader
@@ -96,6 +123,15 @@ export function StaffDashboard() {
           variant="success"
         />
       </div>
+
+      {/* Confirm Action Modal */}
+      <ConfirmActionModal
+        open={actionModal.open}
+        onOpenChange={(open) => setActionModal({ ...actionModal, open })}
+        actionType={actionModal.type}
+        taskTitle={actionModal.taskTitle}
+        onConfirm={handleConfirmAction}
+      />
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* My Tasks */}
@@ -173,17 +209,17 @@ export function StaffDashboard() {
                         <Button size="sm" variant="outline" className="flex-1">
                           Cập nhật tiến độ
                         </Button>
-                        <Button size="sm" className="flex-1">
+                        <Button size="sm" className="flex-1" onClick={() => handleAction('submit', task.title)}>
                           Gửi duyệt
                         </Button>
                       </div>
                     )}
                     {task.status === 'not-assigned' && (
                       <div className="flex gap-2 mt-3 pt-3 border-t">
-                        <Button size="sm" className="flex-1">
+                        <Button size="sm" className="flex-1" onClick={() => handleAction('accept', task.title)}>
                           Nhận việc
                         </Button>
-                        <Button size="sm" variant="outline" className="flex-1">
+                        <Button size="sm" variant="outline" className="flex-1" onClick={() => handleAction('reject', task.title)}>
                           Từ chối
                         </Button>
                       </div>
