@@ -8,8 +8,9 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Project } from '@/types';
 import { Plus, Eye } from 'lucide-react';
-import { useAuth, usePermissions } from '@/contexts/AuthContext';
-
+import { usePermissions } from '@/contexts/AuthContext';
+import { ProjectFormModal } from '@/components/modals/ProjectFormModal';
+import { toast } from 'sonner';
 // Project status labels (different from TaskStatus)
 const projectStatusLabels = {
   'active': 'Đang thực hiện',
@@ -101,6 +102,13 @@ export default function ProjectListPage() {
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [departmentFilter, setDepartmentFilter] = useState('all');
+  const [isProjectModalOpen, setIsProjectModalOpen] = useState(false);
+
+  const handleCreateProject = (data: any) => {
+    console.log('Tạo dự án mới:', data);
+    toast.success('Tạo dự án thành công!');
+    setIsProjectModalOpen(false);
+  };
 
   const columns: Column<Project>[] = [
     {
@@ -188,7 +196,7 @@ export default function ProjectListPage() {
         description="Quản lý và theo dõi tất cả dự án của trung tâm"
         actions={
           permissions?.canCreateProject && (
-            <Button onClick={() => navigate('/projects/create')}>
+            <Button onClick={() => setIsProjectModalOpen(true)}>
               <Plus className="w-4 h-4 mr-2" />
               Tạo dự án mới
             </Button>
@@ -228,6 +236,12 @@ export default function ProjectListPage() {
         keyExtractor={(project) => project.id}
         onRowClick={(project) => navigate(`/projects/${project.id}`)}
         emptyMessage="Không có dự án nào"
+      />
+
+      <ProjectFormModal
+        open={isProjectModalOpen}
+        onOpenChange={setIsProjectModalOpen}
+        onSubmit={handleCreateProject}
       />
     </div>
   );

@@ -7,9 +7,11 @@ import { StatusBadge } from '@/components/common/StatusBadge';
 import { PriorityBadge } from '@/components/common/PriorityBadge';
 import { ProgressBar } from '@/components/common/ProgressBar';
 import { Button } from '@/components/ui/button';
-import { MainTask, statusLabels, priorityLabels, TaskStatus, TaskPriority, User } from '@/types';
+import { MainTask, statusLabels, priorityLabels, TaskStatus, TaskPriority } from '@/types';
 import { Plus, ChevronRight } from 'lucide-react';
 import { usePermissions } from '@/contexts/AuthContext';
+import { TaskFormModal } from '@/components/modals/TaskFormModal';
+import { toast } from 'sonner';
 
 const mockTasks: MainTask[] = [
   {
@@ -120,6 +122,13 @@ export default function TaskListPage() {
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [priorityFilter, setPriorityFilter] = useState('all');
+  const [isTaskModalOpen, setIsTaskModalOpen] = useState(false);
+
+  const handleCreateTask = (data: any) => {
+    console.log('Tạo Main Task mới:', data);
+    toast.success('Tạo Main Task thành công!');
+    setIsTaskModalOpen(false);
+  };
 
   const columns: Column<MainTask>[] = [
     {
@@ -212,7 +221,7 @@ export default function TaskListPage() {
         description="Quản lý Main Task và Subtask của tất cả dự án"
         actions={
           permissions?.canCreateMainTask && (
-            <Button onClick={() => navigate('/tasks/create')}>
+            <Button onClick={() => setIsTaskModalOpen(true)}>
               <Plus className="w-4 h-4 mr-2" />
               Tạo Main Task
             </Button>
@@ -252,6 +261,13 @@ export default function TaskListPage() {
         keyExtractor={(task) => task.id}
         onRowClick={(task) => navigate(`/tasks/${task.id}`)}
         emptyMessage="Không có công việc nào"
+      />
+
+      <TaskFormModal
+        open={isTaskModalOpen}
+        onOpenChange={setIsTaskModalOpen}
+        onSubmit={handleCreateTask}
+        type="main-task"
       />
     </div>
   );
