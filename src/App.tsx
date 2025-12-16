@@ -8,6 +8,8 @@ import { MainLayout } from "@/components/layout/MainLayout";
 import { UserRole } from "@/types";
 import { Loader2 } from "lucide-react";
 
+import HomePage from "./pages/HomePage";
+import SitemapPage from "./pages/SitemapPage";
 import LoginPage from "./pages/LoginPage";
 import DashboardPage from "./pages/DashboardPage";
 import ProjectListPage from "./pages/ProjectListPage";
@@ -82,8 +84,10 @@ function AppRoutes() {
 
   return (
     <Routes>
+      {/* Public Routes */}
+      <Route path="/" element={isAuthenticated ? <Navigate to="/dashboard" /> : <HomePage />} />
+      <Route path="/sitemap" element={<SitemapPage />} />
       <Route path="/login" element={isAuthenticated ? <Navigate to="/dashboard" /> : <LoginPage />} />
-      <Route path="/" element={<Navigate to="/dashboard" replace />} />
       <Route path="/dashboard" element={
         <ProtectedRoute allowedRoles={routePermissions['/dashboard']}>
           <DashboardPage />

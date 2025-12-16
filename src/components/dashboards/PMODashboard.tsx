@@ -1,3 +1,5 @@
+import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { PageHeader } from '@/components/common/PageHeader';
 import { StatCard } from '@/components/common/StatCard';
 import { ProgressBar } from '@/components/common/ProgressBar';
@@ -6,6 +8,9 @@ import { PriorityBadge } from '@/components/common/PriorityBadge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { TaskStatus } from '@/types';
+import { ProjectFormModal } from '@/components/modals/ProjectFormModal';
+import { TaskFormModal } from '@/components/modals/TaskFormModal';
+import { toast } from 'sonner';
 import {
   FolderKanban,
   ListTodo,
@@ -69,6 +74,10 @@ const watchedProjects: { id: string; name: string; progress: number; status: Tas
 ];
 
 export function PMODashboard() {
+  const navigate = useNavigate();
+  const [showProjectModal, setShowProjectModal] = useState(false);
+  const [showTaskModal, setShowTaskModal] = useState(false);
+
   return (
     <div>
       <PageHeader
@@ -106,15 +115,38 @@ export function PMODashboard() {
 
       {/* Quick Actions */}
       <div className="flex gap-3 mb-6">
-        <Button>
+        <Button onClick={() => setShowProjectModal(true)}>
           <Plus className="w-4 h-4 mr-2" />
           Tạo dự án mới
         </Button>
-        <Button variant="outline">
+        <Button variant="outline" onClick={() => setShowTaskModal(true)}>
           <Plus className="w-4 h-4 mr-2" />
           Tạo Main Task
         </Button>
       </div>
+
+      {/* Modals */}
+      <ProjectFormModal
+        open={showProjectModal}
+        onOpenChange={setShowProjectModal}
+        onSubmit={(data) => {
+          toast.success('Tạo dự án thành công', {
+            description: `Dự án "${data.name}" đã được tạo`
+          });
+          navigate('/projects');
+        }}
+      />
+      <TaskFormModal
+        open={showTaskModal}
+        onOpenChange={setShowTaskModal}
+        type="main-task"
+        onSubmit={(data) => {
+          toast.success('Tạo Main Task thành công', {
+            description: `Công việc "${data.title}" đã được tạo`
+          });
+          navigate('/tasks');
+        }}
+      />
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
         {/* Progress Comparison Chart */}
