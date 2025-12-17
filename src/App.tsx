@@ -86,8 +86,13 @@ function AppRoutes() {
     <Routes>
       {/* Public Routes */}
       <Route path="/" element={isAuthenticated ? <Navigate to="/dashboard" /> : <HomePage />} />
-      <Route path="/sitemap" element={<SitemapPage />} />
       <Route path="/login" element={isAuthenticated ? <Navigate to="/dashboard" /> : <LoginPage />} />
+      {/* Sitemap - chỉ dành cho team thiết kế, ẩn khỏi user thường */}
+      <Route path="/sitemap" element={
+        <ProtectedRoute allowedRoles={['admin']}>
+          <SitemapPage />
+        </ProtectedRoute>
+      } />
       <Route path="/dashboard" element={
         <ProtectedRoute allowedRoles={routePermissions['/dashboard']}>
           <DashboardPage />
