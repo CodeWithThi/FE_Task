@@ -1,7 +1,8 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { roleLabels } from '@/types';
-import { Search, Bell, ChevronDown } from 'lucide-react';
+import { Search, Bell, ChevronDown, User, Lock, LogOut } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import {
   DropdownMenu,
@@ -11,11 +12,16 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { Badge } from '@/components/ui/badge';
 
 export function AppHeader() {
-  const { user } = useAuth();
+  const navigate = useNavigate();
+  const { user, logout } = useAuth();
   const [notificationCount] = useState(3);
+
+  const handleLogout = () => {
+    logout();
+    navigate('/login');
+  };
 
   return (
     <header className="h-16 bg-card border-b border-border flex items-center justify-between px-6 sticky top-0 z-30">
@@ -63,7 +69,10 @@ export function AppHeader() {
               </DropdownMenuItem>
             </div>
             <DropdownMenuSeparator />
-            <DropdownMenuItem className="text-center text-primary cursor-pointer">
+            <DropdownMenuItem 
+              className="text-center text-primary cursor-pointer justify-center"
+              onClick={() => navigate('/reminders')}
+            >
               Xem tất cả thông báo
             </DropdownMenuItem>
           </DropdownMenuContent>
@@ -79,23 +88,43 @@ export function AppHeader() {
               <div className="text-left hidden md:block">
                 <p className="text-sm font-medium">{user?.name}</p>
                 <p className="text-xs text-muted-foreground">
-                  {user?.role && roleLabels[user.role]}
+                  {user?.role && roleLabels[user.role]} • {user?.department}
                 </p>
               </div>
               <ChevronDown className="w-4 h-4 text-muted-foreground" />
             </button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-56 bg-popover">
-            <DropdownMenuLabel>Tài khoản của tôi</DropdownMenuLabel>
+            <DropdownMenuLabel>
+              <div className="flex flex-col">
+                <span>{user?.name}</span>
+                <span className="text-xs font-normal text-muted-foreground">
+                  {user?.role && roleLabels[user.role]} • {user?.department}
+                </span>
+              </div>
+            </DropdownMenuLabel>
             <DropdownMenuSeparator />
-            <DropdownMenuItem>Thông tin cá nhân</DropdownMenuItem>
-            <DropdownMenuItem>Đổi mật khẩu</DropdownMenuItem>
+            <DropdownMenuItem 
+              className="cursor-pointer"
+              onClick={() => navigate('/profile')}
+            >
+              <User className="w-4 h-4 mr-2" />
+              Thông tin cá nhân
+            </DropdownMenuItem>
+            <DropdownMenuItem 
+              className="cursor-pointer"
+              onClick={() => navigate('/change-password')}
+            >
+              <Lock className="w-4 h-4 mr-2" />
+              Đổi mật khẩu
+            </DropdownMenuItem>
             <DropdownMenuSeparator />
-            <DropdownMenuItem>
-              <Badge variant="outline" className="mr-2">
-                {user?.role && roleLabels[user.role]}
-              </Badge>
-              {user?.department}
+            <DropdownMenuItem 
+              className="cursor-pointer text-destructive focus:text-destructive"
+              onClick={handleLogout}
+            >
+              <LogOut className="w-4 h-4 mr-2" />
+              Đăng xuất
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>

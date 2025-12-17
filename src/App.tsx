@@ -16,12 +16,15 @@ import ProjectListPage from "./pages/ProjectListPage";
 import ProjectDetailPage from "./pages/ProjectDetailPage";
 import TaskListPage from "./pages/TaskListPage";
 import TaskDetailPage from "./pages/TaskDetailPage";
+import TaskBoardPage from "./pages/TaskBoardPage";
 import RemindersPage from "./pages/RemindersPage";
 import ReportsPage from "./pages/ReportsPage";
 import UsersPage from "./pages/UsersPage";
 import DepartmentsPage from "./pages/DepartmentsPage";
 import SettingsPage from "./pages/SettingsPage";
 import LogsPage from "./pages/LogsPage";
+import ProfilePage from "./pages/ProfilePage";
+import ChangePasswordPage from "./pages/ChangePasswordPage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -118,6 +121,11 @@ function AppRoutes() {
           <TaskDetailPage />
         </ProtectedRoute>
       } />
+      <Route path="/tasks-board" element={
+        <ProtectedRoute allowedRoles={routePermissions['/tasks']}>
+          <TaskBoardPage />
+        </ProtectedRoute>
+      } />
       <Route path="/reminders" element={
         <ProtectedRoute allowedRoles={routePermissions['/reminders']}>
           <RemindersPage />
@@ -146,6 +154,17 @@ function AppRoutes() {
       <Route path="/logs" element={
         <ProtectedRoute allowedRoles={routePermissions['/logs']}>
           <LogsPage />
+        </ProtectedRoute>
+      } />
+      {/* Profile routes - accessible by all authenticated users */}
+      <Route path="/profile" element={
+        <ProtectedRoute>
+          <ProfilePage />
+        </ProtectedRoute>
+      } />
+      <Route path="/change-password" element={
+        <ProtectedRoute>
+          <ChangePasswordPage />
         </ProtectedRoute>
       } />
       <Route path="*" element={<NotFound />} />
