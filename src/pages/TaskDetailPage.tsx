@@ -10,6 +10,8 @@ import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Separator } from '@/components/ui/separator';
 import { Textarea } from '@/components/ui/textarea';
 import { useAuth, usePermissions } from '@/contexts/AuthContext';
+import { SubtaskFormModal, SubtaskFormData } from '@/components/modals/SubtaskFormModal';
+import { toast } from 'sonner';
 import {
   Dialog,
   DialogContent,
@@ -31,6 +33,7 @@ import {
   Building2,
   Paperclip,
   Plus,
+  LayoutGrid,
 } from 'lucide-react';
 
 import { TaskStatus, TaskPriority } from '@/types';
@@ -98,11 +101,18 @@ export default function TaskDetailPage() {
   const [showSubmitDialog, setShowSubmitDialog] = useState(false);
   const [showApproveDialog, setShowApproveDialog] = useState(false);
   const [showReturnDialog, setShowReturnDialog] = useState(false);
+  const [showSubtaskModal, setShowSubtaskModal] = useState(false);
   const [rejectReason, setRejectReason] = useState('');
   const [returnReason, setReturnReason] = useState('');
 
   const isStaff = user?.role === 'staff';
   const isLeader = user?.role === 'leader';
+
+  const handleCreateSubtask = (data: SubtaskFormData) => {
+    console.log('Tạo Subtask mới:', data);
+    toast.success('Tạo Subtask thành công!');
+    setShowSubtaskModal(false);
+  };
 
   return (
     <div>
@@ -156,12 +166,18 @@ export default function TaskDetailPage() {
           <Card>
             <CardHeader className="flex flex-row items-center justify-between">
               <CardTitle className="text-lg">Subtasks ({mockSubtasks.length})</CardTitle>
-              {permissions?.canCreateSubtask && (
-                <Button size="sm" variant="outline">
-                  <Plus className="w-4 h-4 mr-1" />
-                  Thêm Subtask
+              <div className="flex gap-2">
+                <Button size="sm" variant="outline" onClick={() => navigate('/tasks-board')}>
+                  <LayoutGrid className="w-4 h-4 mr-1" />
+                  Kanban
                 </Button>
-              )}
+                {permissions?.canCreateSubtask && (
+                  <Button size="sm" variant="outline" onClick={() => setShowSubtaskModal(true)}>
+                    <Plus className="w-4 h-4 mr-1" />
+                    Thêm Subtask
+                  </Button>
+                )}
+              </div>
             </CardHeader>
             <CardContent className="p-0">
               <div className="divide-y">
@@ -476,6 +492,13 @@ export default function TaskDetailPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <SubtaskFormModal
+        open={showSubtaskModal}
+        onOpenChange={setShowSubtaskModal}
+        onSubmit={handleCreateSubtask}
+        mainTaskTitle={mockTask.title}
+      />
     </div>
   );
 }
