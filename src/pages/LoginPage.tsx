@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -147,9 +147,9 @@ export default function LoginPage() {
               </Button>
 
               <div className="text-center">
-                <a href="#" className="text-sm text-primary hover:underline">
+                <Link to="/forgot-password" className="text-sm text-primary hover:underline">
                   Quên mật khẩu?
-                </a>
+                </Link>
               </div>
             </form>
 
