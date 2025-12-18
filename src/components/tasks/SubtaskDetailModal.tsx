@@ -14,7 +14,8 @@ import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { StatusBadge } from '@/components/common/StatusBadge';
 import { PriorityBadge } from '@/components/common/PriorityBadge';
 import { ProgressBar } from '@/components/common/ProgressBar';
-import { useAuth, usePermissions } from '@/contexts/AuthContext';
+import { Checkbox } from '@/components/ui/checkbox';
+import { useAuth } from '@/contexts/AuthContext';
 import { SubtaskCardData } from './SubtaskCard';
 import { toast } from 'sonner';
 import {
@@ -30,6 +31,9 @@ import {
   ExternalLink,
   Trash2,
   Plus,
+  Building2,
+  User,
+  X,
 } from 'lucide-react';
 
 interface SubtaskDetailModalProps {
@@ -40,13 +44,20 @@ interface SubtaskDetailModalProps {
 
 // Mock data
 const mockAttachments = [
-  { id: '1', name: 'Giao_an_chuong_1.docx', size: '256 KB', type: 'file' },
-  { id: '2', name: 'Tai_lieu_tham_khao.pdf', size: '1.2 MB', type: 'file' },
+  { id: '1', name: 'Giao_an_chuong_1.docx', size: '256 KB' },
+  { id: '2', name: 'Tai_lieu_tham_khao.pdf', size: '1.2 MB' },
 ];
 
 const mockLinks = [
   { id: '1', title: 'Google Docs - Nội dung bài giảng', url: 'https://docs.google.com/...' },
   { id: '2', title: 'Drive - Thư mục tài liệu', url: 'https://drive.google.com/...' },
+];
+
+const mockChecklist = [
+  { id: '1', text: 'Soạn phần lý thuyết', completed: true },
+  { id: '2', text: 'Tạo bài tập mẫu', completed: true },
+  { id: '3', text: 'Thiết kế slide', completed: false },
+  { id: '4', text: 'Review và chỉnh sửa', completed: false },
 ];
 
 const mockActivityLog = [
@@ -57,18 +68,18 @@ const mockActivityLog = [
 
 export function SubtaskDetailModal({ open, onOpenChange, subtask }: SubtaskDetailModalProps) {
   const { user } = useAuth();
-  const permissions = usePermissions();
   const [progress, setProgress] = useState(subtask?.progress || 0);
   const [newComment, setNewComment] = useState('');
   const [newLinkTitle, setNewLinkTitle] = useState('');
   const [newLinkUrl, setNewLinkUrl] = useState('');
   const [showAddLink, setShowAddLink] = useState(false);
+  const [checklist, setChecklist] = useState(mockChecklist);
 
   if (!subtask) return null;
 
   const isStaff = user?.role === 'staff';
   const isLeader = user?.role === 'leader';
-  const canEdit = isStaff && (subtask.status === 'not-assigned' || subtask.status === 'in-progress');
+  const canEdit = isStaff && (subtask.status === 'not-assigned' || subtask.status === 'in-progress' || subtask.status === 'returned');
   const canApprove = isLeader && subtask.status === 'waiting-approval';
 
   const handleUpdateProgress = () => {
@@ -98,35 +109,239 @@ export function SubtaskDetailModal({ open, onOpenChange, subtask }: SubtaskDetai
     }
   };
 
+  const toggleChecklistItem = (id: string) => {
+    setChecklist(prev => prev.map(item =>
+      item.id === id ? { ...item, completed: !item.completed } : item
+    ));
+  };
+
+  const completedChecklistCount = checklist.filter(item => item.completed).length;
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[700px] max-h-[90vh] overflow-y-auto bg-card">
-        <DialogHeader>
+      <DialogContent className="sm:max-w-[900px] max-h-[90vh] overflow-hidden p-0 bg-card">
+        {/* Header */}
+        <DialogHeader className="p-6 pb-0">
           <div className="flex items-start justify-between gap-4">
-            <div className="flex-1">
-              <DialogTitle className="text-lg mb-2">{subtask.title}</DialogTitle>
-              <div className="flex items-center gap-2">
-                <StatusBadge status={subtask.status} />
-                <PriorityBadge priority={subtask.priority} />
-              </div>
-            </div>
+            <DialogTitle className="text-xl pr-8">{subtask.title}</DialogTitle>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="absolute right-4 top-4"
+              onClick={() => onOpenChange(false)}
+            >
+              <X className="w-4 h-4" />
+            </Button>
           </div>
         </DialogHeader>
 
-        <div className="space-y-6 mt-4">
-          {/* Description */}
-          {subtask.description && (
+        {/* Content - 2 Column Layout */}
+        <div className="flex flex-col md:flex-row max-h-[calc(90vh-100px)] overflow-hidden">
+          {/* Left Column - Main Content */}
+          <div className="flex-1 p-6 overflow-y-auto space-y-6 border-r">
+            {/* Description */}
             <div>
-              <Label className="text-muted-foreground">Mô tả</Label>
-              <p className="mt-1 text-sm">{subtask.description}</p>
+              <Label className="text-sm font-medium mb-2 block">Mô tả chi tiết</Label>
+              {canEdit ? (
+                <Textarea
+                  placeholder="Thêm mô tả chi tiết..."
+                  defaultValue={subtask.description}
+                  rows={4}
+                  className="resize-none"
+                />
+              ) : (
+                <p className="text-sm text-muted-foreground bg-muted/50 rounded-lg p-3">
+                  {subtask.description || 'Chưa có mô tả'}
+                </p>
+              )}
             </div>
-          )}
 
-          {/* Info Grid */}
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-1">
-              <Label className="text-muted-foreground text-xs">Người thực hiện</Label>
-              <div className="flex items-center gap-2">
+            {/* Checklist */}
+            <div>
+              <div className="flex items-center justify-between mb-3">
+                <Label className="text-sm font-medium flex items-center gap-2">
+                  <CheckCircle2 className="w-4 h-4" />
+                  Checklist ({completedChecklistCount}/{checklist.length})
+                </Label>
+                {canEdit && (
+                  <Button size="sm" variant="outline">
+                    <Plus className="w-3 h-3 mr-1" />
+                    Thêm
+                  </Button>
+                )}
+              </div>
+              <div className="space-y-2">
+                {checklist.map((item) => (
+                  <div key={item.id} className="flex items-center gap-3 p-2 rounded hover:bg-muted/50">
+                    <Checkbox
+                      checked={item.completed}
+                      onCheckedChange={() => canEdit && toggleChecklistItem(item.id)}
+                      disabled={!canEdit}
+                    />
+                    <span className={`text-sm ${item.completed ? 'line-through text-muted-foreground' : ''}`}>
+                      {item.text}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <Separator />
+
+            {/* Attachments */}
+            <div>
+              <div className="flex items-center justify-between mb-3">
+                <Label className="text-sm font-medium flex items-center gap-2">
+                  <Paperclip className="w-4 h-4" />
+                  File đính kèm ({mockAttachments.length})
+                </Label>
+                {canEdit && (
+                  <Button size="sm" variant="outline">
+                    <Upload className="w-3 h-3 mr-1" />
+                    Upload
+                  </Button>
+                )}
+              </div>
+              <div className="space-y-2">
+                {mockAttachments.map((file) => (
+                  <div
+                    key={file.id}
+                    className="flex items-center gap-3 p-2 rounded-lg border hover:bg-muted/50 group"
+                  >
+                    <FileText className="w-5 h-5 text-primary" />
+                    <div className="flex-1">
+                      <p className="text-sm font-medium">{file.name}</p>
+                      <p className="text-xs text-muted-foreground">{file.size}</p>
+                    </div>
+                    {canEdit && (
+                      <Button size="icon" variant="ghost" className="h-8 w-8 opacity-0 group-hover:opacity-100">
+                        <Trash2 className="w-4 h-4 text-destructive" />
+                      </Button>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Links */}
+            <div>
+              <div className="flex items-center justify-between mb-3">
+                <Label className="text-sm font-medium flex items-center gap-2">
+                  <Link2 className="w-4 h-4" />
+                  Liên kết ({mockLinks.length})
+                </Label>
+                {canEdit && (
+                  <Button size="sm" variant="outline" onClick={() => setShowAddLink(!showAddLink)}>
+                    <Plus className="w-3 h-3 mr-1" />
+                    Thêm
+                  </Button>
+                )}
+              </div>
+
+              {showAddLink && (
+                <div className="space-y-2 mb-3 p-3 bg-muted/50 rounded-lg">
+                  <Input
+                    placeholder="Tiêu đề"
+                    value={newLinkTitle}
+                    onChange={(e) => setNewLinkTitle(e.target.value)}
+                  />
+                  <Input
+                    placeholder="URL"
+                    value={newLinkUrl}
+                    onChange={(e) => setNewLinkUrl(e.target.value)}
+                  />
+                  <div className="flex gap-2">
+                    <Button size="sm" onClick={handleAddLink}>Lưu</Button>
+                    <Button size="sm" variant="outline" onClick={() => setShowAddLink(false)}>Hủy</Button>
+                  </div>
+                </div>
+              )}
+
+              <div className="space-y-2">
+                {mockLinks.map((link) => (
+                  <a
+                    key={link.id}
+                    href={link.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center gap-3 p-2 rounded-lg border hover:bg-muted/50 group"
+                  >
+                    <ExternalLink className="w-5 h-5 text-primary" />
+                    <span className="text-sm group-hover:underline">{link.title}</span>
+                  </a>
+                ))}
+              </div>
+            </div>
+
+            <Separator />
+
+            {/* Comments / Activity */}
+            <div>
+              <Label className="text-sm font-medium flex items-center gap-2 mb-3">
+                <Clock className="w-4 h-4" />
+                Hoạt động
+              </Label>
+
+              {/* Add comment */}
+              <div className="flex gap-2 mb-4">
+                <Avatar className="w-8 h-8">
+                  <AvatarFallback className="text-xs">{user?.name.charAt(0)}</AvatarFallback>
+                </Avatar>
+                <div className="flex-1 flex gap-2">
+                  <Input
+                    placeholder="Thêm bình luận..."
+                    value={newComment}
+                    onChange={(e) => setNewComment(e.target.value)}
+                  />
+                  <Button size="sm" disabled={!newComment.trim()}>Gửi</Button>
+                </div>
+              </div>
+
+              {/* Activity log */}
+              <div className="space-y-3">
+                {mockActivityLog.map((log) => (
+                  <div key={log.id} className="flex gap-3 text-sm">
+                    <Avatar className="w-6 h-6">
+                      <AvatarFallback className="text-xs">{log.user.charAt(0)}</AvatarFallback>
+                    </Avatar>
+                    <div className="flex-1">
+                      <p>
+                        <span className="font-medium">{log.user}</span>
+                        <span className="text-muted-foreground"> {log.action}</span>
+                      </p>
+                      <p className="text-xs text-muted-foreground">{log.time}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          {/* Right Column - Info & Actions */}
+          <div className="w-full md:w-72 p-6 bg-muted/30 space-y-4">
+            {/* Status */}
+            <div>
+              <Label className="text-xs text-muted-foreground uppercase tracking-wide">Trạng thái</Label>
+              <div className="mt-1">
+                <StatusBadge status={subtask.status} />
+              </div>
+            </div>
+
+            {/* Priority */}
+            <div>
+              <Label className="text-xs text-muted-foreground uppercase tracking-wide">Độ ưu tiên</Label>
+              <div className="mt-1">
+                <PriorityBadge priority={subtask.priority} />
+              </div>
+            </div>
+
+            {/* Assignee */}
+            <div>
+              <Label className="text-xs text-muted-foreground uppercase tracking-wide flex items-center gap-1">
+                <User className="w-3 h-3" />
+                Người thực hiện
+              </Label>
+              <div className="mt-1 flex items-center gap-2">
                 <Avatar className="w-6 h-6">
                   <AvatarFallback className="text-xs bg-primary/10 text-primary">
                     {subtask.assignee.name.charAt(0)}
@@ -135,199 +350,89 @@ export function SubtaskDetailModal({ open, onOpenChange, subtask }: SubtaskDetai
                 <span className="text-sm">{subtask.assignee.name}</span>
               </div>
             </div>
-            <div className="space-y-1">
-              <Label className="text-muted-foreground text-xs">Deadline</Label>
-              <div className="flex items-center gap-2 text-sm">
-                <Calendar className="w-4 h-4 text-muted-foreground" />
-                {new Date(subtask.deadline).toLocaleDateString('vi-VN')}
-              </div>
-            </div>
-          </div>
 
-          <Separator />
-
-          {/* Progress */}
-          <div>
-            <div className="flex items-center justify-between mb-2">
-              <Label>Tiến độ</Label>
-              <span className="text-sm font-medium">{progress}%</span>
-            </div>
-            <ProgressBar value={progress} />
-            {canEdit && (
-              <div className="flex items-center gap-2 mt-3">
-                <Input
-                  type="range"
-                  min="0"
-                  max="100"
-                  step="5"
-                  value={progress}
-                  onChange={(e) => setProgress(Number(e.target.value))}
-                  className="flex-1"
-                />
-                <Button size="sm" onClick={handleUpdateProgress}>
-                  Cập nhật
-                </Button>
-              </div>
-            )}
-          </div>
-
-          <Separator />
-
-          {/* Attachments */}
-          <div>
-            <div className="flex items-center justify-between mb-3">
-              <Label className="flex items-center gap-2">
-                <Paperclip className="w-4 h-4" />
-                File đính kèm
+            {/* Department */}
+            <div>
+              <Label className="text-xs text-muted-foreground uppercase tracking-wide flex items-center gap-1">
+                <Building2 className="w-3 h-3" />
+                Phòng ban
               </Label>
-              {canEdit && (
-                <Button size="sm" variant="outline">
-                  <Upload className="w-4 h-4 mr-1" />
-                  Upload
-                </Button>
-              )}
+              <p className="text-sm mt-1">{subtask.department || 'Bộ môn Toán'}</p>
             </div>
-            <div className="space-y-2">
-              {mockAttachments.map((file) => (
-                <div
-                  key={file.id}
-                  className="flex items-center gap-3 p-2 rounded-lg border hover:bg-muted/50"
-                >
-                  <FileText className="w-5 h-5 text-primary" />
-                  <div className="flex-1">
-                    <p className="text-sm font-medium">{file.name}</p>
-                    <p className="text-xs text-muted-foreground">{file.size}</p>
-                  </div>
-                  {canEdit && (
-                    <Button size="icon" variant="ghost" className="h-8 w-8">
-                      <Trash2 className="w-4 h-4 text-muted-foreground hover:text-destructive" />
-                    </Button>
-                  )}
-                </div>
-              ))}
-            </div>
-          </div>
 
-          {/* Links */}
-          <div>
-            <div className="flex items-center justify-between mb-3">
-              <Label className="flex items-center gap-2">
-                <Link2 className="w-4 h-4" />
-                Liên kết
+            {/* Deadline */}
+            <div>
+              <Label className="text-xs text-muted-foreground uppercase tracking-wide flex items-center gap-1">
+                <Calendar className="w-3 h-3" />
+                Deadline
               </Label>
-              {canEdit && (
-                <Button size="sm" variant="outline" onClick={() => setShowAddLink(!showAddLink)}>
-                  <Plus className="w-4 h-4 mr-1" />
-                  Thêm
-                </Button>
-              )}
-            </div>
-            
-            {showAddLink && (
-              <div className="space-y-2 mb-3 p-3 bg-muted/50 rounded-lg">
-                <Input
-                  placeholder="Tiêu đề"
-                  value={newLinkTitle}
-                  onChange={(e) => setNewLinkTitle(e.target.value)}
-                />
-                <Input
-                  placeholder="URL"
-                  value={newLinkUrl}
-                  onChange={(e) => setNewLinkUrl(e.target.value)}
-                />
-                <div className="flex gap-2">
-                  <Button size="sm" onClick={handleAddLink}>Lưu</Button>
-                  <Button size="sm" variant="outline" onClick={() => setShowAddLink(false)}>Hủy</Button>
-                </div>
-              </div>
-            )}
-            
-            <div className="space-y-2">
-              {mockLinks.map((link) => (
-                <a
-                  key={link.id}
-                  href={link.url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex items-center gap-3 p-2 rounded-lg border hover:bg-muted/50 group"
-                >
-                  <ExternalLink className="w-5 h-5 text-primary" />
-                  <span className="text-sm group-hover:underline">{link.title}</span>
-                </a>
-              ))}
-            </div>
-          </div>
-
-          <Separator />
-
-          {/* Activity Log */}
-          <div>
-            <Label className="flex items-center gap-2 mb-3">
-              <Clock className="w-4 h-4" />
-              Nhật ký hoạt động
-            </Label>
-            <div className="space-y-1">
-              {mockActivityLog.map((log) => (
-                <div key={log.id} className="timeline-item">
-                  <div className="timeline-dot" />
-                  <div className="flex items-start justify-between">
-                    <div>
-                      <span className="font-medium text-sm">{log.user}</span>
-                      <span className="text-sm text-muted-foreground"> {log.action}</span>
-                    </div>
-                    <span className="text-xs text-muted-foreground">{log.time}</span>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          <Separator />
-
-          {/* Comments */}
-          <div>
-            <Label className="mb-3 block">Ghi chú / Bình luận</Label>
-            <div className="flex gap-2">
-              <Textarea
-                placeholder="Thêm ghi chú..."
-                value={newComment}
-                onChange={(e) => setNewComment(e.target.value)}
-                rows={2}
-                className="flex-1"
-              />
-              <Button size="sm" className="self-end">
-                Gửi
-              </Button>
-            </div>
-          </div>
-
-          {/* Actions */}
-          <div className="flex gap-2 pt-4 border-t">
-            {isStaff && subtask.status === 'in-progress' && (
-              <Button className="flex-1" onClick={handleSubmitForApproval}>
-                <Send className="w-4 h-4 mr-2" />
-                Gửi duyệt
-              </Button>
-            )}
-            
-            {canApprove && (
-              <>
-                <Button className="flex-1" onClick={handleApprove}>
-                  <CheckCircle2 className="w-4 h-4 mr-2" />
-                  Phê duyệt
-                </Button>
-                <Button variant="outline" className="flex-1" onClick={handleReturn}>
-                  <XCircle className="w-4 h-4 mr-2" />
-                  Trả lại
-                </Button>
-              </>
-            )}
-            
-            {!canEdit && !canApprove && (
-              <p className="text-sm text-muted-foreground text-center w-full py-2">
-                Bạn chỉ có quyền xem công việc này
+              <p className="text-sm mt-1">
+                {new Date(subtask.deadline).toLocaleDateString('vi-VN', {
+                  weekday: 'long',
+                  day: '2-digit',
+                  month: '2-digit',
+                  year: 'numeric'
+                })}
               </p>
-            )}
+            </div>
+
+            <Separator />
+
+            {/* Progress */}
+            <div>
+              <div className="flex items-center justify-between mb-2">
+                <Label className="text-xs text-muted-foreground uppercase tracking-wide">Tiến độ</Label>
+                <span className="text-sm font-medium">{progress}%</span>
+              </div>
+              <ProgressBar value={progress} />
+              {canEdit && (
+                <div className="mt-2 space-y-2">
+                  <Input
+                    type="range"
+                    min="0"
+                    max="100"
+                    step="5"
+                    value={progress}
+                    onChange={(e) => setProgress(Number(e.target.value))}
+                    className="w-full"
+                  />
+                  <Button size="sm" className="w-full" variant="outline" onClick={handleUpdateProgress}>
+                    Cập nhật tiến độ
+                  </Button>
+                </div>
+              )}
+            </div>
+
+            <Separator />
+
+            {/* Actions */}
+            <div className="space-y-2">
+              {isStaff && (subtask.status === 'in-progress' || subtask.status === 'returned') && (
+                <Button className="w-full" onClick={handleSubmitForApproval}>
+                  <Send className="w-4 h-4 mr-2" />
+                  Gửi duyệt
+                </Button>
+              )}
+
+              {canApprove && (
+                <>
+                  <Button className="w-full" onClick={handleApprove}>
+                    <CheckCircle2 className="w-4 h-4 mr-2" />
+                    Phê duyệt
+                  </Button>
+                  <Button variant="outline" className="w-full" onClick={handleReturn}>
+                    <XCircle className="w-4 h-4 mr-2" />
+                    Trả lại
+                  </Button>
+                </>
+              )}
+
+              {!canEdit && !canApprove && (
+                <p className="text-xs text-muted-foreground text-center py-2">
+                  Bạn chỉ có quyền xem công việc này
+                </p>
+              )}
+            </div>
           </div>
         </div>
       </DialogContent>

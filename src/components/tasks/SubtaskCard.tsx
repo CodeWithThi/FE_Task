@@ -1,8 +1,7 @@
 import { TaskStatus, TaskPriority } from '@/types';
-import { StatusBadge } from '@/components/common/StatusBadge';
 import { PriorityBadge } from '@/components/common/PriorityBadge';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
-import { Calendar, Paperclip, MessageSquare } from 'lucide-react';
+import { Calendar, Building2 } from 'lucide-react';
 
 export interface SubtaskCardData {
   id: string;
@@ -12,6 +11,7 @@ export interface SubtaskCardData {
     id: string;
     name: string;
   };
+  department?: string;
   status: TaskStatus;
   priority: TaskPriority;
   deadline: string;
@@ -31,35 +31,17 @@ export function SubtaskCard({ subtask, onClick }: SubtaskCardProps) {
   return (
     <div
       onClick={onClick}
-      className="bg-card border rounded-lg p-4 hover:shadow-md transition-all cursor-pointer hover:border-primary/50 group"
+      className="bg-card border rounded-lg p-3 hover:shadow-md transition-all cursor-pointer hover:border-primary/50 group"
     >
-      {/* Header */}
-      <div className="flex items-start justify-between gap-2 mb-3">
-        <h4 className="font-medium text-sm line-clamp-2 group-hover:text-primary transition-colors">
-          {subtask.title}
-        </h4>
-        <PriorityBadge priority={subtask.priority} />
-      </div>
+      {/* Title */}
+      <h4 className="font-medium text-sm line-clamp-2 group-hover:text-primary transition-colors mb-3">
+        {subtask.title}
+      </h4>
 
-      {/* Description */}
-      {subtask.description && (
-        <p className="text-xs text-muted-foreground line-clamp-2 mb-3">
-          {subtask.description}
-        </p>
-      )}
-
-      {/* Progress Bar */}
-      <div className="mb-3">
-        <div className="flex items-center justify-between text-xs mb-1">
-          <span className="text-muted-foreground">Tiến độ</span>
-          <span className="font-medium">{subtask.progress}%</span>
-        </div>
-        <div className="h-1.5 bg-muted rounded-full overflow-hidden">
-          <div
-            className="h-full bg-primary rounded-full transition-all"
-            style={{ width: `${subtask.progress}%` }}
-          />
-        </div>
+      {/* Info Row */}
+      <div className="flex items-center gap-2 text-xs text-muted-foreground mb-3">
+        <Building2 className="w-3 h-3" />
+        <span className="truncate">{subtask.department || 'Bộ môn Toán'}</span>
       </div>
 
       {/* Footer */}
@@ -71,37 +53,21 @@ export function SubtaskCard({ subtask, onClick }: SubtaskCardProps) {
               {subtask.assignee.name.charAt(0)}
             </AvatarFallback>
           </Avatar>
-          <span className="text-xs text-muted-foreground truncate max-w-[100px]">
-            {subtask.assignee.name}
+          <span className="text-xs text-muted-foreground truncate max-w-[80px]">
+            {subtask.assignee.name.split(' ').slice(-2).join(' ')}
           </span>
         </div>
 
-        {/* Meta */}
-        <div className="flex items-center gap-3 text-muted-foreground">
-          {subtask.attachmentCount && subtask.attachmentCount > 0 && (
-            <div className="flex items-center gap-1">
-              <Paperclip className="w-3 h-3" />
-              <span className="text-xs">{subtask.attachmentCount}</span>
-            </div>
-          )}
-          {subtask.commentCount && subtask.commentCount > 0 && (
-            <div className="flex items-center gap-1">
-              <MessageSquare className="w-3 h-3" />
-              <span className="text-xs">{subtask.commentCount}</span>
-            </div>
-          )}
-          <div className={`flex items-center gap-1 ${isOverdue ? 'text-destructive' : ''}`}>
+        {/* Deadline & Priority */}
+        <div className="flex items-center gap-2">
+          <div className={`flex items-center gap-1 text-xs ${isOverdue ? 'text-destructive' : 'text-muted-foreground'}`}>
             <Calendar className="w-3 h-3" />
-            <span className="text-xs">
+            <span>
               {new Date(subtask.deadline).toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit' })}
             </span>
           </div>
+          <PriorityBadge priority={subtask.priority} />
         </div>
-      </div>
-
-      {/* Status Badge */}
-      <div className="mt-3 pt-3 border-t">
-        <StatusBadge status={subtask.status} />
       </div>
     </div>
   );

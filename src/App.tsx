@@ -11,9 +11,12 @@ import { Loader2 } from "lucide-react";
 import HomePage from "./pages/HomePage";
 import SitemapPage from "./pages/SitemapPage";
 import LoginPage from "./pages/LoginPage";
+import ForgotPasswordPage from "./pages/ForgotPasswordPage";
+import ResetPasswordPage from "./pages/ResetPasswordPage";
 import DashboardPage from "./pages/DashboardPage";
 import ProjectListPage from "./pages/ProjectListPage";
 import ProjectDetailPage from "./pages/ProjectDetailPage";
+import WorkspacePage from "./pages/WorkspacePage";
 import TaskListPage from "./pages/TaskListPage";
 import TaskDetailPage from "./pages/TaskDetailPage";
 import TaskBoardPage from "./pages/TaskBoardPage";
@@ -48,6 +51,23 @@ const routePermissions: Record<string, UserRole[]> = {
   '/logs': ['admin'],                                       // Chỉ Admin xem nhật ký
 };
 
+// Helper function to get default route based on role
+function getDefaultRouteForRole(role: UserRole): string {
+  switch (role) {
+    case 'director':
+      return '/dashboard';
+    case 'pmo':
+      return '/projects';
+    case 'leader':
+    case 'staff':
+      return '/tasks-board';
+    case 'admin':
+      return '/dashboard';
+    default:
+      return '/dashboard';
+  }
+}
+
 function LoadingScreen() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-background">
@@ -79,17 +99,22 @@ function ProtectedRoute({ children, allowedRoles }: { children: React.ReactNode;
 }
 
 function AppRoutes() {
-  const { isAuthenticated, isLoading } = useAuth();
+  const { isAuthenticated, isLoading, user } = useAuth();
 
   if (isLoading) {
     return <LoadingScreen />;
   }
 
+  // Get default route based on user role
+  const defaultRoute = user ? getDefaultRouteForRole(user.role) : '/dashboard';
+
   return (
     <Routes>
       {/* Public Routes */}
-      <Route path="/" element={isAuthenticated ? <Navigate to="/dashboard" /> : <HomePage />} />
-      <Route path="/login" element={isAuthenticated ? <Navigate to="/dashboard" /> : <LoginPage />} />
+      <Route path="/" element={isAuthenticated ? <Navigate to={defaultRoute} /> : <HomePage />} />
+      <Route path="/login" element={isAuthenticated ? <Navigate to={defaultRoute} /> : <LoginPage />} />
+      <Route path="/forgot-password" element={isAuthenticated ? <Navigate to={defaultRoute} /> : <ForgotPasswordPage />} />
+      <Route path="/reset-password" element={isAuthenticated ? <Navigate to={defaultRoute} /> : <ResetPasswordPage />} />
       {/* Sitemap - chỉ dành cho team thiết kế, ẩn khỏi user thường */}
       <Route path="/sitemap" element={
         <ProtectedRoute allowedRoles={['admin']}>
@@ -109,6 +134,12 @@ function AppRoutes() {
       <Route path="/projects/:id" element={
         <ProtectedRoute allowedRoles={routePermissions['/projects']}>
           <ProjectDetailPage />
+        </ProtectedRoute>
+      } />
+      {/* Workspace - when clicking on a project */}
+      <Route path="/workspace/:id" element={
+        <ProtectedRoute allowedRoles={routePermissions['/projects']}>
+          <WorkspacePage />
         </ProtectedRoute>
       } />
       <Route path="/tasks" element={
