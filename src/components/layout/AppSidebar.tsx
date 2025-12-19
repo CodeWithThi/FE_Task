@@ -27,11 +27,13 @@ interface MenuItem {
   section?: string;
 }
 
-// Menu cho Leader/Staff: CHỈ CÓ Bảng công việc
-// Menu cho Director/PMO: Có thêm Dự án, Báo cáo
-// Menu cho Admin: Quản lý hệ thống
+// Menu theo role:
+// - Director: Tổng quan (chỉ xem)
+// - PMO: Dự án (Workspace)
+// - Leader/Staff: Tổng quan công việc → Bảng công việc
+// - Admin: Quản lý hệ thống
 const menuItems: MenuItem[] = [
-  // Tổng quan - Chỉ Director, PMO, Admin
+  // Tổng quan - Director, PMO, Admin
   {
     icon: LayoutDashboard,
     label: 'Tổng quan',
@@ -40,7 +42,16 @@ const menuItems: MenuItem[] = [
     section: 'main',
   },
   
-  // Bảng công việc - Leader/Staff màn hình chính DUY NHẤT
+  // Tổng quan công việc của tôi - Leader/Staff
+  {
+    icon: LayoutDashboard,
+    label: 'Tổng quan',
+    path: '/my-overview',
+    roles: ['leader', 'staff'],
+    section: 'main',
+  },
+  
+  // Bảng công việc - Leader/Staff
   {
     icon: Kanban,
     label: 'Bảng công việc',

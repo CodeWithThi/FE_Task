@@ -9,14 +9,13 @@ import { UserRole } from "@/types";
 import { Loader2 } from "lucide-react";
 
 import HomePage from "./pages/HomePage";
-import SitemapPage from "./pages/SitemapPage";
 import LoginPage from "./pages/LoginPage";
 import ForgotPasswordPage from "./pages/ForgotPasswordPage";
 import ResetPasswordPage from "./pages/ResetPasswordPage";
 import DashboardPage from "./pages/DashboardPage";
 import ProjectListPage from "./pages/ProjectListPage";
-import ProjectDetailPage from "./pages/ProjectDetailPage";
 import WorkspacePage from "./pages/WorkspacePage";
+import MyOverviewPage from "./pages/MyOverviewPage";
 import TaskBoardPage from "./pages/TaskBoardPage";
 import RemindersPage from "./pages/RemindersPage";
 import ReportsPage from "./pages/ReportsPage";
@@ -53,12 +52,12 @@ const routePermissions: Record<string, UserRole[]> = {
 function getDefaultRouteForRole(role: UserRole): string {
   switch (role) {
     case 'director':
-      return '/dashboard';
+      return '/dashboard'; // Tổng quan (chỉ xem)
     case 'pmo':
-      return '/projects';
+      return '/projects'; // Danh sách dự án (Workspace)
     case 'leader':
     case 'staff':
-      return '/tasks-board';
+      return '/my-overview'; // Tổng quan công việc của tôi
     case 'admin':
       return '/dashboard';
     default:
@@ -113,28 +112,25 @@ function AppRoutes() {
       <Route path="/login" element={isAuthenticated ? <Navigate to={defaultRoute} /> : <LoginPage />} />
       <Route path="/forgot-password" element={isAuthenticated ? <Navigate to={defaultRoute} /> : <ForgotPasswordPage />} />
       <Route path="/reset-password" element={isAuthenticated ? <Navigate to={defaultRoute} /> : <ResetPasswordPage />} />
-      {/* Sitemap - chỉ dành cho team thiết kế, ẩn khỏi user thường */}
-      <Route path="/sitemap" element={
-        <ProtectedRoute allowedRoles={['admin']}>
-          <SitemapPage />
-        </ProtectedRoute>
-      } />
+      {/* Dashboard - Director, PMO, Admin */}
       <Route path="/dashboard" element={
         <ProtectedRoute allowedRoles={routePermissions['/dashboard']}>
           <DashboardPage />
         </ProtectedRoute>
       } />
+      {/* Tổng quan công việc của tôi - Leader/Staff */}
+      <Route path="/my-overview" element={
+        <ProtectedRoute allowedRoles={['leader', 'staff']}>
+          <MyOverviewPage />
+        </ProtectedRoute>
+      } />
+      {/* Dự án - Director, PMO */}
       <Route path="/projects" element={
         <ProtectedRoute allowedRoles={routePermissions['/projects']}>
           <ProjectListPage />
         </ProtectedRoute>
       } />
-      <Route path="/projects/:id" element={
-        <ProtectedRoute allowedRoles={routePermissions['/projects']}>
-          <ProjectDetailPage />
-        </ProtectedRoute>
-      } />
-      {/* Workspace - when clicking on a project */}
+      {/* Workspace - Khi click vào dự án */}
       <Route path="/workspace/:id" element={
         <ProtectedRoute allowedRoles={routePermissions['/projects']}>
           <WorkspacePage />
