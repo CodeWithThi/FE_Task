@@ -66,6 +66,14 @@ const mockActivityLog = [
   { id: '3', user: 'Phạm Thị Leader', action: 'Giao việc cho Hoàng Văn Nhân Viên', time: '3 ngày trước' },
 ];
 
+// Mock danh sách nhân viên để Leader gán việc
+const mockStaffList = [
+  { id: '5', name: 'Hoàng Văn Nhân Viên', department: 'Bộ môn Toán' },
+  { id: '6', name: 'Nguyễn Thị Lan', department: 'Bộ môn Toán' },
+  { id: '7', name: 'Trần Văn Nam', department: 'Bộ môn Lý' },
+  { id: '8', name: 'Lê Thị Hoa', department: 'Bộ môn Hóa' },
+];
+
 export function SubtaskDetailModal({ open, onOpenChange, task }: SubtaskDetailModalProps) {
   const { user } = useAuth();
   const [progress, setProgress] = useState(task?.progress || 0);
@@ -76,6 +84,8 @@ export function SubtaskDetailModal({ open, onOpenChange, task }: SubtaskDetailMo
   const [checklist, setChecklist] = useState(mockChecklist);
   const [returnReason, setReturnReason] = useState('');
   const [showReturnDialog, setShowReturnDialog] = useState(false);
+  const [showAssigneeDropdown, setShowAssigneeDropdown] = useState(false);
+  const [currentAssignee, setCurrentAssignee] = useState(task?.assignee || { id: '', name: 'Chưa gán' });
 
   if (!task) return null;
 
@@ -83,6 +93,7 @@ export function SubtaskDetailModal({ open, onOpenChange, task }: SubtaskDetailMo
   const isLeader = user?.role === 'leader';
   const canEdit = isStaff && (task.status === 'not-assigned' || task.status === 'in-progress' || task.status === 'returned');
   const canApprove = isLeader && task.status === 'waiting-approval';
+  const canAssign = isLeader; // Leader có thể gán/đổi người thực hiện
 
   const handleUpdateProgress = () => {
     toast.success(`Đã cập nhật tiến độ: ${progress}%`);
@@ -121,6 +132,12 @@ export function SubtaskDetailModal({ open, onOpenChange, task }: SubtaskDetailMo
     setChecklist(prev => prev.map(item =>
       item.id === id ? { ...item, completed: !item.completed } : item
     ));
+  };
+
+  const handleAssigneeChange = (staff: { id: string; name: string }) => {
+    setCurrentAssignee(staff);
+    setShowAssigneeDropdown(false);
+    toast.success(`Đã gán công việc cho ${staff.name}`);
   };
 
   const completedChecklistCount = checklist.filter(item => item.completed).length;
@@ -343,20 +360,50 @@ export function SubtaskDetailModal({ open, onOpenChange, task }: SubtaskDetailMo
               </div>
             </div>
 
-            {/* Người thực hiện */}
-            <div>
+            {/* Người thực hiện - Leader có thể gán/đổi */}
+            <div className="relative">
               <Label className="text-xs text-muted-foreground uppercase tracking-wide flex items-center gap-1">
                 <User className="w-3 h-3" />
                 Người thực hiện
               </Label>
-              <div className="mt-1 flex items-center gap-2">
+              <div
+                className={`mt-1 flex items-center gap-2 p-2 rounded-lg ${canAssign ? 'hover:bg-muted cursor-pointer border border-transparent hover:border-border' : ''}`}
+                onClick={() => canAssign && setShowAssigneeDropdown(!showAssigneeDropdown)}
+              >
                 <Avatar className="w-6 h-6">
                   <AvatarFallback className="text-xs bg-primary/10 text-primary">
-                    {task.assignee.name.charAt(0)}
+                    {currentAssignee.name.charAt(0)}
                   </AvatarFallback>
                 </Avatar>
-                <span className="text-sm">{task.assignee.name}</span>
+                <span className="text-sm flex-1">{currentAssignee.name}</span>
+                {canAssign && (
+                  <span className="text-xs text-muted-foreground">Đổi</span>
+                )}
               </div>
+              
+              {/* Dropdown chọn người thực hiện */}
+              {showAssigneeDropdown && canAssign && (
+                <div className="absolute top-full left-0 right-0 mt-1 bg-card border rounded-lg shadow-lg z-10 overflow-hidden">
+                  <div className="p-2 text-xs text-muted-foreground border-b">Chọn người thực hiện</div>
+                  {mockStaffList.map((staff) => (
+                    <div
+                      key={staff.id}
+                      onClick={() => handleAssigneeChange(staff)}
+                      className="flex items-center gap-2 p-2 hover:bg-muted cursor-pointer"
+                    >
+                      <Avatar className="w-6 h-6">
+                        <AvatarFallback className="text-xs bg-primary/10 text-primary">
+                          {staff.name.charAt(0)}
+                        </AvatarFallback>
+                      </Avatar>
+                      <div>
+                        <p className="text-sm">{staff.name}</p>
+                        <p className="text-xs text-muted-foreground">{staff.department}</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
 
             {/* Phòng ban */}
