@@ -6,7 +6,7 @@ import { cn } from '@/lib/utils';
 import {
   LayoutDashboard,
   FolderKanban,
-  ListTodo,
+  Kanban,
   Bell,
   BarChart3,
   Users,
@@ -27,46 +27,52 @@ interface MenuItem {
   section?: string;
 }
 
-// Menu items theo đúng phân quyền role
+// Menu cho Leader/Staff: CHỈ CÓ Bảng công việc
+// Menu cho Director/PMO: Có thêm Dự án, Báo cáo
+// Menu cho Admin: Quản lý hệ thống
 const menuItems: MenuItem[] = [
-  // Tổng quan - Tất cả role đều xem được
+  // Tổng quan - Chỉ Director, PMO, Admin
   {
     icon: LayoutDashboard,
     label: 'Tổng quan',
     path: '/dashboard',
-    roles: ['admin', 'director', 'pmo', 'leader', 'staff'],
+    roles: ['admin', 'director', 'pmo'],
     section: 'main',
   },
   
-  // Nghiệp vụ dự án - Admin KHÔNG tham gia
+  // Bảng công việc - Leader/Staff màn hình chính DUY NHẤT
+  {
+    icon: Kanban,
+    label: 'Bảng công việc',
+    path: '/tasks-board',
+    roles: ['leader', 'staff'],
+    section: 'main',
+  },
+  
+  // Dự án - Director, PMO (không phải Leader/Staff)
   {
     icon: FolderKanban,
     label: 'Dự án',
     path: '/projects',
-    roles: ['director', 'pmo', 'leader', 'staff'],  // Admin không có quyền
+    roles: ['director', 'pmo'],
     section: 'project',
   },
-  {
-    icon: ListTodo,
-    label: 'Công việc',
-    path: '/tasks',
-    roles: ['director', 'pmo', 'leader', 'staff'],  // Admin không có quyền
-    section: 'project',
-  },
+  
+  // Nhắc việc - PMO, Leader, Staff
   {
     icon: Bell,
     label: 'Nhắc việc',
     path: '/reminders',
-    roles: ['pmo', 'leader', 'staff'],  // Director chỉ xem, không cần nhắc việc
+    roles: ['pmo', 'leader', 'staff'],
     section: 'project',
   },
   
-  // Báo cáo - Staff không xem được
+  // Báo cáo - Director, PMO, Leader (không phải Staff)
   {
     icon: BarChart3,
     label: 'Báo cáo',
     path: '/reports',
-    roles: ['director', 'pmo', 'leader'],  // Admin và Staff không có quyền
+    roles: ['director', 'pmo', 'leader'],
     section: 'report',
   },
   
@@ -105,7 +111,7 @@ const menuItems: MenuItem[] = [
 
 const sectionLabels: Record<string, string> = {
   main: '',
-  project: 'Quản lý dự án',
+  project: 'Quản lý',
   report: 'Báo cáo',
   management: 'Quản lý',
   system: 'Hệ thống',

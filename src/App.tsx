@@ -17,8 +17,6 @@ import DashboardPage from "./pages/DashboardPage";
 import ProjectListPage from "./pages/ProjectListPage";
 import ProjectDetailPage from "./pages/ProjectDetailPage";
 import WorkspacePage from "./pages/WorkspacePage";
-import TaskListPage from "./pages/TaskListPage";
-import TaskDetailPage from "./pages/TaskDetailPage";
 import TaskBoardPage from "./pages/TaskBoardPage";
 import RemindersPage from "./pages/RemindersPage";
 import ReportsPage from "./pages/ReportsPage";
@@ -142,21 +140,15 @@ function AppRoutes() {
           <WorkspacePage />
         </ProtectedRoute>
       } />
-      <Route path="/tasks" element={
-        <ProtectedRoute allowedRoles={routePermissions['/tasks']}>
-          <TaskListPage />
-        </ProtectedRoute>
-      } />
-      <Route path="/tasks/:id" element={
-        <ProtectedRoute allowedRoles={routePermissions['/tasks']}>
-          <TaskDetailPage />
-        </ProtectedRoute>
-      } />
+      {/* Leader/Staff: Chỉ có Bảng công việc - KHÔNG CÓ DANH SÁCH */}
       <Route path="/tasks-board" element={
         <ProtectedRoute allowedRoles={routePermissions['/tasks']}>
           <TaskBoardPage />
         </ProtectedRoute>
       } />
+      {/* Redirect /tasks to /tasks-board for Leader/Staff */}
+      <Route path="/tasks" element={<Navigate to="/tasks-board" replace />} />
+      <Route path="/tasks/:id" element={<Navigate to="/tasks-board" replace />} />
       <Route path="/reminders" element={
         <ProtectedRoute allowedRoles={routePermissions['/reminders']}>
           <RemindersPage />

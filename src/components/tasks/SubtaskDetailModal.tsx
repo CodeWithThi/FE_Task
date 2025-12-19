@@ -39,7 +39,7 @@ import {
 interface SubtaskDetailModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  subtask: SubtaskCardData | null;
+  task: SubtaskCardData | null;
 }
 
 // Mock data
@@ -66,28 +66,30 @@ const mockActivityLog = [
   { id: '3', user: 'Phạm Thị Leader', action: 'Giao việc cho Hoàng Văn Nhân Viên', time: '3 ngày trước' },
 ];
 
-export function SubtaskDetailModal({ open, onOpenChange, subtask }: SubtaskDetailModalProps) {
+export function SubtaskDetailModal({ open, onOpenChange, task }: SubtaskDetailModalProps) {
   const { user } = useAuth();
-  const [progress, setProgress] = useState(subtask?.progress || 0);
+  const [progress, setProgress] = useState(task?.progress || 0);
   const [newComment, setNewComment] = useState('');
   const [newLinkTitle, setNewLinkTitle] = useState('');
   const [newLinkUrl, setNewLinkUrl] = useState('');
   const [showAddLink, setShowAddLink] = useState(false);
   const [checklist, setChecklist] = useState(mockChecklist);
+  const [returnReason, setReturnReason] = useState('');
+  const [showReturnDialog, setShowReturnDialog] = useState(false);
 
-  if (!subtask) return null;
+  if (!task) return null;
 
   const isStaff = user?.role === 'staff';
   const isLeader = user?.role === 'leader';
-  const canEdit = isStaff && (subtask.status === 'not-assigned' || subtask.status === 'in-progress' || subtask.status === 'returned');
-  const canApprove = isLeader && subtask.status === 'waiting-approval';
+  const canEdit = isStaff && (task.status === 'not-assigned' || task.status === 'in-progress' || task.status === 'returned');
+  const canApprove = isLeader && task.status === 'waiting-approval';
 
   const handleUpdateProgress = () => {
     toast.success(`Đã cập nhật tiến độ: ${progress}%`);
   };
 
   const handleSubmitForApproval = () => {
-    toast.success('Đã gửi trình duyệt!');
+    toast.success('Đã gửi duyệt!');
   };
 
   const handleApprove = () => {
@@ -96,7 +98,13 @@ export function SubtaskDetailModal({ open, onOpenChange, subtask }: SubtaskDetai
   };
 
   const handleReturn = () => {
+    if (!returnReason.trim()) {
+      toast.error('Vui lòng nhập lý do trả lại!');
+      return;
+    }
     toast.info('Đã trả lại công việc');
+    setShowReturnDialog(false);
+    setReturnReason('');
     onOpenChange(false);
   };
 
@@ -123,7 +131,7 @@ export function SubtaskDetailModal({ open, onOpenChange, subtask }: SubtaskDetai
         {/* Header */}
         <DialogHeader className="p-6 pb-0">
           <div className="flex items-start justify-between gap-4">
-            <DialogTitle className="text-xl pr-8">{subtask.title}</DialogTitle>
+            <DialogTitle className="text-xl pr-8">{task.title}</DialogTitle>
             <Button
               variant="ghost"
               size="icon"
@@ -135,23 +143,23 @@ export function SubtaskDetailModal({ open, onOpenChange, subtask }: SubtaskDetai
           </div>
         </DialogHeader>
 
-        {/* Content - 2 Column Layout */}
+        {/* Content - 2 Column Layout (Trello-style) */}
         <div className="flex flex-col md:flex-row max-h-[calc(90vh-100px)] overflow-hidden">
-          {/* Left Column - Main Content */}
+          {/* CỘT TRÁI - Nội dung */}
           <div className="flex-1 p-6 overflow-y-auto space-y-6 border-r">
-            {/* Description */}
+            {/* Mô tả chi tiết */}
             <div>
               <Label className="text-sm font-medium mb-2 block">Mô tả chi tiết</Label>
               {canEdit ? (
                 <Textarea
                   placeholder="Thêm mô tả chi tiết..."
-                  defaultValue={subtask.description}
+                  defaultValue={task.description}
                   rows={4}
                   className="resize-none"
                 />
               ) : (
                 <p className="text-sm text-muted-foreground bg-muted/50 rounded-lg p-3">
-                  {subtask.description || 'Chưa có mô tả'}
+                  {task.description || 'Chưa có mô tả'}
                 </p>
               )}
             </div>
@@ -188,7 +196,7 @@ export function SubtaskDetailModal({ open, onOpenChange, subtask }: SubtaskDetai
 
             <Separator />
 
-            {/* Attachments */}
+            {/* File đính kèm */}
             <div>
               <div className="flex items-center justify-between mb-3">
                 <Label className="text-sm font-medium flex items-center gap-2">
@@ -223,7 +231,7 @@ export function SubtaskDetailModal({ open, onOpenChange, subtask }: SubtaskDetai
               </div>
             </div>
 
-            {/* Links */}
+            {/* Liên kết */}
             <div>
               <div className="flex items-center justify-between mb-3">
                 <Label className="text-sm font-medium flex items-center gap-2">
@@ -275,14 +283,14 @@ export function SubtaskDetailModal({ open, onOpenChange, subtask }: SubtaskDetai
 
             <Separator />
 
-            {/* Comments / Activity */}
+            {/* Hoạt động / Bình luận */}
             <div>
               <Label className="text-sm font-medium flex items-center gap-2 mb-3">
                 <Clock className="w-4 h-4" />
                 Hoạt động
               </Label>
 
-              {/* Add comment */}
+              {/* Thêm bình luận */}
               <div className="flex gap-2 mb-4">
                 <Avatar className="w-8 h-8">
                   <AvatarFallback className="text-xs">{user?.name.charAt(0)}</AvatarFallback>
@@ -297,7 +305,7 @@ export function SubtaskDetailModal({ open, onOpenChange, subtask }: SubtaskDetai
                 </div>
               </div>
 
-              {/* Activity log */}
+              {/* Dòng thời gian */}
               <div className="space-y-3">
                 {mockActivityLog.map((log) => (
                   <div key={log.id} className="flex gap-3 text-sm">
@@ -317,25 +325,25 @@ export function SubtaskDetailModal({ open, onOpenChange, subtask }: SubtaskDetai
             </div>
           </div>
 
-          {/* Right Column - Info & Actions */}
+          {/* CỘT PHẢI - Thông tin & Hành động */}
           <div className="w-full md:w-72 p-6 bg-muted/30 space-y-4">
-            {/* Status */}
+            {/* Trạng thái */}
             <div>
               <Label className="text-xs text-muted-foreground uppercase tracking-wide">Trạng thái</Label>
               <div className="mt-1">
-                <StatusBadge status={subtask.status} />
+                <StatusBadge status={task.status} />
               </div>
             </div>
 
-            {/* Priority */}
+            {/* Độ ưu tiên */}
             <div>
               <Label className="text-xs text-muted-foreground uppercase tracking-wide">Độ ưu tiên</Label>
               <div className="mt-1">
-                <PriorityBadge priority={subtask.priority} />
+                <PriorityBadge priority={task.priority} />
               </div>
             </div>
 
-            {/* Assignee */}
+            {/* Người thực hiện */}
             <div>
               <Label className="text-xs text-muted-foreground uppercase tracking-wide flex items-center gap-1">
                 <User className="w-3 h-3" />
@@ -344,30 +352,30 @@ export function SubtaskDetailModal({ open, onOpenChange, subtask }: SubtaskDetai
               <div className="mt-1 flex items-center gap-2">
                 <Avatar className="w-6 h-6">
                   <AvatarFallback className="text-xs bg-primary/10 text-primary">
-                    {subtask.assignee.name.charAt(0)}
+                    {task.assignee.name.charAt(0)}
                   </AvatarFallback>
                 </Avatar>
-                <span className="text-sm">{subtask.assignee.name}</span>
+                <span className="text-sm">{task.assignee.name}</span>
               </div>
             </div>
 
-            {/* Department */}
+            {/* Phòng ban */}
             <div>
               <Label className="text-xs text-muted-foreground uppercase tracking-wide flex items-center gap-1">
                 <Building2 className="w-3 h-3" />
                 Phòng ban
               </Label>
-              <p className="text-sm mt-1">{subtask.department || 'Bộ môn Toán'}</p>
+              <p className="text-sm mt-1">{task.department || 'Chưa có phòng ban'}</p>
             </div>
 
-            {/* Deadline */}
+            {/* Thời hạn */}
             <div>
               <Label className="text-xs text-muted-foreground uppercase tracking-wide flex items-center gap-1">
                 <Calendar className="w-3 h-3" />
-                Deadline
+                Thời hạn
               </Label>
               <p className="text-sm mt-1">
-                {new Date(subtask.deadline).toLocaleDateString('vi-VN', {
+                {new Date(task.deadline).toLocaleDateString('vi-VN', {
                   weekday: 'long',
                   day: '2-digit',
                   month: '2-digit',
@@ -378,7 +386,7 @@ export function SubtaskDetailModal({ open, onOpenChange, subtask }: SubtaskDetai
 
             <Separator />
 
-            {/* Progress */}
+            {/* Tiến độ */}
             <div>
               <div className="flex items-center justify-between mb-2">
                 <Label className="text-xs text-muted-foreground uppercase tracking-wide">Tiến độ</Label>
@@ -405,22 +413,24 @@ export function SubtaskDetailModal({ open, onOpenChange, subtask }: SubtaskDetai
 
             <Separator />
 
-            {/* Actions */}
+            {/* Hành động theo vai trò */}
             <div className="space-y-2">
-              {isStaff && (subtask.status === 'in-progress' || subtask.status === 'returned') && (
+              {/* Nhân viên: Gửi duyệt */}
+              {isStaff && (task.status === 'in-progress' || task.status === 'returned') && (
                 <Button className="w-full" onClick={handleSubmitForApproval}>
                   <Send className="w-4 h-4 mr-2" />
                   Gửi duyệt
                 </Button>
               )}
 
+              {/* Trưởng nhóm: Duyệt / Trả lại */}
               {canApprove && (
                 <>
                   <Button className="w-full" onClick={handleApprove}>
                     <CheckCircle2 className="w-4 h-4 mr-2" />
                     Phê duyệt
                   </Button>
-                  <Button variant="outline" className="w-full" onClick={handleReturn}>
+                  <Button variant="outline" className="w-full" onClick={() => setShowReturnDialog(true)}>
                     <XCircle className="w-4 h-4 mr-2" />
                     Trả lại
                   </Button>
@@ -435,6 +445,32 @@ export function SubtaskDetailModal({ open, onOpenChange, subtask }: SubtaskDetai
             </div>
           </div>
         </div>
+
+        {/* Dialog trả lại - BẮT BUỘC nhập lý do */}
+        {showReturnDialog && (
+          <div className="absolute inset-0 bg-background/80 flex items-center justify-center p-6">
+            <div className="bg-card border rounded-lg p-6 w-full max-w-md space-y-4">
+              <h3 className="text-lg font-semibold">Trả lại công việc</h3>
+              <p className="text-sm text-muted-foreground">
+                Vui lòng nhập lý do trả lại công việc này.
+              </p>
+              <Textarea
+                placeholder="Nhập lý do..."
+                value={returnReason}
+                onChange={(e) => setReturnReason(e.target.value)}
+                rows={3}
+              />
+              <div className="flex gap-2 justify-end">
+                <Button variant="outline" onClick={() => setShowReturnDialog(false)}>
+                  Hủy
+                </Button>
+                <Button onClick={handleReturn}>
+                  Xác nhận trả lại
+                </Button>
+              </div>
+            </div>
+          </div>
+        )}
       </DialogContent>
     </Dialog>
   );
