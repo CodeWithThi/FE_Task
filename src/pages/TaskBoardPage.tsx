@@ -1,67 +1,58 @@
 import { useState } from 'react';
-import { PageHeader } from '@/components/common/PageHeader';
-import { FilterBar } from '@/components/common/FilterBar';
 import { KanbanBoard } from '@/components/tasks/KanbanBoard';
 import { SubtaskDetailModal } from '@/components/tasks/SubtaskDetailModal';
 import { SubtaskCardData } from '@/components/tasks/SubtaskCard';
-import { Button } from '@/components/ui/button';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { useNavigate } from 'react-router-dom';
+import { Input } from '@/components/ui/input';
 import { useAuth } from '@/contexts/AuthContext';
-import { LayoutGrid, List } from 'lucide-react';
+import { Search } from 'lucide-react';
 
-// Mock subtasks data
-const mockSubtasks: SubtaskCardData[] = [
+// Mock data - công việc
+const mockTasks: SubtaskCardData[] = [
   {
     id: '1',
     title: 'Soạn giáo án chương 1 - Đại số',
-    description: 'Soạn giáo án chi tiết cho chương 1 về đại số cơ bản',
     assignee: { id: '5', name: 'Hoàng Văn Nhân Viên' },
+    department: 'Bộ môn Toán',
     status: 'completed',
     priority: 'high',
     deadline: '2024-05-03',
     progress: 100,
-    attachmentCount: 2,
-    commentCount: 3,
   },
   {
     id: '2',
     title: 'Soạn giáo án chương 2 - Hình học',
-    description: 'Chuẩn bị nội dung bài giảng hình học phẳng',
     assignee: { id: '5', name: 'Hoàng Văn Nhân Viên' },
+    department: 'Bộ môn Toán',
     status: 'completed',
     priority: 'medium',
     deadline: '2024-05-05',
     progress: 100,
-    attachmentCount: 1,
   },
   {
     id: '3',
     title: 'Soạn giáo án chương 3 - Giải tích',
-    description: 'Nội dung về tích phân và đạo hàm',
     assignee: { id: '5', name: 'Hoàng Văn Nhân Viên' },
+    department: 'Bộ môn Toán',
     status: 'in-progress',
     priority: 'high',
     deadline: '2024-05-08',
     progress: 60,
-    commentCount: 2,
   },
   {
     id: '4',
     title: 'Thiết kế bài tập thực hành',
-    description: 'Tạo bộ bài tập cho học sinh thực hành',
     assignee: { id: '6', name: 'Nguyễn Thị Lan' },
+    department: 'Bộ môn Toán',
     status: 'waiting-approval',
     priority: 'medium',
     deadline: '2024-05-10',
     progress: 100,
-    attachmentCount: 3,
   },
   {
     id: '5',
     title: 'Chuẩn bị đề kiểm tra giữa kỳ',
-    description: 'Soạn đề kiểm tra 15 phút và 45 phút',
     assignee: { id: '7', name: 'Trần Văn Nam' },
+    department: 'Bộ môn Lý',
     status: 'not-assigned',
     priority: 'low',
     deadline: '2024-05-15',
@@ -70,19 +61,18 @@ const mockSubtasks: SubtaskCardData[] = [
   {
     id: '6',
     title: 'Rà soát nội dung chương 1',
-    description: 'Kiểm tra và chỉnh sửa lỗi trong giáo án',
     assignee: { id: '5', name: 'Hoàng Văn Nhân Viên' },
+    department: 'Bộ môn Toán',
     status: 'returned',
     priority: 'high',
     deadline: '2024-05-06',
     progress: 80,
-    commentCount: 5,
   },
   {
     id: '7',
     title: 'Upload tài liệu tham khảo',
-    description: 'Đăng tải tài liệu bổ sung cho học sinh',
     assignee: { id: '6', name: 'Nguyễn Thị Lan' },
+    department: 'Bộ môn Toán',
     status: 'in-progress',
     priority: 'low',
     deadline: '2024-05-12',
@@ -91,8 +81,8 @@ const mockSubtasks: SubtaskCardData[] = [
   {
     id: '8',
     title: 'Soạn slide bài giảng chương 4',
-    description: 'Thiết kế slide PowerPoint cho bài giảng',
     assignee: { id: '8', name: 'Lê Thị Hoa' },
+    department: 'Bộ môn Hóa',
     status: 'not-assigned',
     priority: 'medium',
     deadline: '2024-05-18',
@@ -101,53 +91,70 @@ const mockSubtasks: SubtaskCardData[] = [
 ];
 
 export default function TaskBoardPage() {
-  const navigate = useNavigate();
   const { user } = useAuth();
   const [search, setSearch] = useState('');
-  const [selectedSubtask, setSelectedSubtask] = useState<SubtaskCardData | null>(null);
+  const [tasks, setTasks] = useState<SubtaskCardData[]>(mockTasks);
+  const [selectedTask, setSelectedTask] = useState<SubtaskCardData | null>(null);
   const [showDetail, setShowDetail] = useState(false);
 
-  const filteredSubtasks = mockSubtasks.filter((subtask) =>
-    subtask.title.toLowerCase().includes(search.toLowerCase())
+  const filteredTasks = tasks.filter((task) =>
+    task.title.toLowerCase().includes(search.toLowerCase())
   );
 
-  const handleCardClick = (subtask: SubtaskCardData) => {
-    setSelectedSubtask(subtask);
+  const handleCardClick = (task: SubtaskCardData) => {
+    setSelectedTask(task);
     setShowDetail(true);
   };
 
+  const handleAddCard = (title: string, status: SubtaskCardData['status']) => {
+    const newTask: SubtaskCardData = {
+      id: Date.now().toString(),
+      title,
+      assignee: { id: user?.id || '0', name: user?.name || 'Chưa gán' },
+      department: user?.department || 'Chưa có',
+      status,
+      priority: 'medium',
+      deadline: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+      progress: 0,
+    };
+    setTasks([...tasks, newTask]);
+  };
+
   return (
-    <div>
-      <PageHeader
-        title="Bảng công việc"
-        description="Xem công việc theo dạng Kanban"
-        actions={
-          <Button variant="outline" onClick={() => navigate('/tasks')}>
-            <List className="w-4 h-4 mr-2" />
-            Xem danh sách
-          </Button>
-        }
-      />
+    <div className="h-full flex flex-col">
+      {/* Header đơn giản */}
+      <div className="mb-6">
+        <h1 className="text-2xl font-bold mb-1">Bảng công việc</h1>
+        <p className="text-muted-foreground text-sm">
+          Quản lý và theo dõi công việc của bạn
+        </p>
+      </div>
 
-      <FilterBar
-        searchValue={search}
-        onSearchChange={setSearch}
-        searchPlaceholder="Tìm kiếm công việc..."
-        filters={[]}
-        onClearFilters={() => {}}
-      />
-
-      <div className="mt-4">
-        <KanbanBoard
-          subtasks={filteredSubtasks}
-          onCardClick={handleCardClick}
+      {/* Search */}
+      <div className="relative w-full max-w-sm mb-4">
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+        <Input
+          placeholder="Tìm kiếm công việc..."
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          className="pl-10"
         />
       </div>
 
+      {/* Kanban Board */}
+      <div className="flex-1 overflow-hidden">
+        <KanbanBoard
+          tasks={filteredTasks}
+          onCardClick={handleCardClick}
+          onAddCard={handleAddCard}
+        />
+      </div>
+
+      {/* Chi tiết thẻ - Modal DUY NHẤT ngoài Kanban */}
       <SubtaskDetailModal
         open={showDetail}
         onOpenChange={setShowDetail}
-        subtask={selectedSubtask}
+        task={selectedTask}
       />
     </div>
   );
