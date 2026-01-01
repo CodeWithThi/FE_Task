@@ -10,7 +10,7 @@ const statusStyles: Record<TaskStatus, string> = {
   'not-assigned': 'badge-pending',
   'in-progress': 'badge-in-progress',
   'waiting-approval': 'badge-waiting',
-  'returned': 'badge-warning',
+  'returned': 'badge-returned',
   'completed': 'badge-completed',
   'overdue': 'badge-overdue',
 };
@@ -19,7 +19,7 @@ export function StatusBadge({ status, className }: StatusBadgeProps) {
   return (
     <span
       className={cn(
-        'inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium',
+        'inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium transition-all duration-200',
         statusStyles[status],
         className
       )}

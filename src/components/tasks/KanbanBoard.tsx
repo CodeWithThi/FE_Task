@@ -55,20 +55,20 @@ export function KanbanBoard({ tasks, onCardClick, onAddCard }: KanbanBoardProps)
         return (
           <div
             key={column.status}
-            className="flex-shrink-0 w-72 bg-muted/30 rounded-lg flex flex-col"
+            className="flex-shrink-0 w-72 bg-muted/30 rounded-lg flex flex-col transition-colors duration-200"
           >
-            {/* Column Header */}
-            <div className="p-3 border-b bg-muted/50 rounded-t-lg">
+            {/* Tiêu đề cột */}
+            <div className="p-3 border-b bg-muted/50 rounded-t-lg transition-colors duration-200">
               <div className="flex items-center gap-2">
-                <div className={`w-3 h-3 rounded-full ${column.color}`} />
+                <div className={`w-3 h-3 rounded-full ${column.color} transition-colors duration-200`} />
                 <h3 className="font-medium text-sm">{statusLabels[column.status]}</h3>
-                <span className="ml-auto text-xs text-muted-foreground bg-background px-2 py-0.5 rounded-full">
+                <span className="ml-auto text-xs text-muted-foreground bg-background px-2 py-0.5 rounded-full transition-colors duration-200">
                   {columnTasks.length}
                 </span>
               </div>
             </div>
 
-            {/* Column Content */}
+            {/* Nội dung cột */}
             <ScrollArea className="flex-1 min-h-[300px]">
               <div className="p-3 space-y-3">
                 {columnTasks.length === 0 && !isAdding && (
@@ -85,9 +85,9 @@ export function KanbanBoard({ tasks, onCardClick, onAddCard }: KanbanBoardProps)
                   />
                 ))}
 
-                {/* Inline Add Card Form */}
+                {/* Form thêm thẻ mới */}
                 {isAdding && (
-                  <div className="bg-card border rounded-lg p-3 space-y-2">
+                  <div className="bg-card border rounded-lg p-3 space-y-2 animate-fade-in">
                     <Input
                       placeholder="Nhập tên công việc..."
                       value={newCardTitle}
@@ -99,10 +99,10 @@ export function KanbanBoard({ tasks, onCardClick, onAddCard }: KanbanBoardProps)
                       autoFocus
                     />
                     <div className="flex gap-2">
-                      <Button size="sm" onClick={() => handleAddCard(column.status)}>
+                      <Button size="sm" onClick={() => handleAddCard(column.status)} className="transition-all duration-200 hover:scale-105">
                         Thêm thẻ
                       </Button>
-                      <Button size="sm" variant="ghost" onClick={handleCancelAdd}>
+                      <Button size="sm" variant="ghost" onClick={handleCancelAdd} className="transition-all duration-200 hover:scale-105">
                         <X className="w-4 h-4" />
                       </Button>
                     </div>
@@ -111,13 +111,13 @@ export function KanbanBoard({ tasks, onCardClick, onAddCard }: KanbanBoardProps)
               </div>
             </ScrollArea>
 
-            {/* Add Card Button */}
+            {/* Nút thêm thẻ */}
             {!isAdding && onAddCard && (
               <div className="p-3 pt-0">
                 <Button
                   variant="ghost"
                   size="sm"
-                  className="w-full justify-start text-muted-foreground hover:text-foreground"
+                  className="w-full justify-start text-muted-foreground hover:text-foreground transition-all duration-200 hover:bg-muted"
                   onClick={() => setAddingToColumn(column.status)}
                 >
                   <Plus className="w-4 h-4 mr-2" />

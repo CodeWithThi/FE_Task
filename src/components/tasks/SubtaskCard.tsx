@@ -29,10 +29,10 @@ export function SubtaskCard({ task, onClick }: SubtaskCardProps) {
   return (
     <div
       onClick={onClick}
-      className="bg-card border rounded-lg p-3 hover:shadow-md transition-all cursor-pointer hover:border-primary/50 group"
+      className="bg-card border rounded-lg p-3 hover:shadow-lg transition-all duration-200 cursor-pointer hover:border-primary/50 hover:scale-[1.02] group"
     >
       {/* Tên công việc */}
-      <h4 className="font-medium text-sm line-clamp-2 group-hover:text-primary transition-colors mb-3">
+      <h4 className="font-medium text-sm line-clamp-2 group-hover:text-primary transition-colors duration-200 mb-3">
         {task.title}
       </h4>
 
@@ -46,7 +46,7 @@ export function SubtaskCard({ task, onClick }: SubtaskCardProps) {
       <div className="flex items-center justify-between">
         {/* Người thực hiện */}
         <div className="flex items-center gap-2">
-          <Avatar className="w-6 h-6">
+          <Avatar className="w-6 h-6 transition-transform duration-200 group-hover:scale-110">
             <AvatarFallback className="text-xs bg-primary/10 text-primary">
               {task.assignee.name.charAt(0)}
             </AvatarFallback>
@@ -58,7 +58,7 @@ export function SubtaskCard({ task, onClick }: SubtaskCardProps) {
 
         {/* Thời hạn & Độ ưu tiên */}
         <div className="flex items-center gap-2">
-          <div className={`flex items-center gap-1 text-xs ${isOverdue ? 'text-destructive' : 'text-muted-foreground'}`}>
+          <div className={`flex items-center gap-1 text-xs transition-colors duration-200 ${isOverdue ? 'text-destructive' : 'text-muted-foreground'}`}>
             <Calendar className="w-3 h-3" />
             <span>
               {new Date(task.deadline).toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit' })}
