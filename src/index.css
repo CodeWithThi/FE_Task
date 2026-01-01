@@ -6,7 +6,7 @@
 
 @layer base {
   :root {
-    /* Core palette - Professional Blue Theme - Chế độ Sáng */
+    /* Core palette - 4 màu chính: Xanh dương, Xanh lá, Vàng cam, Xám */
     --background: 210 20% 98%;
     --foreground: 222 47% 11%;
 
@@ -16,6 +16,7 @@
     --popover: 0 0% 100%;
     --popover-foreground: 222 47% 11%;
 
+    /* Màu chính: Xanh dương */
     --primary: 217 91% 50%;
     --primary-foreground: 0 0% 100%;
 
@@ -48,9 +49,14 @@
     --sidebar-ring: 217 91% 60%;
     --sidebar-muted: 215 16% 60%;
 
-    /* Status colors - Màu trạng thái */
-    --status-pending: 45 93% 47%;
-    --status-pending-bg: 45 93% 94%;
+    /* Progress bar - Xanh lá làm chính */
+    --progress-low: 38 92% 50%;        /* Vàng cam cho dưới 30% */
+    --progress-medium: 142 60% 55%;    /* Xanh lá nhạt cho 30-70% */
+    --progress-high: 142 71% 40%;      /* Xanh lá đậm cho trên 70% */
+
+    /* Status colors - Đơn giản hóa */
+    --status-pending: 38 92% 50%;
+    --status-pending-bg: 38 92% 94%;
     --status-in-progress: 217 91% 50%;
     --status-in-progress-bg: 217 91% 95%;
     --status-completed: 142 71% 45%;
@@ -62,15 +68,20 @@
     --status-returned: 25 95% 53%;
     --status-returned-bg: 25 95% 94%;
 
-    /* Priority colors - Màu độ ưu tiên */
+    /* Priority colors - 3 màu rõ ràng */
     --priority-high: 0 84% 60%;
-    --priority-medium: 45 93% 47%;
+    --priority-medium: 38 92% 50%;
     --priority-low: 142 71% 45%;
+
+    /* Action icons */
+    --action-view: 142 71% 45%;        /* Xanh lá */
+    --action-edit: 38 92% 50%;         /* Vàng */
+    --action-delete: 0 84% 60%;        /* Đỏ */
 
     /* Charts - Biểu đồ */
     --chart-1: 217 91% 50%;
     --chart-2: 142 71% 45%;
-    --chart-3: 45 93% 47%;
+    --chart-3: 38 92% 50%;
     --chart-4: 262 83% 58%;
     --chart-5: 0 84% 60%;
   }
@@ -114,9 +125,14 @@
     --sidebar-border: 222 47% 15%;
     --sidebar-ring: 217 91% 60%;
 
+    /* Progress bar - Dark mode */
+    --progress-low: 38 92% 55%;
+    --progress-medium: 142 60% 50%;
+    --progress-high: 142 71% 45%;
+
     /* Status colors - Dark mode */
-    --status-pending: 45 93% 55%;
-    --status-pending-bg: 45 30% 15%;
+    --status-pending: 38 92% 55%;
+    --status-pending-bg: 38 30% 15%;
     --status-in-progress: 217 91% 65%;
     --status-in-progress-bg: 217 40% 15%;
     --status-completed: 142 71% 50%;
@@ -130,8 +146,13 @@
 
     /* Priority colors - Dark mode */
     --priority-high: 0 84% 65%;
-    --priority-medium: 45 93% 55%;
+    --priority-medium: 38 92% 55%;
     --priority-low: 142 71% 55%;
+
+    /* Action icons - Dark mode */
+    --action-view: 142 71% 55%;
+    --action-edit: 38 92% 55%;
+    --action-delete: 0 84% 65%;
   }
 
   /* Theme transition - Chuyển đổi mượt mà */
@@ -193,6 +214,19 @@
     @apply bg-[hsl(var(--priority-low)/0.1)] text-[hsl(var(--priority-low))] border border-[hsl(var(--priority-low)/0.3)] transition-colors duration-200;
   }
 
+  /* Action icons - Icon hành động */
+  .action-view {
+    @apply text-[hsl(var(--action-view))] hover:bg-[hsl(var(--action-view)/0.1)] transition-colors duration-200;
+  }
+
+  .action-edit {
+    @apply text-[hsl(var(--action-edit))] hover:bg-[hsl(var(--action-edit)/0.1)] transition-colors duration-200;
+  }
+
+  .action-delete {
+    @apply text-[hsl(var(--action-delete))] hover:bg-[hsl(var(--action-delete)/0.1)] transition-colors duration-200;
+  }
+
   /* Card hover effect - Hiệu ứng hover */
   .card-hover {
     @apply transition-all duration-200 hover:shadow-lg hover:border-primary/20 hover:scale-[1.01];
@@ -250,6 +284,11 @@
   /* Skeleton loading */
   .skeleton {
     @apply bg-muted animate-pulse rounded;
+  }
+
+  /* Title styles - Tiêu đề */
+  .title-bold-center {
+    @apply font-bold text-center uppercase tracking-wide;
   }
 }
 

@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { PriorityBadge } from '@/components/common/PriorityBadge';
-import { StatusBadge } from '@/components/common/StatusBadge';
+import { ProgressBar, ProgressLegend, PriorityLegend } from '@/components/common/ProgressBar';
 import { SubtaskCardData } from '@/components/tasks/SubtaskCard';
 import { SubtaskDetailModal } from '@/components/tasks/SubtaskDetailModal';
 import {
@@ -102,13 +102,26 @@ export default function MyOverviewPage() {
           </AvatarFallback>
         </Avatar>
         <div className="flex-1 min-w-0">
-          <p className="font-medium text-sm truncate group-hover:text-primary transition-colors">
-            {task.title}
-          </p>
-          <p className="text-xs text-muted-foreground">{task.department}</p>
+          <div className="flex items-center gap-3">
+            {/* Màu độ ưu tiên trên tiêu đề */}
+            <span className={`w-2 h-2 rounded-full flex-shrink-0 ${
+              task.priority === 'high' ? 'bg-priority-high' :
+              task.priority === 'medium' ? 'bg-priority-medium' : 'bg-priority-low'
+            }`} />
+            <p className="font-medium text-sm truncate group-hover:text-primary transition-colors flex-1">
+              {task.title}
+            </p>
+            {/* Progress bar cùng dòng với tiêu đề */}
+            <div className="w-24 flex-shrink-0">
+              <ProgressBar value={task.progress} size="sm" showLabel={false} />
+            </div>
+            <span className="text-xs font-medium text-muted-foreground w-8 text-right">
+              {task.progress}%
+            </span>
+          </div>
+          <p className="text-xs text-muted-foreground mt-1">{task.department}</p>
         </div>
         <div className="flex items-center gap-2">
-          <PriorityBadge priority={task.priority} />
           <div className={`flex items-center gap-1 text-xs ${isOverdue ? 'text-destructive' : 'text-muted-foreground'}`}>
             <Calendar className="w-3 h-3" />
             {new Date(task.deadline).toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit' })}
@@ -131,6 +144,19 @@ export default function MyOverviewPage() {
           <Kanban className="w-4 h-4 mr-2" />
           Vào bảng công việc
         </Button>
+      </div>
+
+      {/* Chú thích màu */}
+      <div className="flex flex-wrap items-center gap-6 p-4 bg-card rounded-lg border">
+        <div>
+          <p className="text-xs font-medium text-muted-foreground mb-2">Tiến độ</p>
+          <ProgressLegend />
+        </div>
+        <div className="h-8 w-px bg-border" />
+        <div>
+          <p className="text-xs font-medium text-muted-foreground mb-2">Độ ưu tiên</p>
+          <PriorityLegend />
+        </div>
       </div>
 
       {/* Thống kê nhanh */}

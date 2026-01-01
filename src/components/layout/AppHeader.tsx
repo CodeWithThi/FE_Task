@@ -32,13 +32,13 @@ export function AppHeader() {
   };
 
   return (
-    <header className="h-16 bg-card border-b border-border flex items-center justify-between px-6 sticky top-0 z-30 transition-colors duration-300">
+    <header className="h-16 bg-sidebar border-b border-sidebar-border flex items-center justify-between px-6 sticky top-0 z-30 transition-colors duration-300">
       {/* Tìm kiếm */}
       <div className="relative w-80">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-sidebar-muted" />
         <Input
           placeholder="Tìm kiếm dự án, công việc..."
-          className="pl-10 bg-muted/50 border-0 focus-visible:ring-1 transition-colors duration-200"
+          className="pl-10 bg-sidebar-accent border-sidebar-border text-sidebar-foreground placeholder:text-sidebar-muted focus-visible:ring-1 focus-visible:ring-sidebar-ring transition-colors duration-200"
         />
       </div>
 
@@ -51,10 +51,10 @@ export function AppHeader() {
               variant="ghost"
               size="icon"
               onClick={toggleTheme}
-              className="relative hover:bg-muted transition-all duration-200 hover:scale-105"
+              className="relative hover:bg-sidebar-accent text-sidebar-muted hover:text-sidebar-foreground transition-all duration-200 hover:scale-105"
             >
-              <Sun className="h-5 w-5 rotate-0 scale-100 transition-all duration-300 dark:-rotate-90 dark:scale-0 text-amber-500" />
-              <Moon className="absolute h-5 w-5 rotate-90 scale-0 transition-all duration-300 dark:rotate-0 dark:scale-100 text-blue-400" />
+              <Sun className="h-5 w-5 rotate-0 scale-100 transition-all duration-300 dark:-rotate-90 dark:scale-0 text-amber-400" />
+              <Moon className="absolute h-5 w-5 rotate-90 scale-0 transition-all duration-300 dark:rotate-0 dark:scale-100 text-blue-300" />
               <span className="sr-only">Chuyển đổi giao diện</span>
             </Button>
           </TooltipTrigger>
@@ -66,8 +66,8 @@ export function AppHeader() {
         {/* Thông báo */}
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <button className="relative p-2 rounded-lg hover:bg-muted transition-all duration-200 hover:scale-105">
-              <Bell className="w-5 h-5 text-muted-foreground" />
+            <button className="relative p-2 rounded-lg hover:bg-sidebar-accent text-sidebar-muted hover:text-sidebar-foreground transition-all duration-200 hover:scale-105">
+              <Bell className="w-5 h-5" />
               {notificationCount > 0 && (
                 <span className="absolute top-1 right-1 w-4 h-4 bg-destructive text-destructive-foreground text-xs rounded-full flex items-center justify-center animate-pulse">
                   {notificationCount}
@@ -79,20 +79,29 @@ export function AppHeader() {
             <DropdownMenuLabel>Thông báo</DropdownMenuLabel>
             <DropdownMenuSeparator />
             <div className="max-h-80 overflow-y-auto">
-              <DropdownMenuItem className="flex flex-col items-start gap-1 cursor-pointer hover:bg-muted/50 transition-colors">
+              <DropdownMenuItem 
+                className="flex flex-col items-start gap-1 cursor-pointer hover:bg-muted/50 transition-colors"
+                onClick={() => navigate('/my-overview')}
+              >
                 <p className="text-sm font-medium">Công việc mới được giao</p>
                 <p className="text-xs text-muted-foreground">Bạn được giao công việc "Chuẩn bị giáo án tháng 1"</p>
                 <span className="text-xs text-muted-foreground">5 phút trước</span>
               </DropdownMenuItem>
-              <DropdownMenuItem className="flex flex-col items-start gap-1 cursor-pointer hover:bg-muted/50 transition-colors">
-                <p className="text-sm font-medium">Công việc sắp đến hạn</p>
-                <p className="text-xs text-muted-foreground">"Hoàn thành báo cáo" còn 2 ngày</p>
-                <span className="text-xs text-muted-foreground">1 giờ trước</span>
-              </DropdownMenuItem>
-              <DropdownMenuItem className="flex flex-col items-start gap-1 cursor-pointer hover:bg-muted/50 transition-colors">
+              <DropdownMenuItem 
+                className="flex flex-col items-start gap-1 cursor-pointer hover:bg-muted/50 transition-colors"
+                onClick={() => navigate('/tasks-board')}
+              >
                 <p className="text-sm font-medium">Công việc đã được duyệt</p>
                 <p className="text-xs text-muted-foreground">"Soạn đề kiểm tra" đã hoàn thành</p>
                 <span className="text-xs text-muted-foreground">2 giờ trước</span>
+              </DropdownMenuItem>
+              <DropdownMenuItem 
+                className="flex flex-col items-start gap-1 cursor-pointer hover:bg-muted/50 transition-colors"
+                onClick={() => navigate('/projects')}
+              >
+                <p className="text-sm font-medium">Thay đổi thời hạn dự án</p>
+                <p className="text-xs text-muted-foreground">Dự án "Chương trình học kỳ 2" được gia hạn</p>
+                <span className="text-xs text-muted-foreground">1 ngày trước</span>
               </DropdownMenuItem>
             </div>
             <DropdownMenuSeparator />
@@ -105,20 +114,20 @@ export function AppHeader() {
           </DropdownMenuContent>
         </DropdownMenu>
 
-        {/* Menu người dùng */}
+        {/* Menu người dùng - Hiển thị đầy đủ thông tin */}
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <button className="flex items-center gap-3 p-2 rounded-lg hover:bg-muted transition-all duration-200">
-              <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-primary font-medium">
+            <button className="flex items-center gap-3 p-2 rounded-lg hover:bg-sidebar-accent transition-all duration-200">
+              <div className="w-8 h-8 rounded-full bg-sidebar-primary/20 flex items-center justify-center text-sidebar-foreground font-medium">
                 {user?.name.charAt(0)}
               </div>
               <div className="text-left hidden md:block">
-                <p className="text-sm font-medium">{user?.name}</p>
-                <p className="text-xs text-muted-foreground">
-                  {user?.role && roleLabels[user.role]} • {user?.department}
+                <p className="text-sm font-medium text-sidebar-foreground">{user?.name}</p>
+                <p className="text-xs text-sidebar-muted">
+                  {user?.role && roleLabels[user.role]}
                 </p>
               </div>
-              <ChevronDown className="w-4 h-4 text-muted-foreground" />
+              <ChevronDown className="w-4 h-4 text-sidebar-muted" />
             </button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-56 bg-popover">
