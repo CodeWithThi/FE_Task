@@ -135,11 +135,11 @@ export default function MyOverviewPage() {
 
       {/* Thống kê nhanh */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <Card className="border-l-4 border-l-blue-500">
+        <Card className="border-l-4 border-l-[hsl(var(--status-in-progress))] transition-all duration-200 hover:shadow-lg hover:scale-[1.02]">
           <CardContent className="p-4">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-lg bg-blue-500/10 flex items-center justify-center">
-                <Clock className="w-5 h-5 text-blue-500" />
+              <div className="w-10 h-10 rounded-lg bg-[hsl(var(--status-in-progress-bg))] flex items-center justify-center transition-colors duration-200">
+                <Clock className="w-5 h-5 text-[hsl(var(--status-in-progress))]" />
               </div>
               <div>
                 <p className="text-2xl font-bold">{mockMyTasks.length}</p>
@@ -149,11 +149,11 @@ export default function MyOverviewPage() {
           </CardContent>
         </Card>
 
-        <Card className="border-l-4 border-l-amber-500">
+        <Card className="border-l-4 border-l-[hsl(var(--status-pending))] transition-all duration-200 hover:shadow-lg hover:scale-[1.02]">
           <CardContent className="p-4">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-lg bg-amber-500/10 flex items-center justify-center">
-                <AlertTriangle className="w-5 h-5 text-amber-500" />
+              <div className="w-10 h-10 rounded-lg bg-[hsl(var(--status-pending-bg))] flex items-center justify-center transition-colors duration-200">
+                <AlertTriangle className="w-5 h-5 text-[hsl(var(--status-pending))]" />
               </div>
               <div>
                 <p className="text-2xl font-bold">{mockUpcomingTasks.length}</p>
@@ -163,11 +163,11 @@ export default function MyOverviewPage() {
           </CardContent>
         </Card>
 
-        <Card className="border-l-4 border-l-red-500">
+        <Card className="border-l-4 border-l-[hsl(var(--status-overdue))] transition-all duration-200 hover:shadow-lg hover:scale-[1.02]">
           <CardContent className="p-4">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-lg bg-red-500/10 flex items-center justify-center">
-                <AlertTriangle className="w-5 h-5 text-red-500" />
+              <div className="w-10 h-10 rounded-lg bg-[hsl(var(--status-overdue-bg))] flex items-center justify-center transition-colors duration-200">
+                <AlertTriangle className="w-5 h-5 text-[hsl(var(--status-overdue))]" />
               </div>
               <div>
                 <p className="text-2xl font-bold">{mockOverdueTasks.length}</p>
@@ -179,13 +179,13 @@ export default function MyOverviewPage() {
       </div>
 
       {/* Công việc đang làm */}
-      <Card>
+      <Card className="transition-all duration-200">
         <CardHeader className="flex flex-row items-center justify-between pb-2">
           <CardTitle className="text-lg flex items-center gap-2">
-            <Clock className="w-5 h-5 text-blue-500" />
+            <Clock className="w-5 h-5 text-[hsl(var(--status-in-progress))]" />
             Công việc đang thực hiện
           </CardTitle>
-          <Button variant="ghost" size="sm" onClick={() => navigate('/tasks-board')}>
+          <Button variant="ghost" size="sm" onClick={() => navigate('/tasks-board')} className="transition-all duration-200 hover:scale-105">
             Xem tất cả
             <ArrowRight className="w-4 h-4 ml-1" />
           </Button>
@@ -204,10 +204,10 @@ export default function MyOverviewPage() {
 
       {/* Sắp đến hạn */}
       {mockUpcomingTasks.length > 0 && (
-        <Card className="border-amber-500/30">
+        <Card className="border-[hsl(var(--status-pending)/0.3)] transition-all duration-200">
           <CardHeader className="pb-2">
             <CardTitle className="text-lg flex items-center gap-2">
-              <AlertTriangle className="w-5 h-5 text-amber-500" />
+              <AlertTriangle className="w-5 h-5 text-[hsl(var(--status-pending))]" />
               Sắp đến hạn (trong 3 ngày)
             </CardTitle>
           </CardHeader>
@@ -219,7 +219,7 @@ export default function MyOverviewPage() {
 
       {/* Trễ hạn */}
       {mockOverdueTasks.length > 0 && (
-        <Card className="border-red-500/30">
+        <Card className="border-[hsl(var(--status-overdue)/0.3)] transition-all duration-200">
           <CardHeader className="pb-2">
             <CardTitle className="text-lg flex items-center gap-2 text-destructive">
               <AlertTriangle className="w-5 h-5" />

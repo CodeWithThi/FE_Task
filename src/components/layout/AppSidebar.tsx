@@ -155,7 +155,7 @@ export function AppSidebar() {
       <div className="h-16 flex items-center justify-between px-4 border-b border-sidebar-border">
         {!collapsed && (
           <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-lg bg-sidebar-primary flex items-center justify-center">
+            <div className="w-8 h-8 rounded-lg bg-sidebar-primary flex items-center justify-center transition-transform duration-200 hover:scale-105">
               <span className="text-sidebar-primary-foreground font-bold text-sm">TT</span>
             </div>
             <span className="text-sidebar-foreground font-semibold">Trung Tâm</span>
@@ -163,7 +163,8 @@ export function AppSidebar() {
         )}
         <button
           onClick={() => setCollapsed(!collapsed)}
-          className="p-1.5 rounded-lg hover:bg-sidebar-accent text-sidebar-muted hover:text-sidebar-foreground transition-colors"
+          className="p-1.5 rounded-lg hover:bg-sidebar-accent text-sidebar-muted hover:text-sidebar-foreground transition-all duration-200 hover:scale-105"
+          title={collapsed ? 'Mở rộng' : 'Thu gọn'}
         >
           {collapsed ? <ChevronRight size={18} /> : <ChevronLeft size={18} />}
         </button>

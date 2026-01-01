@@ -8,7 +8,7 @@ interface MainLayoutProps {
 
 export function MainLayout({ children }: MainLayoutProps) {
   return (
-    <div className="min-h-screen flex w-full bg-background">
+    <div className="min-h-screen flex w-full bg-background transition-colors duration-300">
       <AppSidebar />
       <div className="flex-1 ml-64 transition-all duration-300">
         <AppHeader />
