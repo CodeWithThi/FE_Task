@@ -78,6 +78,16 @@ export default {
           medium: "hsl(var(--priority-medium))",
           low: "hsl(var(--priority-low))",
         },
+        progress: {
+          low: "hsl(var(--progress-low))",
+          medium: "hsl(var(--progress-medium))",
+          high: "hsl(var(--progress-high))",
+        },
+        action: {
+          view: "hsl(var(--action-view))",
+          edit: "hsl(var(--action-edit))",
+          delete: "hsl(var(--action-delete))",
+        },
         chart: {
           "1": "hsl(var(--chart-1))",
           "2": "hsl(var(--chart-2))",

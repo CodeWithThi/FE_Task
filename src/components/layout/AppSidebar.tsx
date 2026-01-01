@@ -14,9 +14,8 @@ import {
   Settings,
   ChevronLeft,
   ChevronRight,
-  LogOut,
   FileText,
-  Shield,
+  GraduationCap,
 } from 'lucide-react';
 
 interface MenuItem {
@@ -130,7 +129,7 @@ const sectionLabels: Record<string, string> = {
 
 export function AppSidebar() {
   const [collapsed, setCollapsed] = useState(false);
-  const { user, logout } = useAuth();
+  const { user } = useAuth();
 
   const filteredMenuItems = menuItems.filter(
     (item) => user && item.roles.includes(user.role)
@@ -151,26 +150,33 @@ export function AppSidebar() {
         collapsed ? 'w-16' : 'w-64'
       )}
     >
-      {/* Logo */}
-      <div className="h-16 flex items-center justify-between px-4 border-b border-sidebar-border">
-        {!collapsed && (
+      {/* Phần trên: Logo + Tên trung tâm */}
+      <div className="h-16 flex items-center justify-between px-4 border-b border-sidebar-border flex-shrink-0">
+        {collapsed ? (
+          <div className="w-8 h-8 rounded-lg bg-sidebar-primary flex items-center justify-center mx-auto transition-transform duration-200 hover:scale-105">
+            <GraduationCap className="w-5 h-5 text-sidebar-primary-foreground" />
+          </div>
+        ) : (
           <div className="flex items-center gap-2">
             <div className="w-8 h-8 rounded-lg bg-sidebar-primary flex items-center justify-center transition-transform duration-200 hover:scale-105">
-              <span className="text-sidebar-primary-foreground font-bold text-sm">TT</span>
+              <GraduationCap className="w-5 h-5 text-sidebar-primary-foreground" />
             </div>
-            <span className="text-sidebar-foreground font-semibold">Trung Tâm</span>
+            <span className="text-sidebar-foreground font-semibold">Trung Tâm Dạy Học</span>
           </div>
         )}
         <button
           onClick={() => setCollapsed(!collapsed)}
-          className="p-1.5 rounded-lg hover:bg-sidebar-accent text-sidebar-muted hover:text-sidebar-foreground transition-all duration-200 hover:scale-105"
+          className={cn(
+            'p-1.5 rounded-lg hover:bg-sidebar-accent text-sidebar-muted hover:text-sidebar-foreground transition-all duration-200 hover:scale-105',
+            collapsed && 'absolute right-1 top-1/2 -translate-y-1/2'
+          )}
           title={collapsed ? 'Mở rộng' : 'Thu gọn'}
         >
           {collapsed ? <ChevronRight size={18} /> : <ChevronLeft size={18} />}
         </button>
       </div>
 
-      {/* Menu */}
+      {/* Phần dưới: Menu chức năng với thanh cuộn */}
       <nav className="flex-1 py-4 px-2 overflow-y-auto scrollbar-thin">
         {Object.entries(groupedItems).map(([section, items]) => (
           <div key={section} className="mb-4">
@@ -184,8 +190,12 @@ export function AppSidebar() {
                 <li key={item.path}>
                   <NavLink
                     to={item.path}
-                    className="sidebar-item"
+                    className={cn(
+                      'sidebar-item',
+                      collapsed && 'justify-center px-2'
+                    )}
                     activeClassName="sidebar-item-active"
+                    title={collapsed ? item.label : undefined}
                   >
                     <item.icon className="w-5 h-5 flex-shrink-0" />
                     {!collapsed && <span>{item.label}</span>}
@@ -196,43 +206,6 @@ export function AppSidebar() {
           </div>
         ))}
       </nav>
-
-      {/* User Info */}
-      <div className="p-2 border-t border-sidebar-border">
-        {user && (
-          <div className={cn(
-            'flex items-center gap-3 p-2 rounded-lg',
-            collapsed ? 'justify-center' : ''
-          )}>
-            <div className="w-8 h-8 rounded-full bg-sidebar-accent flex items-center justify-center text-sidebar-foreground font-medium text-sm flex-shrink-0">
-              {user.name.charAt(0)}
-            </div>
-            {!collapsed && (
-              <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium text-sidebar-foreground truncate">
-                  {user.name}
-                </p>
-                <div className="flex items-center gap-1">
-                  <Shield className="w-3 h-3 text-sidebar-muted" />
-                  <p className="text-xs text-sidebar-muted truncate">
-                    {roleLabels[user.role]}
-                  </p>
-                </div>
-              </div>
-            )}
-          </div>
-        )}
-        <button
-          onClick={logout}
-          className={cn(
-            'sidebar-item w-full mt-1 text-sidebar-muted hover:text-red-400',
-            collapsed ? 'justify-center' : ''
-          )}
-        >
-          <LogOut className="w-5 h-5" />
-          {!collapsed && <span>Đăng xuất</span>}
-        </button>
-      </div>
     </aside>
   );
 }
