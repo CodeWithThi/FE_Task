@@ -1,4 +1,4 @@
-import apiClient from '@/lib/apiClient';
+import apiClient from '@/config/api';
 
 /**
  * AUTH SERVICE
@@ -57,7 +57,8 @@ export const authService = {
                 username: rawUser.UserName || rawUser.username,
                 name: rawUser.Account_Name || rawUser.Name || rawUser.name || rawUser.UserName || rawUser.username,
                 role: normalizedRole,
-                m_id: rawUser.Member?.M_ID || rawUser.M_ID
+                m_id: rawUser.Member?.M_ID || rawUser.M_ID,
+                avatar: rawUser.Avatar ? `http://localhost:3069${rawUser.Avatar}` : null
             };
 
             // Return formatted data for AuthContext
@@ -132,7 +133,8 @@ export const authService = {
                 username: rawUser.UserName || rawUser.username,
                 name: rawUser.Account_Name || rawUser.Name || rawUser.name || rawUser.UserName || rawUser.username,
                 role: normalizedRole,
-                m_id: rawUser.Member?.M_ID || rawUser.M_ID
+                m_id: rawUser.Member?.M_ID || rawUser.M_ID,
+                avatar: rawUser.Avatar ? `http://localhost:3069${rawUser.Avatar}` : null
             };
 
             return {
@@ -152,11 +154,12 @@ export const authService = {
      * Change password
      * Returns: { ok: boolean, message }
      */
-    changePassword: async (currentPassword, newPassword) => {
+    changePassword: async (oldPassword, newPassword) => {
         try {
             const response = await apiClient.post('/auth/change-password', {
-                currentPassword,
-                newPassword
+                oldPassword,
+                newPassword,
+                confirmPassword: newPassword // Backend might expect this
             });
 
             if (response.ok === false) {
@@ -168,14 +171,52 @@ export const authService = {
 
             return {
                 ok: true,
-                message: 'Đổi mật khẩu thành công'
+                message: response.message || 'Đổi mật khẩu thành công'
             };
         } catch (error) {
             console.error('authService.changePassword error:', error);
             return {
                 ok: false,
-                message: 'Lỗi kết nối server'
+                message: error.message || 'Lỗi kết nối server'
             };
+        }
+    },
+
+    /**
+     * Forgot Password
+     */
+    forgotPassword: async (email) => {
+        try {
+            const response = await apiClient.post('/auth/forgot-password', { email });
+            // API returns { status: 200, message: "..." }
+            if (response.status === 200 || response.ok) {
+                return { ok: true, message: response.message };
+            }
+            return { ok: false, message: response.message || 'Gửi yêu cầu thất bại' };
+        } catch (error) {
+            console.error('authService.forgotPassword error:', error);
+            return { ok: false, message: 'Lỗi kết nối server' };
+        }
+    },
+
+    /**
+     * Reset Password
+     */
+    resetPassword: async (token, email, newPassword) => {
+        try {
+            const response = await apiClient.post('/auth/reset-password', {
+                token,
+                email,
+                newPassword,
+                confirmPassword: newPassword // Backend might expect this
+            });
+            if (response.ok === true || response.ok === undefined) {
+                return { ok: true, message: response.message || 'Đặt lại mật khẩu thành công' };
+            }
+            return { ok: false, message: response.message || 'Đặt lại mật khẩu thất bại' };
+        } catch (error) {
+            console.error('authService.resetPassword error:', error);
+            return { ok: false, message: error.message || 'Lỗi kết nối server' };
         }
     },
 

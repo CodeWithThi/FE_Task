@@ -1,5 +1,5 @@
-```javascript
-import apiClient from '../lib/apiClient';
+// Member Service - Real API
+import apiClient from '@/config/api';
 
 /**
  * MEMBER SERVICE - Real API
@@ -89,38 +89,38 @@ export const memberService = {
      */
     async getMembersByDepartment(departmentId) {
         try {
-            const res = await apiClient.get(`/ departments / ${ departmentId }/members`);
+            const res = await apiClient.get(`/ departments / ${departmentId}/members`);
 
-if (res.status === 200 || res.ok) {
-    const rawData = res.data || res;
-    const items = Array.isArray(rawData) ? rawData : (rawData.data || []);
+            if (res.status === 200 || res.ok) {
+                const rawData = res.data || res;
+                const items = Array.isArray(rawData) ? rawData : (rawData.data || []);
 
-    const members = items.map(item => ({
-        id: item.M_ID || item.id,
-        name: item.M_Name || item.name,
-        email: item.Email || item.email,
-        departmentId: item.Department_ID || item.departmentId
-    }));
+                const members = items.map(item => ({
+                    id: item.M_ID || item.id,
+                    name: item.M_Name || item.name,
+                    email: item.Email || item.email,
+                    departmentId: item.Department_ID || item.departmentId
+                }));
 
-    return {
-        ok: true,
-        data: members
-    };
-}
+                return {
+                    ok: true,
+                    data: members
+                };
+            }
 
-return {
-    ok: false,
-    message: res.message || 'Không thể tải thành viên phòng ban',
-    data: []
-};
+            return {
+                ok: false,
+                message: res.message || 'Không thể tải thành viên phòng ban',
+                data: []
+            };
         } catch (err) {
-    console.error('memberService.getMembersByDepartment error:', err);
-    return {
-        ok: false,
-        message: 'Lỗi kết nối server',
-        data: []
-    };
-}
+            console.error('memberService.getMembersByDepartment error:', err);
+            return {
+                ok: false,
+                message: 'Lỗi kết nối server',
+                data: []
+            };
+        }
     },
 
     /**
@@ -128,145 +128,145 @@ return {
      * GET /members/:id
      */
     async getMemberById(memberId) {
-    try {
-        const res = await apiClient.get(`/members/${memberId}`);
+        try {
+            const res = await apiClient.get(`/members/${memberId}`);
 
-        if (res.status === 200 || res.ok) {
-            const item = res.data || res;
-            if (!item) return { ok: false, message: 'Không tìm thấy thành viên' };
+            if (res.status === 200 || res.ok) {
+                const item = res.data || res;
+                if (!item) return { ok: false, message: 'Không tìm thấy thành viên' };
 
-            const member = {
-                id: item.M_ID || item.id,
-                name: item.M_Name || item.name,
-                email: item.Email || item.email,
-                phone: item.Phone || item.phone,
-                departmentId: item.Department_ID || item.departmentId,
-                status: item.Status || item.status
-            };
+                const member = {
+                    id: item.M_ID || item.id,
+                    name: item.M_Name || item.name,
+                    email: item.Email || item.email,
+                    phone: item.Phone || item.phone,
+                    departmentId: item.Department_ID || item.departmentId,
+                    status: item.Status || item.status
+                };
+
+                return {
+                    ok: true,
+                    data: member
+                };
+            }
 
             return {
-                ok: true,
-                data: member
+                ok: false,
+                message: res.message || 'Không tìm thấy thành viên',
+                data: null
+            };
+        } catch (err) {
+            console.error('memberService.getMemberById error:', err);
+            return {
+                ok: false,
+                message: 'Lỗi kết nối server',
+                data: null
             };
         }
-
-        return {
-            ok: false,
-            message: res.message || 'Không tìm thấy thành viên',
-            data: null
-        };
-    } catch (err) {
-        console.error('memberService.getMemberById error:', err);
-        return {
-            ok: false,
-            message: 'Lỗi kết nối server',
-            data: null
-        };
-    }
-},
+    },
 
     /**
      * Create new member
      * POST /members
      */
     async createMember(memberData) {
-    try {
-        // Map frontend data to backend schema if needed
-        const payload = {
-            M_Name: memberData.name,
-            Email: memberData.email,
-            Phone: memberData.phone,
-            Department_ID: memberData.departmentId,
-            // Add other fields as per schema
-        };
+        try {
+            // Map frontend data to backend schema if needed
+            const payload = {
+                M_Name: memberData.name,
+                Email: memberData.email,
+                Phone: memberData.phone,
+                Department_ID: memberData.departmentId,
+                // Add other fields as per schema
+            };
 
-        const res = await apiClient.post('/members', payload);
+            const res = await apiClient.post('/members', payload);
 
-        if (res.status === 201 || res.status === 200 || res.ok) {
+            if (res.status === 201 || res.status === 200 || res.ok) {
+                return {
+                    ok: true,
+                    data: res.data,
+                    message: 'Tạo thành viên thành công'
+                };
+            }
+
             return {
-                ok: true,
-                data: res.data,
-                message: 'Tạo thành viên thành công'
+                ok: false,
+                message: res.message || 'Tạo thành viên thất bại'
+            };
+        } catch (err) {
+            console.error('memberService.createMember error:', err);
+            return {
+                ok: false,
+                message: 'Lỗi kết nối server'
             };
         }
-
-        return {
-            ok: false,
-            message: res.message || 'Tạo thành viên thất bại'
-        };
-    } catch (err) {
-        console.error('memberService.createMember error:', err);
-        return {
-            ok: false,
-            message: 'Lỗi kết nối server'
-        };
-    }
-},
+    },
 
     /**
      * Update member
      * PUT /members/:id
      */
     async updateMember(memberId, memberData) {
-    try {
-        const payload = {
-            M_Name: memberData.name,
-            Email: memberData.email,
-            Phone: memberData.phone,
-            Department_ID: memberData.departmentId,
-            Status: memberData.status
-        };
+        try {
+            const payload = {
+                M_Name: memberData.name,
+                Email: memberData.email,
+                Phone: memberData.phone,
+                Department_ID: memberData.departmentId,
+                Status: memberData.status
+            };
 
-        const res = await apiClient.put(`/members/${memberId}`, payload);
+            const res = await apiClient.put(`/members/${memberId}`, payload);
 
-        if (res.status === 200 || res.ok) {
+            if (res.status === 200 || res.ok) {
+                return {
+                    ok: true,
+                    data: res.data,
+                    message: 'Cập nhật thành viên thành công'
+                };
+            }
+
             return {
-                ok: true,
-                data: res.data,
-                message: 'Cập nhật thành viên thành công'
+                ok: false,
+                message: res.message || 'Cập nhật thành viên thất bại'
+            };
+        } catch (err) {
+            console.error('memberService.updateMember error:', err);
+            return {
+                ok: false,
+                message: 'Lỗi kết nối server'
             };
         }
-
-        return {
-            ok: false,
-            message: res.message || 'Cập nhật thành viên thất bại'
-        };
-    } catch (err) {
-        console.error('memberService.updateMember error:', err);
-        return {
-            ok: false,
-            message: 'Lỗi kết nối server'
-        };
-    }
-},
+    },
 
     /**
      * Delete member (soft delete)
      * DELETE /members/:id
      */
     async deleteMember(memberId) {
-    try {
-        const res = await apiClient.delete(`/members/${memberId}`);
+        try {
+            const res = await apiClient.delete(`/members/${memberId}`);
 
-        if (res.status === 200 || res.ok) {
+            if (res.status === 200 || res.ok) {
+                return {
+                    ok: true,
+                    message: 'Xóa thành viên thành công'
+                };
+            }
+
             return {
-                ok: true,
-                message: 'Xóa thành viên thành công'
+                ok: false,
+                message: res.message || 'Xóa thành viên thất bại'
+            };
+        } catch (err) {
+            console.error('memberService.deleteMember error:', err);
+            return {
+                ok: false,
+                message: 'Lỗi kết nối server'
             };
         }
-
-        return {
-            ok: false,
-            message: res.message || 'Xóa thành viên thất bại'
-        };
-    } catch (err) {
-        console.error('memberService.deleteMember error:', err);
-        return {
-            ok: false,
-            message: 'Lỗi kết nối server'
-        };
     }
-}
 };
 
 export default memberService;

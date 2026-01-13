@@ -15,6 +15,8 @@ import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContaine
 import { dashboardService } from '@/services/dashboardService';
 import { projectService } from '@/services/projectService';
 import { taskService } from '@/services/taskService';
+import { accountService } from '@/services/accountService';
+import { departmentService } from '@/services/departmentService';
 
 // Mock chart data for now as backend doesn't provide this yet
 const projectProgress = [
@@ -38,6 +40,8 @@ export function PMODashboard() {
   });
   const [watchedProjects, setWatchedProjects] = useState([]);
   const [overdueItems, setOverdueItems] = useState([]);
+  const [accounts, setAccounts] = useState([]);
+  const [departments, setDepartments] = useState([]);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -51,9 +55,17 @@ export function PMODashboard() {
         const projectsRes = await projectService.getAllProjects({ status: 'active' });
         const projects = projectsRes.ok ? projectsRes.data : [];
 
-        // 3. Fetch Tasks to calculate overdue and running
+        // 3. Fetch Tasks
         const tasksRes = await taskService.getAllTasks({ status: 'in-progress' });
         const tasks = tasksRes.ok ? tasksRes.data : [];
+
+        // 4. Fetch Common Data for Modals
+        const [accRes, deptRes] = await Promise.all([
+          accountService.getAccounts(),
+          departmentService.getDepartments()
+        ]);
+        if (accRes.ok) setAccounts(accRes.data);
+        if (deptRes.ok) setDepartments(deptRes.data);
 
         // Process Overdue Tasks
         const now = new Date();
@@ -61,11 +73,15 @@ export function PMODashboard() {
 
         // Update States
         if (dashboardData) {
+          const activeProj = dashboardData.projectsByStatus?.find(p => p.status === 'active')?.count || 0;
+          const running = dashboardData.tasksByStatus?.find(t => t.status === 'in-progress' || t.status === 'processing')?.count || 0;
+          const pending = dashboardData.tasksByStatus?.find(t => t.status === 'pending' || t.status === 'todo')?.count || 0;
+
           setStats({
-            activeProjects: dashboardData.projects?.active || 0,
-            runningTasks: dashboardData.tasks?.byStatus?.['active'] || dashboardData.tasks?.byStatus?.['in-progress'] || 0,
-            overdueTasks: overdue.length, // Client-side calc for now
-            pendingTasks: dashboardData.tasks?.byStatus?.['pending'] || 0
+            activeProjects: activeProj,
+            runningTasks: running,
+            overdueTasks: overdue.length,
+            pendingTasks: pending
           });
         }
 
@@ -120,7 +136,7 @@ export function PMODashboard() {
       </Button>
       <Button variant="outline" onClick={() => setShowTaskModal(true)}>
         <Plus className="w-4 h-4 mr-2" />
-        Tạo Main Task
+        Tạo Công việc
       </Button>
     </div>
 
@@ -145,13 +161,14 @@ export function PMODashboard() {
     <TaskFormModal open={showTaskModal} onOpenChange={setShowTaskModal} type="main-task" onSubmit={(data) => {
       taskService.createTask(data).then(res => {
         if (res.ok) {
-          toast.success('Tạo Main Task thành công');
+          toast.success('Tạo Công việc thành công');
           setShowTaskModal(false);
+          // Refresh data would be good here but simpler to just close
         } else {
           toast.error(res.message);
         }
       });
-    }} accounts={[]} departments={[]} />
+    }} accounts={accounts} departments={departments} />
     {/* Note: TaskFormModal needs accounts/departments props? checking original usage... passed manually. */}
 
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
@@ -229,7 +246,7 @@ export function PMODashboard() {
                   Trễ {item.daysOverdue} ngày
                 </span>
                 <p className="text-xs text-muted-foreground">
-                  Hạn: {item.dueDate ? new Date(item.dueDate).toLocaleDateString('vi-VN') : 'N/A'}
+                  Hạn: {item.dueDate ? new Date(item.dueDate).toLocaleDateString('vi-VN') : 'Chưa có hạn'}
                 </p>
               </div>
             </div>))}

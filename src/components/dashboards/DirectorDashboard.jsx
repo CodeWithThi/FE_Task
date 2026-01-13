@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { PageHeader } from '@/components/common/PageHeader';
 import { StatCard } from '@/components/common/StatCard';
 import { ProgressBar } from '@/components/common/ProgressBar';
@@ -24,6 +25,7 @@ const projectStatusStyles = {
 };
 
 export function DirectorDashboard() {
+  const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState(null);
   const [projects, setProjects] = useState([]);
@@ -60,17 +62,23 @@ export function DirectorDashboard() {
   }
 
   // Prepare chart data from stats
+  const tasksByStatus = stats?.tasksByStatus || [];
+  const completed = tasksByStatus.find(s => s.status === 'completed')?.count || 0;
+  const inProgress = tasksByStatus.find(s => s.status === 'in-progress' || s.status === 'processing')?.count || 0;
+  const pending = tasksByStatus.find(s => s.status === 'pending' || s.status === 'todo')?.count || 0;
+  const overdue = 0; // Backend doesn't provide this yet
+
   const statusData = stats ? [
-    { name: 'Hoàn thành', value: stats.completedTasks || 0, color: 'hsl(142, 71%, 45%)' },
-    { name: 'Đang làm', value: stats.inProgressTasks || 0, color: 'hsl(217, 91%, 50%)' },
-    { name: 'Chờ duyệt', value: stats.pendingTasks || 0, color: 'hsl(262, 83%, 58%)' },
-    { name: 'Trễ hạn', value: stats.overdueTasks || 0, color: 'hsl(0, 84%, 60%)' },
+    { name: 'Hoàn thành', value: completed, color: 'hsl(142, 71%, 45%)' },
+    { name: 'Đang làm', value: inProgress, color: 'hsl(217, 91%, 50%)' },
+    { name: 'Chờ duyệt', value: pending, color: 'hsl(262, 83%, 58%)' },
+    { name: 'Trễ hạn', value: overdue, color: 'hsl(0, 84%, 60%)' },
   ] : [];
 
   const totalTasks = stats?.totalTasks || 0;
-  const activeTasks = stats?.inProgressTasks || 0;
-  const completedTasks = stats?.completedTasks || 0;
-  const overdueTasks = stats?.overdueTasks || 0;
+  const activeTasks = inProgress;
+  const completedTasks = completed;
+  const overdueTasks = overdue;
   const totalProjects = stats?.totalProjects || projects.length;
 
   return (
@@ -87,24 +95,28 @@ export function DirectorDashboard() {
           value={totalProjects}
           icon={FolderKanban}
           variant="primary"
+          onClick={() => navigate('/projects')}
         />
         <StatCard
           title="Công việc đang thực hiện"
           value={activeTasks}
           icon={ListTodo}
           variant="default"
+          onClick={() => navigate('/tasks?status=in-progress')}
         />
         <StatCard
           title="Công việc trễ hạn"
           value={overdueTasks}
           icon={AlertTriangle}
           variant="danger"
+          onClick={() => navigate('/tasks')}
         />
         <StatCard
           title="Hoàn thành"
           value={completedTasks}
           icon={CheckCircle2}
           variant="success"
+          onClick={() => navigate('/tasks?status=completed')}
         />
       </div>
 

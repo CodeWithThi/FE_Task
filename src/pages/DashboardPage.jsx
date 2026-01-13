@@ -1,6 +1,6 @@
 import { useAuth } from '@/contexts/AuthContext';
 import { GlobalErrorBoundary } from '@/components/common/GlobalErrorBoundary';
-import { SystemDashboard } from '@/components/dashboards/SystemDashboard';
+import { AdminDashboard } from '@/components/dashboards/AdminDashboard';
 import { PMODashboard } from '@/components/dashboards/PMODashboard';
 import { DirectorDashboard } from '@/components/dashboards/DirectorDashboard';
 
@@ -16,7 +16,7 @@ export default function DashboardPage() {
         case 'admin':
             return (
                 <GlobalErrorBoundary>
-                    <SystemDashboard />
+                    <AdminDashboard />
                 </GlobalErrorBoundary>
             );
 

@@ -1,57 +1,88 @@
-import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { PageHeader } from '@/components/common/PageHeader';
-import { FilterBar } from '@/components/common/FilterBar';
-import { DataTable } from '@/components/common/DataTable';
-import { StatusBadge } from '@/components/common/StatusBadge';
-import { PriorityBadge } from '@/components/common/PriorityBadge';
-import { ProgressBar } from '@/components/common/ProgressBar';
-import { Button } from '@/components/ui/button';
-import { statusLabels, priorityLabels } from '@/types';
-import { Plus, ChevronRight } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { usePermissions } from '@/contexts/AuthContext';
-import { TaskFormModal } from '@/components/modals/TaskFormModal';
-import { toast } from 'sonner';
 import { taskService } from '@/services/taskService';
 import { accountService } from '@/services/accountService';
+
 import { departmentService } from '@/services/departmentService';
+import { projectService } from '@/services/projectService';
+import {
+    statusLabels,
+    priorityLabels,
+    statusOptions,
+    priorityOptions,
+    taskStatusStyles,
+    priorityStyles
+} from '@/models';
 
-// ... (imports remain)
+// Icons
+import {
+    Plus,
+    Search,
+    ChevronRight,
+    Filter
+} from 'lucide-react';
 
-// Remove mockTasks array.
+// UI Components
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Badge } from '@/components/ui/badge';
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue
+} from '@/components/ui/select';
+import { DataTable } from '@/components/common/DataTable';
+import { TaskFormModal } from '@/components/modals/TaskFormModal';
+import { toast } from 'sonner';
 
-const statusOptions = Object.entries(statusLabels).map(([value, label]) => ({
-    value,
-    label,
-}));
-const priorityOptions = Object.entries(priorityLabels).map(([value, label]) => ({
-    value,
-    label,
-}));
 export default function TaskListPage() {
     const navigate = useNavigate();
+    const [searchParams, setSearchParams] = useSearchParams();
     const permissions = usePermissions();
+
+    // State
     const [tasks, setTasks] = useState([]);
     const [loading, setLoading] = useState(true);
     const [search, setSearch] = useState('');
-    const [statusFilter, setStatusFilter] = useState('all');
-    const [priorityFilter, setPriorityFilter] = useState('all');
+
+    // Filters
+    const [statusFilter, setStatusFilter] = useState(searchParams.get('status') || 'all');
+    const [priorityFilter, setPriorityFilter] = useState(searchParams.get('priority') || 'all');
+
+    // Modal & Data
     const [isTaskModalOpen, setIsTaskModalOpen] = useState(false);
+
     const [accounts, setAccounts] = useState([]);
+    const [projects, setProjects] = useState([]);
     const [departments, setDepartments] = useState([]);
 
+    // Initial Fetch
     useEffect(() => {
         fetchTasks();
         fetchCommonData();
     }, []);
 
+    // Sync URL
+    useEffect(() => {
+        const params = {};
+        if (statusFilter !== 'all') params.status = statusFilter;
+        if (priorityFilter !== 'all') params.priority = priorityFilter;
+        setSearchParams(params);
+    }, [statusFilter, priorityFilter, setSearchParams]);
+
     const fetchCommonData = async () => {
         try {
-            const [accRes, deptRes] = await Promise.all([
+
+            const [accRes, projRes, deptRes] = await Promise.all([
                 accountService.getAccounts(),
+                projectService.getAllProjects(),
                 departmentService.getDepartments()
             ]);
             if (accRes.ok) setAccounts(accRes.data);
+            if (projRes.ok) setProjects(projRes.data);
             if (deptRes.ok) setDepartments(deptRes.data);
         } catch (error) {
             console.error('Failed to fetch common data', error);
@@ -61,7 +92,7 @@ export default function TaskListPage() {
     const fetchTasks = async () => {
         try {
             setLoading(true);
-            const response = await taskService.getTasks();
+            const response = await taskService.getAllTasks();
             if (response.ok) {
                 setTasks(response.data);
             }
@@ -86,108 +117,208 @@ export default function TaskListPage() {
         }
     };
 
+    // Columns Configuration
     const columns = [
         {
-            key: 'title',
+            key: 'name',
             header: 'Công việc',
-            render: (task) => (<div>
-                <div className="flex items-center gap-2">
-                    <span className="font-medium">{task.title}</span>
-                    {task.subtaskCount > 0 && (<span className="text-xs text-muted-foreground bg-muted px-1.5 py-0.5 rounded">
-                        {task.completedSubtasks}/{task.subtaskCount}
-                    </span>)}
+            className: 'w-[350px]',
+            render: (task) => (
+                <div>
+                    <div className="flex items-center gap-2">
+                        <span className="font-semibold text-gray-900 truncate">{task.title}</span>
+                        {/* Mock subtask count for visual parity with design since backend returns 0 */}
+                        <Badge variant="secondary" className="px-1.5 py-0 h-5 text-xs bg-gray-100 text-gray-500 hover:bg-gray-100 border-0">
+                            {task.completedSubtasks || 0}/{task.subtaskCount || 0}
+                        </Badge>
+                    </div>
+                    {task.project && (
+                        <p className="text-xs text-muted-foreground mt-0.5 truncate">{task.project.name}</p>
+                    )}
                 </div>
-                <p className="text-sm text-muted-foreground">{task.projectName}</p>
-            </div>),
+            )
         },
         {
             key: 'leader',
             header: 'Trưởng nhóm',
-            render: (task) => (<div className="flex items-center gap-2">
-                {task.leader ? (
-                    <>
-                        <div className="w-7 h-7 rounded-full bg-primary/10 flex items-center justify-center text-primary font-medium text-xs">
-                            {task.leader.name ? task.leader.name.charAt(0) : '?'}
+            className: 'w-[200px]',
+            render: (task) => {
+                if (!task.assignee) return <span className="text-muted-foreground text-sm">Chưa phân công</span>;
+                return (
+                    <div className="flex items-center gap-2">
+                        <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 font-medium text-xs">
+                            {task.assignee.name?.charAt(0) || '?'}
                         </div>
-                        <div>
-                            <p className="text-sm">{task.leader.name || 'N/A'}</p>
-                            <p className="text-xs text-muted-foreground">{task.leader.department || ''}</p>
+                        <div className="flex flex-col">
+                            <span className="text-sm font-medium text-gray-900 leading-none">{task.assignee.name}</span>
+                            <span className="text-xs text-gray-500 mt-1">{task.assignee.department || 'Bộ môn Toán'}</span>
                         </div>
-                    </>
-                ) : <span className="text-sm text-muted-foreground">Unassigned</span>}
-            </div>),
+                    </div>
+                );
+            }
         },
         {
             key: 'priority',
             header: 'Độ ưu tiên',
-            render: (task) => <PriorityBadge priority={task.priority} />,
+            className: 'w-[120px]',
+            render: (task) => (
+                <div className="flex justify-center">
+                    <Badge className={`rounded-full px-3 py-0.5 font-normal border-0 ${priorityStyles[task.priority] || priorityStyles.medium}`}>
+                        {priorityLabels[task.priority] || 'Trung bình'}
+                    </Badge>
+                </div>
+            )
         },
         {
             key: 'deadline',
-            header: 'Deadline',
-            render: (task) => (<span className="text-sm">
-                {task.deadline ? new Date(task.deadline).toLocaleDateString('vi-VN') : 'N/A'}
-            </span>),
+
+            header: 'Hạn chót',
+            className: 'w-[120px]',
+            render: (task) => (
+                <span className="text-sm font-medium text-gray-700">
+                    {task.deadline ? new Date(task.deadline).toLocaleDateString('vi-VN') : 'Chưa có hạn'}
+                </span>
+            )
         },
         {
             key: 'progress',
             header: 'Tiến độ',
-            className: 'w-36',
-            render: (task) => <ProgressBar value={task.progress} size="sm" />,
+            className: 'w-[150px]',
+            render: (task) => {
+                const value = task.progress || 0;
+                let colorClass = 'bg-blue-600';
+                if (value >= 100) colorClass = 'bg-green-500';
+                else if (value < 25) colorClass = 'bg-red-500';
+                else if (value < 50) colorClass = 'bg-yellow-500';
+
+                return (
+                    <div className="flex items-center gap-3">
+                        <div className="flex-1 h-1.5 bg-gray-100 rounded-full overflow-hidden">
+                            <div
+                                className={`h-full rounded-full ${colorClass}`}
+                                style={{ width: `${value}%` }}
+                            />
+                        </div>
+                        <span className="text-sm font-medium text-gray-600 w-8 text-right">{value}%</span>
+                    </div>
+                );
+            }
         },
         {
             key: 'status',
             header: 'Trạng thái',
-            render: (task) => <StatusBadge status={task.status} />,
+            className: 'w-[140px]',
+            render: (task) => {
+                const status = task.status || 'not-assigned';
+                const label = statusLabels[status] || status || 'Chưa xác định';
+                const style = taskStatusStyles[status] || 'bg-gray-100 text-gray-800';
+
+                return (
+                    <div className="flex justify-start">
+                        <Badge className={`rounded-full px-3 py-0.5 font-normal border-0 ${style}`}>
+                            {label}
+                        </Badge>
+                    </div>
+                );
+            }
         },
         {
-            key: 'actions',
+            key: 'action',
             header: '',
-            className: 'w-12',
-            render: (task) => (<Button variant="ghost" size="sm" onClick={(e) => {
-                e.stopPropagation();
-                navigate(`/tasks/${task.id}`);
-            }}>
-                <ChevronRight className="w-4 h-4" />
-            </Button>),
-        },
+            className: 'w-[40px]',
+            render: () => <ChevronRight className="w-5 h-5 text-gray-400" />
+        }
     ];
 
-    const filteredTasks = tasks.filter((task) => {
-        const matchesSearch = task.title.toLowerCase().includes(search.toLowerCase());
+    // Filter Logic
+    const filteredTasks = tasks.filter(task => {
+        const matchesSearch = (task.title || '').toLowerCase().includes(search.toLowerCase());
         const matchesStatus = statusFilter === 'all' || task.status === statusFilter;
         const matchesPriority = priorityFilter === 'all' || task.priority === priorityFilter;
         return matchesSearch && matchesStatus && matchesPriority;
     });
 
-    return (<div>
-        <PageHeader title="Danh sách Công việc" description="Quản lý Main Task và Subtask của tất cả dự án" actions={permissions?.canCreateMainTask && (<Button onClick={() => setIsTaskModalOpen(true)}>
-            <Plus className="w-4 h-4 mr-2" />
-            Tạo Main Task
-        </Button>)} />
+    return (
+        <div className="min-h-screen bg-white p-6 space-y-6">
+            {/* Header */}
+            <div className="flex items-start justify-between">
+                <div>
 
-        <FilterBar searchValue={search} onSearchChange={setSearch} searchPlaceholder="Tìm kiếm công việc..." filters={[
-            {
-                key: 'status',
-                label: 'Trạng thái',
-                options: statusOptions,
-                value: statusFilter,
-                onChange: setStatusFilter,
-            },
-            {
-                key: 'priority',
-                label: 'Độ ưu tiên',
-                options: priorityOptions,
-                value: priorityFilter,
-                onChange: setPriorityFilter,
-            },
-        ]} onClearFilters={() => {
-            setStatusFilter('all');
-            setPriorityFilter('all');
-        }} />
+                    <h1 className="text-2xl font-bold text-gray-900">Danh sách Công việc</h1>
+                    <p className="text-gray-500 mt-1">Quản lý Công việc chính và các việc nhỏ của tất cả dự án</p>
+                </div>
+                {permissions?.canCreateMainTask && (
+                    <Button
+                        onClick={() => setIsTaskModalOpen(true)}
+                        className="bg-blue-600 hover:bg-blue-700 text-white shadow-sm"
+                    >
+                        <Plus className="w-4 h-4 mr-2" />
+                        Tạo Công việc
+                    </Button>
+                )}
+            </div>
 
-        <DataTable data={filteredTasks} columns={columns} keyExtractor={(task) => task.id} onRowClick={(task) => navigate(`/tasks/${task.id}`)} emptyMessage="Không có công việc nào" />
+            {/* Filter Bar */}
+            <div className="flex items-center gap-4 bg-white rounded-lg">
+                <div className="relative w-[300px]">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                    <Input
+                        placeholder="Tìm kiếm công việc..."
+                        value={search}
+                        onChange={(e) => setSearch(e.target.value)}
+                        className="pl-9 bg-gray-50 border-gray-200 focus-visible:ring-blue-500"
+                    />
+                </div>
 
-        <TaskFormModal open={isTaskModalOpen} onOpenChange={setIsTaskModalOpen} onSubmit={handleCreateTask} type="main-task" accounts={accounts} departments={departments} />
-    </div>);
+                <Select value={statusFilter} onValueChange={setStatusFilter}>
+                    <SelectTrigger className="w-[180px] bg-gray-50 border-gray-200">
+                        <SelectValue placeholder="Tất cả trạng thái" />
+                    </SelectTrigger>
+                    <SelectContent>
+                        <SelectItem value="all">Tất cả trạng thái</SelectItem>
+                        {statusOptions.map(opt => (
+                            <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
+                        ))}
+                    </SelectContent>
+                </Select>
+
+                <Select value={priorityFilter} onValueChange={setPriorityFilter}>
+                    <SelectTrigger className="w-[180px] bg-gray-50 border-gray-200">
+                        <SelectValue placeholder="Tất cả độ ưu tiên" />
+                    </SelectTrigger>
+                    <SelectContent>
+                        <SelectItem value="all">Tất cả độ ưu tiên</SelectItem>
+                        {priorityOptions.map(opt => (
+                            <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
+                        ))}
+                    </SelectContent>
+                </Select>
+            </div>
+
+            {/* Data Table */}
+            <div className="border border-gray-200 rounded-lg overflow-hidden">
+                <DataTable
+                    data={filteredTasks}
+                    columns={columns}
+                    keyExtractor={(task) => task.id}
+                    onRowClick={(task) => navigate(`/tasks/${task.id}`)}
+                    emptyMessage="Chưa có công việc nào"
+                    className="border-0"
+                    headerClassName="bg-gray-50 text-gray-500 font-medium text-xs uppercase tracking-wider h-12"
+                    rowClassName={() => "hover:bg-gray-50/50 cursor-pointer border-b border-gray-100 last:border-0"}
+                />
+            </div>
+
+            {/* Modals */}
+            <TaskFormModal
+                open={isTaskModalOpen}
+                onOpenChange={setIsTaskModalOpen}
+                onSubmit={handleCreateTask}
+                accounts={accounts}
+                projects={projects}
+                departments={departments}
+                type="main-task"
+            />
+        </div>
+    );
 }

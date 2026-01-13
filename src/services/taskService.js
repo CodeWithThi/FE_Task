@@ -1,4 +1,4 @@
-import apiClient from '../lib/apiClient';
+import apiClient from '@/config/api';
 
 /**
  * TASK SERVICE - Real API
@@ -39,18 +39,23 @@ const mapTaskToFrontend = (backendTask) => {
         description: backendTask.Description,
         projectId: backendTask.P_ID,
         projectName: backendTask.Project?.P_Name,
+        departmentId: backendTask.Department?.D_ID || backendTask.Project?.Department?.D_ID,
+        departmentName: backendTask.Department?.D_Name || backendTask.Project?.Department?.D_Name,
         priority: priority,
         status: status,
         startDate: backendTask.Begin_Date,
         deadline: backendTask.Due_Date,
         completedAt: backendTask.Complete_At,
         assignee: backendTask.Member ? {
-            name: backendTask.Member.M_Name || backendTask.Member.Full_Name || backendTask.Member.Email, // Use M_Name preferrably
-            id: backendTask.Member.M_ID
+            name: backendTask.Member.FullName,
+            id: backendTask.Member.M_ID,
+            department: backendTask.Member.Department?.D_Name
         } : null,
         createdBy: backendTask.Account?.UserName,
-        subtaskCount: 0,
-        completedSubtasks: 0,
+        parentTaskId: backendTask.Parent_T_ID,
+        subtasks: backendTask.Subtasks ? backendTask.Subtasks.map(mapTaskToFrontend) : [],
+        subtaskCount: backendTask.Subtasks?.length || 0,
+        completedSubtasks: backendTask.Subtasks?.filter(st => st.Status?.toLowerCase() === 'completed').length || 0,
         progress: 0
     };
 };
@@ -153,7 +158,8 @@ export const taskService = {
                 dueDate: taskData.deadline,
                 priority: taskData.priority,
                 projectId: taskData.projectId,
-                assignedTo: taskData.assigneeId // Assuming frontend sends ID
+                assignedTo: taskData.assigneeId, // Assuming frontend sends ID
+                parentTaskId: taskData.parentTaskId || null  // Include parent task ID for subtasks
             };
 
             const res = await apiClient.post('/tasks', payload);

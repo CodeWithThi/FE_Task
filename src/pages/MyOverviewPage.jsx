@@ -7,68 +7,69 @@ import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { ProgressBar, ProgressLegend, PriorityLegend } from '@/components/common/ProgressBar';
 import { SubtaskDetailModal } from '@/components/tasks/SubtaskDetailModal';
 import { Kanban, Clock, AlertTriangle, CheckCircle2, ArrowRight, Calendar, } from 'lucide-react';
-// Mock data - công việc của tôi
-const mockMyTasks = [
-  {
-    id: '3',
-    title: 'Soạn giáo án chương 3 - Giải tích',
-    assignee: { id: '5', name: 'Hoàng Văn Nhân Viên' },
-    department: 'Bộ môn Toán',
-    status: 'in-progress',
-    priority: 'high',
-    deadline: '2024-05-08',
-    progress: 60,
-  },
-  {
-    id: '6',
-    title: 'Rà soát nội dung chương 1',
-    assignee: { id: '5', name: 'Hoàng Văn Nhân Viên' },
-    department: 'Bộ môn Toán',
-    status: 'returned',
-    priority: 'high',
-    deadline: '2024-05-06',
-    progress: 80,
-  },
-  {
-    id: '7',
-    title: 'Upload tài liệu tham khảo',
-    assignee: { id: '6', name: 'Nguyễn Thị Lan' },
-    department: 'Bộ môn Toán',
-    status: 'in-progress',
-    priority: 'low',
-    deadline: '2024-05-12',
-    progress: 30,
-  },
-];
-const mockUpcomingTasks = [
-  {
-    id: '4',
-    title: 'Thiết kế bài tập thực hành',
-    assignee: { id: '6', name: 'Nguyễn Thị Lan' },
-    department: 'Bộ môn Toán',
-    status: 'waiting-approval',
-    priority: 'medium',
-    deadline: '2024-05-10',
-    progress: 100,
-  },
-];
-const mockOverdueTasks = [
-  {
-    id: '6',
-    title: 'Rà soát nội dung chương 1',
-    assignee: { id: '5', name: 'Hoàng Văn Nhân Viên' },
-    department: 'Bộ môn Toán',
-    status: 'returned',
-    priority: 'high',
-    deadline: '2024-05-06',
-    progress: 80,
-  },
-];
+import { taskService } from '@/services/taskService';
+import { useEffect } from 'react';
+import { toast } from 'sonner';
+
 export default function MyOverviewPage() {
   const navigate = useNavigate();
   const { user } = useAuth();
   const [selectedTask, setSelectedTask] = useState(null);
   const [showDetail, setShowDetail] = useState(false);
+  const [myTasks, setMyTasks] = useState([]);
+  const [upcomingTasks, setUpcomingTasks] = useState([]);
+  const [overdueTasks, setOverdueTasks] = useState([]);
+
+  useEffect(() => {
+    if (user?.m_id) {
+      fetchMyTasks();
+    }
+  }, [user]);
+
+  const fetchMyTasks = async () => {
+    try {
+      const res = await taskService.getAllTasks({ assignedTo: user.m_id });
+      if (res.ok) {
+        const allTasks = res.data;
+        const now = new Date();
+        const threeDaysFromNow = new Date();
+        threeDaysFromNow.setDate(now.getDate() + 3);
+
+        const inProgress = [];
+        const upcoming = [];
+        const overdue = [];
+
+        allTasks.forEach(t => {
+          const deadline = t.deadline ? new Date(t.deadline) : null;
+          const isCompleted = t.status === 'completed';
+
+          // Overdue: Not completed AND deadline passed
+          if (deadline && deadline < now && !isCompleted) {
+            overdue.push(t);
+          }
+
+          // Upcoming: Not completed AND deadline within 3 days AND not overdue
+          else if (deadline && deadline <= threeDaysFromNow && deadline >= now && !isCompleted) {
+            upcoming.push(t);
+          }
+
+          // In Progress: status is in-progress (and maybe others?)
+          // Or just show everything assigned that is active? 
+          // Let's stick to status 'in-progress' as "Doing" list.
+          if (t.status === 'in-progress') {
+            inProgress.push(t);
+          }
+        });
+
+        setMyTasks(inProgress);
+        setUpcomingTasks(upcoming);
+        setOverdueTasks(overdue);
+      }
+    } catch (error) {
+      console.error("Failed to fetch my tasks", error);
+    }
+  };
+
   const handleTaskClick = (task) => {
     setSelectedTask(task);
     setShowDetail(true);
@@ -78,7 +79,7 @@ export default function MyOverviewPage() {
     return (<div onClick={() => handleTaskClick(task)} className="flex items-center gap-4 p-3 rounded-lg border hover:bg-muted/50 cursor-pointer transition-colors group">
       <Avatar className="w-8 h-8">
         <AvatarFallback className="text-xs bg-primary/10 text-primary">
-          {task.assignee.name.charAt(0)}
+          {task.assignee?.name?.charAt(0) || user?.name?.charAt(0) || '?'}
         </AvatarFallback>
       </Avatar>
       <div className="flex-1 min-w-0">
@@ -97,12 +98,12 @@ export default function MyOverviewPage() {
             {task.progress}%
           </span>
         </div>
-        <p className="text-xs text-muted-foreground mt-1">{task.department}</p>
+        <p className="text-xs text-muted-foreground mt-1">{task.projectName || 'General'}</p>
       </div>
       <div className="flex items-center gap-2">
         <div className={`flex items-center gap-1 text-xs ${isOverdue ? 'text-destructive' : 'text-muted-foreground'}`}>
           <Calendar className="w-3 h-3" />
-          {new Date(task.deadline).toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit' })}
+          {task.deadline ? new Date(task.deadline).toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit' }) : 'N/A'}
         </div>
       </div>
       <ArrowRight className="w-4 h-4 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
@@ -143,7 +144,7 @@ export default function MyOverviewPage() {
               <Clock className="w-5 h-5 text-[hsl(var(--status-in-progress))]" />
             </div>
             <div>
-              <p className="text-2xl font-bold">{mockMyTasks.length}</p>
+              <p className="text-2xl font-bold">{myTasks.length}</p>
               <p className="text-sm text-muted-foreground">Đang thực hiện</p>
             </div>
           </div>
@@ -157,7 +158,7 @@ export default function MyOverviewPage() {
               <AlertTriangle className="w-5 h-5 text-[hsl(var(--status-pending))]" />
             </div>
             <div>
-              <p className="text-2xl font-bold">{mockUpcomingTasks.length}</p>
+              <p className="text-2xl font-bold">{upcomingTasks.length}</p>
               <p className="text-sm text-muted-foreground">Sắp đến hạn</p>
             </div>
           </div>
@@ -171,7 +172,7 @@ export default function MyOverviewPage() {
               <AlertTriangle className="w-5 h-5 text-[hsl(var(--status-overdue))]" />
             </div>
             <div>
-              <p className="text-2xl font-bold">{mockOverdueTasks.length}</p>
+              <p className="text-2xl font-bold">{overdueTasks.length}</p>
               <p className="text-sm text-muted-foreground">Trễ hạn</p>
             </div>
           </div>
@@ -192,7 +193,7 @@ export default function MyOverviewPage() {
         </Button>
       </CardHeader>
       <CardContent className="space-y-2">
-        {mockMyTasks.length > 0 ? (mockMyTasks.map(task => <TaskItem key={task.id} task={task} />)) : (<div className="text-center py-8 text-muted-foreground">
+        {myTasks.length > 0 ? (myTasks.map(task => <TaskItem key={task.id} task={task} />)) : (<div className="text-center py-8 text-muted-foreground">
           <CheckCircle2 className="w-12 h-12 mx-auto mb-2 opacity-50" />
           <p>Không có công việc nào đang thực hiện</p>
         </div>)}
@@ -200,7 +201,7 @@ export default function MyOverviewPage() {
     </Card>
 
     {/* Sắp đến hạn */}
-    {mockUpcomingTasks.length > 0 && (<Card className="border-[hsl(var(--status-pending)/0.3)] transition-all duration-200">
+    {upcomingTasks.length > 0 && (<Card className="border-[hsl(var(--status-pending)/0.3)] transition-all duration-200">
       <CardHeader className="pb-2">
         <CardTitle className="text-lg flex items-center gap-2">
           <AlertTriangle className="w-5 h-5 text-[hsl(var(--status-pending))]" />
@@ -208,12 +209,12 @@ export default function MyOverviewPage() {
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-2">
-        {mockUpcomingTasks.map(task => <TaskItem key={task.id} task={task} />)}
+        {upcomingTasks.map(task => <TaskItem key={task.id} task={task} />)}
       </CardContent>
     </Card>)}
 
     {/* Trễ hạn */}
-    {mockOverdueTasks.length > 0 && (<Card className="border-[hsl(var(--status-overdue)/0.3)] transition-all duration-200">
+    {overdueTasks.length > 0 && (<Card className="border-[hsl(var(--status-overdue)/0.3)] transition-all duration-200">
       <CardHeader className="pb-2">
         <CardTitle className="text-lg flex items-center gap-2 text-destructive">
           <AlertTriangle className="w-5 h-5" />
@@ -221,7 +222,7 @@ export default function MyOverviewPage() {
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-2">
-        {mockOverdueTasks.map(task => <TaskItem key={task.id} task={task} />)}
+        {overdueTasks.map(task => <TaskItem key={task.id} task={task} />)}
       </CardContent>
     </Card>)}
 

@@ -1,31 +1,88 @@
+import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { PageHeader } from '@/components/common/PageHeader';
 import { StatCard } from '@/components/common/StatCard';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Users, Building2, Settings, Shield, Activity, Database, ArrowRight, } from 'lucide-react';
-const recentLogs = [
-  { id: '1', user: 'Nguyễn Văn A', action: 'Đăng nhập hệ thống', time: '5 phút trước' },
-  { id: '2', user: 'Trần Thị B', action: 'Tạo dự án mới "Kế hoạch Q2"', time: '15 phút trước' },
-  { id: '3', user: 'Admin', action: 'Thêm người dùng mới', time: '30 phút trước' },
-  { id: '4', user: 'Lê Văn C', action: 'Cập nhật tiến độ công việc', time: '1 giờ trước' },
-  { id: '5', user: 'Phạm Thị D', action: 'Gửi duyệt công việc', time: '2 giờ trước' },
-];
+import { dashboardService } from '@/services/dashboardService';
+
 const quickActions = [
   { icon: Users, label: 'Quản lý người dùng', path: '/users', color: 'text-primary' },
   { icon: Building2, label: 'Quản lý phòng ban', path: '/departments', color: 'text-status-completed' },
   { icon: Settings, label: 'Cấu hình hệ thống', path: '/settings', color: 'text-status-pending' },
-  { icon: Shield, label: 'Phân quyền', path: '/permissions', color: 'text-status-waiting' },
 ];
+
+// Mock logs for now (or TODO: Fetch from API)
+const recentLogs = [
+  { id: '1', user: 'System', action: 'Hệ thống khởi động', time: 'Vừa xong' },
+  { id: '2', user: 'Admin', action: 'Đồng bộ dữ liệu', time: '5 phút trước' },
+];
+
 export function AdminDashboard() {
+  const navigate = useNavigate();
+  const [stats, setStats] = useState({
+    totalUsers: 0,
+    departmentCount: 0,
+    activeUsers: 0,
+    totalTasks: 0
+  });
+
+  useEffect(() => {
+    fetchStats();
+
+    // Auto-refresh every 30 seconds to update online users count
+    const interval = setInterval(() => {
+      fetchStats();
+    }, 30000);
+
+    return () => clearInterval(interval);
+  }, []);
+
+  const fetchStats = async () => {
+    try {
+      const res = await dashboardService.getStats();
+      if (res.ok && res.data) {
+        setStats(res.data);
+      }
+    } catch (error) {
+      console.error("Failed to fetch dashboard stats", error);
+    }
+  };
+
   return (<div>
     <PageHeader title="Tổng quan - Quản trị hệ thống" description="Quản lý người dùng, phòng ban và cấu hình hệ thống" />
 
     {/* Stats Grid */}
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-      <StatCard title="Tổng người dùng" value={45} icon={Users} variant="primary" />
-      <StatCard title="Phòng ban" value={8} icon={Building2} variant="default" />
-      <StatCard title="Người dùng hoạt động" value={38} icon={Activity} variant="success" />
-      <StatCard title="Dung lượng hệ thống" value="2.4 GB" icon={Database} variant="warning" />
+      <StatCard
+        title="Tổng người dùng"
+        value={stats.totalUsers}
+        icon={Users}
+        variant="primary"
+        onClick={() => navigate('/users')}
+      />
+      <StatCard
+        title="Phòng ban"
+        value={stats.departmentCount}
+        icon={Building2}
+        variant="default"
+        onClick={() => navigate('/departments')}
+      />
+      <StatCard
+        title="Đang hoạt động"
+        value={stats.activeUsers}
+        icon={Activity}
+        variant="success"
+        onClick={() => navigate('/logs')}
+      />
+      <StatCard
+        title="Cấu hình hệ thống"
+        value="Cấu hình"
+        icon={Settings}
+        variant="warning"
+        onClick={() => navigate('/settings')}
+      />
     </div>
 
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -36,7 +93,7 @@ export function AdminDashboard() {
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-2 gap-3">
-            {quickActions.map((action) => (<Button key={action.path} variant="outline" className="h-auto flex-col gap-2 py-4 hover:bg-muted">
+            {quickActions.map((action) => (<Button key={action.path} variant="outline" className="h-auto flex-col gap-2 py-4 hover:bg-muted" onClick={() => navigate(action.path)}>
               <action.icon className={`w-6 h-6 ${action.color}`} />
               <span className="text-sm">{action.label}</span>
             </Button>))}
@@ -51,7 +108,7 @@ export function AdminDashboard() {
             <Activity className="w-5 h-5 text-primary" />
             Nhật ký hoạt động gần đây
           </CardTitle>
-          <Button variant="ghost" size="sm" className="text-primary">
+          <Button variant="ghost" size="sm" className="text-primary" onClick={() => navigate('/logs')}>
             Xem tất cả <ArrowRight className="w-4 h-4 ml-1" />
           </Button>
         </CardHeader>

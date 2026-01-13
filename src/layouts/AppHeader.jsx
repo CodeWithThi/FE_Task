@@ -1,12 +1,12 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
-import { roleLabels } from '@/types';
+import { roleLabels } from '@/models';
 import { useTheme } from '@/hooks/use-theme';
 import { Search, Bell, ChevronDown, User, Lock, LogOut, Sun, Moon } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger, } from '@/components/ui/dropdown-menu';
 import { Tooltip, TooltipContent, TooltipTrigger, } from '@/components/ui/tooltip';
 export function AppHeader() {
@@ -79,6 +79,7 @@ export function AppHeader() {
         <DropdownMenuTrigger asChild>
           <button className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-sidebar-accent transition-colors">
             <Avatar className="h-8 w-8">
+              <AvatarImage src={user?.avatar} alt={user?.name} />
               <AvatarFallback className="bg-primary text-primary-foreground text-sm font-semibold">
                 {(user?.name || user?.username || 'U').charAt(0).toUpperCase()}
               </AvatarFallback>

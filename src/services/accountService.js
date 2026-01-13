@@ -1,4 +1,4 @@
-import apiClient from '@/lib/apiClient';
+import apiClient from '@/config/api';
 
 export const accountService = {
     getAccounts: async () => {

@@ -1,12 +1,6 @@
 // ===================
 // ROLE DEFINITIONS
 // ===================
-// 1. SYSTEM ADMIN - Quản lý user, phân quyền, cấu hình hệ thống, xem log. KHÔNG tham gia nghiệp vụ dự án
-// 2. DIRECTOR (Ban Giám đốc) - Xem Dashboard tổng hợp, xem báo cáo. KHÔNG chỉnh sửa dữ liệu, KHÔNG giao task
-// 3. PMO - Tạo/quản lý Dự án, tạo Main Task, gán Leader, theo dõi tiến độ, cảnh báo trễ hạn, tổng hợp báo cáo
-// 4. LEADER - Nhận Main Task, tạo Subtask, phân công Nhân viên, duyệt/trả lại Subtask, đánh giá tiến độ
-// 5. STAFF (Nhân viên) - Nhận/từ chối Subtask, cập nhật tiến độ, upload tài liệu, gửi trình duyệt
-// Vietnamese labels
 export const roleLabels = {
     admin: 'Quản trị viên',
     director: 'Ban Giám đốc',
@@ -14,6 +8,10 @@ export const roleLabels = {
     leader: 'Trưởng nhóm',
     staff: 'Nhân viên',
 };
+
+// ===================
+// STATUS & PRIORITY LABELS
+// ===================
 export const statusLabels = {
     'not-assigned': 'Chưa nhận',
     'in-progress': 'Đang làm',
@@ -22,16 +20,70 @@ export const statusLabels = {
     'completed': 'Hoàn thành',
     'overdue': 'Trễ hạn',
 };
+
+export const projectStatusLabels = {
+    'Running': 'Đang thực hiện',
+    'Completed': 'Hoàn thành',
+    'On-Hold': 'Tạm dừng',
+    'Pending': 'Chờ xử lý',
+    'active': 'Đang hoạt động',
+    'inactive': 'Dừng hoạt động',
+    'paused': 'Tạm dừng',
+    'cancelled': 'Đã hủy',
+};
+
+export const statusOptions = Object.entries(statusLabels).map(([value, label]) => ({
+    value,
+    label,
+}));
+
 export const priorityLabels = {
     high: 'Cao',
     medium: 'Trung bình',
     low: 'Thấp',
 };
-// Role-based permissions
+
+export const priorityOptions = Object.entries(priorityLabels).map(([value, label]) => ({
+    value,
+    label,
+}));
+
+// ===================
+// STYLES
+// ===================
+export const projectStatusStyles = {
+    'Running': 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400',
+    'Completed': 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400',
+    'On-Hold': 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400',
+    'Pending': 'bg-gray-100 text-gray-800 dark:bg-gray-900/30 dark:text-gray-400',
+    'active': 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400',
+    'inactive': 'bg-gray-100 text-gray-700 dark:bg-gray-900/30 dark:text-gray-400',
+    'paused': 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400',
+    'cancelled': 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400',
+};
+
+export const priorityStyles = {
+    high: 'bg-red-100 text-red-600 dark:bg-red-900/30 dark:text-red-400',
+    medium: 'bg-yellow-100 text-yellow-600 dark:bg-yellow-900/30 dark:text-yellow-400',
+    low: 'bg-green-100 text-green-600 dark:bg-green-900/30 dark:text-green-400',
+};
+
+export const taskStatusStyles = {
+    'not-assigned': 'bg-orange-100 text-orange-600 dark:bg-orange-900/30 dark:text-orange-400',
+    'in-progress': 'bg-blue-100 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400',
+    'waiting-approval': 'bg-purple-100 text-purple-600 dark:bg-purple-900/30 dark:text-purple-400',
+    'returned': 'bg-pink-100 text-pink-600 dark:bg-pink-900/30 dark:text-pink-400',
+    'completed': 'bg-green-100 text-green-600 dark:bg-green-900/30 dark:text-green-400',
+    'overdue': 'bg-red-100 text-red-600 dark:bg-red-900/30 dark:text-red-400',
+};
+
+// ===================
+// PERMISSIONS
+// ===================
 export const rolePermissions = {
     admin: {
         canViewDashboard: true,
-        canViewProjects: false, // Admin không tham gia nghiệp vụ dự án
+        canViewProjects: false,
         canCreateProject: false,
         canEditProject: false,
         canViewTasks: false,
@@ -48,12 +100,12 @@ export const rolePermissions = {
     director: {
         canViewDashboard: true,
         canViewProjects: true,
-        canCreateProject: false, // Director chỉ xem, không tạo
-        canEditProject: false, // Director chỉ xem, không sửa
+        canCreateProject: false,
+        canEditProject: false,
         canViewTasks: true,
         canCreateMainTask: false,
         canCreateSubtask: false,
-        canAssignTask: false, // Director không giao task
+        canAssignTask: false,
         canApproveTask: false,
         canViewReports: true,
         canManageUsers: false,
@@ -64,12 +116,12 @@ export const rolePermissions = {
     pmo: {
         canViewDashboard: true,
         canViewProjects: true,
-        canCreateProject: true, // PMO tạo và quản lý dự án
+        canCreateProject: true,
         canEditProject: true,
         canViewTasks: true,
-        canCreateMainTask: true, // PMO tạo Main Task
+        canCreateMainTask: true,
         canCreateSubtask: false,
-        canAssignTask: true, // PMO gán Leader cho Main Task
+        canAssignTask: true,
         canApproveTask: false,
         canViewReports: true,
         canManageUsers: true,
@@ -84,9 +136,9 @@ export const rolePermissions = {
         canEditProject: false,
         canViewTasks: true,
         canCreateMainTask: false,
-        canCreateSubtask: true, // Leader tạo Subtask
-        canAssignTask: true, // Leader phân công nhân viên
-        canApproveTask: true, // Leader duyệt/trả lại Subtask
+        canCreateSubtask: true,
+        canAssignTask: true,
+        canApproveTask: true,
         canViewReports: true,
         canManageUsers: false,
         canManageDepartments: false,

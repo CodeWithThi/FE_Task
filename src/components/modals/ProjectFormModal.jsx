@@ -6,28 +6,41 @@ import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { Checkbox } from '@/components/ui/checkbox';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { CalendarIcon, FolderKanban } from 'lucide-react';
 import { format } from 'date-fns';
 import { vi } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
 import { departmentService } from '@/services/departmentService';
 
-export function ProjectFormModal({ open, onOpenChange, onSubmit, initialData, mode = 'create' }) {
+export function ProjectFormModal({ open, onOpenChange, onSubmit, initialData, mode = 'edit' }) {
   const [departments, setDepartments] = useState([]);
   const [formData, setFormData] = useState(initialData || {
     name: '',
     description: '',
     startDate: undefined,
     endDate: undefined,
-    departments: [],
+    departmentId: '',
   });
 
   useEffect(() => {
     if (open) {
       fetchDepartments();
+      // Sync formData with initialData when modal opens
+      if (initialData) {
+        setFormData(initialData);
+      } else {
+        // Reset form for create mode
+        setFormData({
+          name: '',
+          description: '',
+          startDate: undefined,
+          endDate: undefined,
+          departmentId: '',
+        });
+      }
     }
-  }, [open]);
+  }, [open, initialData]);
 
   const fetchDepartments = async () => {
     try {
@@ -39,16 +52,9 @@ export function ProjectFormModal({ open, onOpenChange, onSubmit, initialData, mo
       console.error('Error fetching departments:', error);
     }
   };
-  const handleDepartmentToggle = (deptId) => {
-    setFormData((prev) => ({
-      ...prev,
-      departments: prev.departments.includes(deptId)
-        ? prev.departments.filter((id) => id !== deptId)
-        : [...prev.departments, deptId],
-    }));
-  };
+
   const handleSubmit = () => {
-    if (!formData.name.trim())
+    if (!formData.name.trim() || !formData.departmentId)
       return;
     onSubmit(formData);
     if (mode === 'create') {
@@ -57,11 +63,12 @@ export function ProjectFormModal({ open, onOpenChange, onSubmit, initialData, mo
         description: '',
         startDate: undefined,
         endDate: undefined,
-        departments: [],
+        departmentId: '',
       });
     }
     onOpenChange(false);
   };
+
   return (<Dialog open={open} onOpenChange={onOpenChange}>
     <DialogContent className="max-w-lg">
       <DialogHeader>
@@ -95,6 +102,26 @@ export function ProjectFormModal({ open, onOpenChange, onSubmit, initialData, mo
           <Textarea id="description" value={formData.description} onChange={(e) => setFormData({ ...formData, description: e.target.value })} placeholder="Mô tả chi tiết về dự án..." rows={3} />
         </div>
 
+        {/* Departments */}
+        <div className="space-y-2">
+          <Label>Phòng ban phụ trách *</Label>
+          <Select
+            value={formData.departmentId}
+            onValueChange={(value) => setFormData({ ...formData, departmentId: value })}
+          >
+            <SelectTrigger>
+              <SelectValue placeholder="Chọn phòng ban" />
+            </SelectTrigger>
+            <SelectContent>
+              {departments.map((dept) => (
+                <SelectItem key={dept.D_ID || dept.id} value={dept.D_ID || dept.id}>
+                  {dept.D_Name || dept.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+
         {/* Dates */}
         <div className="grid grid-cols-2 gap-4">
           <div className="space-y-2">
@@ -109,7 +136,16 @@ export function ProjectFormModal({ open, onOpenChange, onSubmit, initialData, mo
                 </Button>
               </PopoverTrigger>
               <PopoverContent className="w-auto p-0" align="start">
-                <Calendar mode="single" selected={formData.startDate} onSelect={(date) => setFormData({ ...formData, startDate: date })} initialFocus locale={vi} />
+                <Calendar
+                  mode="single"
+                  selected={formData.startDate}
+                  onSelect={(date) => {
+                    if (date) date.setHours(12, 0, 0, 0);
+                    setFormData({ ...formData, startDate: date });
+                  }}
+                  initialFocus
+                  locale={vi}
+                />
               </PopoverContent>
             </Popover>
           </div>
@@ -126,32 +162,18 @@ export function ProjectFormModal({ open, onOpenChange, onSubmit, initialData, mo
                 </Button>
               </PopoverTrigger>
               <PopoverContent className="w-auto p-0" align="start">
-                <Calendar mode="single" selected={formData.endDate} onSelect={(date) => setFormData({ ...formData, endDate: date })} initialFocus locale={vi} />
+                <Calendar
+                  mode="single"
+                  selected={formData.endDate}
+                  onSelect={(date) => {
+                    if (date) date.setHours(12, 0, 0, 0);
+                    setFormData({ ...formData, endDate: date });
+                  }}
+                  initialFocus
+                  locale={vi}
+                />
               </PopoverContent>
             </Popover>
-          </div>
-        </div>
-
-        {/* Departments */}
-        <div className="space-y-3">
-          <Label>Phòng ban tham gia</Label>
-          <div className="grid grid-cols-2 gap-2">
-            {departments.map((dept) => (
-              <div
-                key={dept.D_ID || dept.id}
-                className="flex items-center space-x-2 p-2 rounded-lg border hover:bg-muted/50 cursor-pointer"
-                onClick={() => handleDepartmentToggle(dept.D_ID || dept.id)}
-              >
-                <Checkbox
-                  id={dept.D_ID || dept.id}
-                  checked={formData.departments.includes(dept.D_ID || dept.id)}
-                  onCheckedChange={() => handleDepartmentToggle(dept.D_ID || dept.id)}
-                />
-                <label htmlFor={dept.D_ID || dept.id} className="text-sm cursor-pointer flex-1">
-                  {dept.D_Name || dept.name}
-                </label>
-              </div>
-            ))}
           </div>
         </div>
       </div>

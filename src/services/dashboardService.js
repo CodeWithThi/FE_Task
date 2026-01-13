@@ -1,20 +1,19 @@
-import apiClient from '../lib/apiClient';
+import apiClient from '@/config/api';
 
 /**
  * DASHBOARD SERVICE
  * Connects to backend API at /dashboard
  */
-
 export const dashboardService = {
     /**
-     * Get dashboard statistics
+     * Get dashboard stats (admin/global)
      * GET /dashboard/stats
      */
-    async getStats() {
+    getStats: async (type) => {
         try {
-            const res = await apiClient.get('/dashboard/stats');
+            const query = type ? `?type=${type}` : '';
+            const res = await apiClient.get(`/dashboard/stats${query}`);
 
-            // Backend returns { status: 200, data: { ... } }
             if (res.status !== 200) {
                 return {
                     ok: false,
@@ -37,5 +36,3 @@ export const dashboardService = {
         }
     }
 };
-
-export default dashboardService;

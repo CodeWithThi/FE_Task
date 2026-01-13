@@ -5,6 +5,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter } from "react-router-dom";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { AppRoutes } from "@/routes/AppRoutes";
+import { GlobalErrorBoundary } from "@/components/common/GlobalErrorBoundary";
 const queryClient = new QueryClient();
 const App = () => (<QueryClientProvider client={queryClient}>
   <AuthProvider>
@@ -12,7 +13,9 @@ const App = () => (<QueryClientProvider client={queryClient}>
       <Toaster />
       <Sonner />
       <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
-        <AppRoutes />
+        <GlobalErrorBoundary>
+          <AppRoutes />
+        </GlobalErrorBoundary>
       </BrowserRouter>
     </TooltipProvider>
   </AuthProvider>

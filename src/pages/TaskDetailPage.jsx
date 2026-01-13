@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { StatusBadge } from '@/components/common/StatusBadge';
 import { PriorityBadge } from '@/components/common/PriorityBadge';
@@ -12,14 +12,16 @@ import { useAuth, usePermissions } from '@/contexts/AuthContext';
 import { SubtaskFormModal } from '@/components/modals/SubtaskFormModal';
 import { toast } from 'sonner';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, } from '@/components/ui/dialog';
-import { ArrowLeft, Calendar, FileText, Upload, Send, CheckCircle2, XCircle, RefreshCw, Clock, Building2, Paperclip, Plus, LayoutGrid, } from 'lucide-react';
+import { ArrowLeft, Calendar, FileText, Upload, Send, CheckCircle2, XCircle, RefreshCw, Clock, Building2, Paperclip, Plus, LayoutGrid, ListTodo, } from 'lucide-react';
 import { taskService } from '@/services/taskService';
+import { userService } from '@/services/userService';
 
 // ... imports ...
 
 // Replacing mock data with state in component
 
 // Mocks removed
+// Mock data removed - Features dependent on DB updates
 const mockSubtasks = [];
 const mockFiles = [];
 const mockActivityLog = [];
@@ -31,6 +33,7 @@ export default function TaskDetailPage() {
   const permissions = usePermissions();
   const [task, setTask] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [staff, setStaff] = useState([]);
 
   // Dialog states
   const [showAcceptDialog, setShowAcceptDialog] = useState(false);
@@ -59,17 +62,65 @@ export default function TaskDetailPage() {
     fetchTask();
   }, [id]);
 
+  // Fetch staff when task department is available
+  useEffect(() => {
+    if (task?.departmentId) {
+      const fetchStaff = async () => {
+        try {
+          const response = await userService.getUsers({ departmentId: task.departmentId, limit: 100 });
+          if (response.ok) {
+            const staffList = response.data
+              .filter(u => u.status === 'active' && !u.isDeleted)
+              .map(u => ({
+                id: u.member?.id || u.aid,
+                name: u.member?.fullName || u.userName,
+                role: u.role?.name,
+                department: u.member?.departmentName
+              }));
+            setStaff(staffList);
+          }
+        } catch (error) {
+          console.error('Error fetching staff:', error);
+        }
+      };
+      fetchStaff();
+    }
+  }, [task?.departmentId]);
+
   const isStaff = user?.role === 'staff';
   const isLeader = user?.role === 'leader';
 
-  const handleCreateSubtask = (data) => {
-    console.log('Tạo Subtask mới:', data);
-    toast.success('Tạo Subtask thành công!');
-    setShowSubtaskModal(false);
+  const handleCreateSubtask = async (data) => {
+    try {
+      // Prepare subtask data with parent task ID
+      const subtaskData = {
+        ...data,
+        projectId: task.projectId,
+        parentTaskId: task.id,
+        // Map assigneeIds to single assigneeId for now (backend limitation)
+        assigneeId: data.assigneeIds && data.assigneeIds.length > 0 ? data.assigneeIds[0] : null
+      };
+
+      const response = await taskService.createTask(subtaskData);
+      if (response.ok) {
+        toast.success('Tạo việc nhỏ thành công!');
+        setShowSubtaskModal(false);
+        // Refresh task to show new subtask
+        const updatedTask = await taskService.getTaskById(id);
+        if (updatedTask.ok) {
+          setTask(updatedTask.data);
+        }
+      } else {
+        toast.error(response.message || 'Tạo việc nhỏ thất bại');
+      }
+    } catch (error) {
+      console.error('Error creating subtask:', error);
+      toast.error('Lỗi khi tạo việc nhỏ');
+    }
   };
 
-  if (loading) return <div>Loading...</div>;
-  if (!task) return <div>Task not found</div>;
+  if (loading) return <div>Đang tải...</div>;
+  if (!task) return <div>Không tìm thấy công việc</div>;
 
   const mockTask = task; // Alias to minimize refactor of render code
 
@@ -117,41 +168,71 @@ export default function TaskDetailPage() {
           </CardContent>
         </Card>
 
-        {/* Subtasks */}
+        {/* Subtasks Section */}
         <Card>
           <CardHeader className="flex flex-row items-center justify-between">
-            <CardTitle className="text-lg">Subtasks ({mockSubtasks.length})</CardTitle>
+            <CardTitle className="text-lg flex items-center gap-2">
+              <ListTodo className="w-5 h-5" />
+              Việc nhỏ ({task.subtasks?.length || 0})
+            </CardTitle>
             <div className="flex gap-2">
               <Button size="sm" variant="outline" onClick={() => navigate('/tasks-board')}>
                 <LayoutGrid className="w-4 h-4 mr-1" />
-                Kanban
+                Bảng
               </Button>
               {permissions?.canCreateSubtask && (<Button size="sm" variant="outline" onClick={() => setShowSubtaskModal(true)}>
                 <Plus className="w-4 h-4 mr-1" />
-                Thêm Subtask
+                Thêm việc nhỏ
               </Button>)}
             </div>
           </CardHeader>
           <CardContent className="p-0">
             <div className="divide-y">
-              {mockSubtasks.map((subtask) => (<div key={subtask.id} className="p-4 flex items-center justify-between hover:bg-muted/50">
-                <div className="flex items-center gap-3">
-                  <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${subtask.status === 'completed'
-                    ? 'bg-status-completed border-status-completed'
-                    : 'border-muted-foreground'}`}>
-                    {subtask.status === 'completed' && (<CheckCircle2 className="w-3 h-3 text-white" />)}
-                  </div>
-                  <div>
-                    <p className={`font-medium ${subtask.status === 'completed' ? 'line-through text-muted-foreground' : ''}`}>
-                      {subtask.title}
-                    </p>
-                    <p className="text-sm text-muted-foreground">
-                      {subtask.assignee} • Hạn: {new Date(subtask.deadline).toLocaleDateString('vi-VN')}
-                    </p>
-                  </div>
+              {(!task.subtasks || task.subtasks.length === 0) ? (
+                <div className="p-8 text-center text-muted-foreground">
+                  Chưa có việc nhỏ nào
                 </div>
-                <StatusBadge status={subtask.status} />
-              </div>))}
+              ) : (
+                task.subtasks.map((subtask) => (
+                  <div key={subtask.id} className="p-4 flex items-center justify-between hover:bg-muted/50">
+                    <div className="flex items-center gap-3 flex-1">
+                      <button
+                        type="button"
+                        onClick={async () => {
+                          try {
+                            const newStatus = subtask.status === 'completed' ? 'in-progress' : 'completed';
+                            const response = await taskService.updateTask(subtask.id, { status: newStatus });
+                            if (response.ok) {
+                              toast.success(newStatus === 'completed' ? 'Đã hoàn thành việc nhỏ!' : 'Đã đánh dấu chưa hoàn thành');
+                              // Refresh task data
+                              const updatedTask = await taskService.getTaskById(id);
+                              if (updatedTask.ok) {
+                                setTask(updatedTask.data);
+                              }
+                            }
+                          } catch (error) {
+                            toast.error('Lỗi khi cập nhật trạng thái');
+                          }
+                        }}
+                        className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-colors ${subtask.status === 'completed'
+                          ? 'bg-status-completed border-status-completed'
+                          : 'border-muted-foreground hover:border-primary'}`}
+                      >
+                        {subtask.status === 'completed' && (<CheckCircle2 className="w-3 h-3 text-white" />)}
+                      </button>
+                      <div className="flex-1">
+                        <p className={`font-medium ${subtask.status === 'completed' ? 'line-through text-muted-foreground' : ''}`}>
+                          {subtask.title}
+                        </p>
+                        <p className="text-sm text-muted-foreground">
+                          {subtask.assignee?.name || 'Chưa gán'} • Hạn: {subtask.deadline ? new Date(subtask.deadline).toLocaleDateString('vi-VN') : 'Chưa có'}
+                        </p>
+                      </div>
+                    </div>
+                    <StatusBadge status={subtask.status} />
+                  </div>
+                ))
+              )}
             </div>
           </CardContent>
         </Card>
@@ -161,11 +242,11 @@ export default function TaskDetailPage() {
           <CardHeader className="flex flex-row items-center justify-between">
             <CardTitle className="text-lg flex items-center gap-2">
               <Paperclip className="w-5 h-5" />
-              File đính kèm ({mockFiles.length})
+              Tài liệu đính kèm ({mockFiles.length})
             </CardTitle>
             {isStaff && (<Button size="sm" variant="outline">
               <Upload className="w-4 h-4 mr-1" />
-              Upload
+              Tải lên
             </Button>)}
           </CardHeader>
           <CardContent>
@@ -188,7 +269,7 @@ export default function TaskDetailPage() {
           <CardHeader>
             <CardTitle className="text-lg flex items-center gap-2">
               <Clock className="w-5 h-5" />
-              Nhật ký thay đổi
+              Nhật ký hoạt động
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -213,7 +294,7 @@ export default function TaskDetailPage() {
         {/* Actions Card */}
         <Card>
           <CardHeader>
-            <CardTitle className="text-lg">Hành động</CardTitle>
+            <CardTitle className="text-lg">Thao tác</CardTitle>
           </CardHeader>
           <CardContent className="space-y-2">
             {/* Staff actions */}
@@ -270,16 +351,16 @@ export default function TaskDetailPage() {
           </CardHeader>
           <CardContent className="space-y-4">
             <div>
-              <p className="text-sm text-muted-foreground mb-1">Trưởng nhóm phụ trách</p>
+              <p className="text-sm text-muted-foreground mb-1">Người thực hiện</p>
               <div className="flex items-center gap-2">
                 <Avatar className="h-8 w-8">
                   <AvatarFallback className="bg-primary/10 text-primary text-sm">
-                    {mockTask.leader.name.charAt(0)}
+                    {mockTask.assignee?.name?.charAt(0) || '?'}
                   </AvatarFallback>
                 </Avatar>
                 <div>
-                  <p className="text-sm font-medium">{mockTask.leader.name}</p>
-                  <p className="text-xs text-muted-foreground">{mockTask.leader.department}</p>
+                  <p className="text-sm font-medium">{mockTask.assignee?.name || 'Chưa phân công'}</p>
+                  <p className="text-xs text-muted-foreground">{mockTask.assignee?.department || 'Chưa gán phòng ban'}</p>
                 </div>
               </div>
             </div>
@@ -287,17 +368,17 @@ export default function TaskDetailPage() {
             <Separator />
 
             <div>
-              <p className="text-sm text-muted-foreground mb-1">Bộ phận chính</p>
+              <p className="text-sm text-muted-foreground mb-1">Phòng ban chủ trì</p>
               <div className="flex items-center gap-2">
                 <Building2 className="w-4 h-4 text-muted-foreground" />
-                <span className="text-sm">{mockTask.department}</span>
+                <span className="text-sm">{mockTask.departmentName || mockTask.departmentId || 'Chưa gán'}</span>
               </div>
             </div>
 
             <div>
-              <p className="text-sm text-muted-foreground mb-1">Bộ phận phối hợp</p>
+              <p className="text-sm text-muted-foreground mb-1">Phòng ban phối hợp</p>
               <div className="flex flex-wrap gap-2">
-                {mockTask.cooperatingDepts.map((dept) => (<span key={dept} className="text-xs bg-muted px-2 py-1 rounded">
+                {(mockTask.cooperatingDepts || []).map((dept) => (<span key={dept} className="text-xs bg-muted px-2 py-1 rounded">
                   {dept}
                 </span>))}
               </div>
@@ -314,7 +395,7 @@ export default function TaskDetailPage() {
                 </div>
               </div>
               <div>
-                <p className="text-sm text-muted-foreground mb-1">Deadline</p>
+                <p className="text-sm text-muted-foreground mb-1">Hạn chót</p>
                 <div className="flex items-center gap-2">
                   <Calendar className="w-4 h-4 text-status-overdue" />
                   <span className="text-sm font-medium">{new Date(mockTask.deadline).toLocaleDateString('vi-VN')}</span>
@@ -404,6 +485,12 @@ export default function TaskDetailPage() {
       </DialogContent>
     </Dialog>
 
-    <SubtaskFormModal open={showSubtaskModal} onOpenChange={setShowSubtaskModal} onSubmit={handleCreateSubtask} mainTaskTitle={mockTask.title} />
+    <SubtaskFormModal
+      open={showSubtaskModal}
+      onOpenChange={setShowSubtaskModal}
+      onSubmit={handleCreateSubtask}
+      mainTaskTitle={mockTask.title}
+      staff={staff}
+    />
   </div>);
 }

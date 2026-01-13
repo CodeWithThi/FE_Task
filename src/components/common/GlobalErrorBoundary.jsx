@@ -20,21 +20,32 @@ export class GlobalErrorBoundary extends React.Component {
     render() {
         if (this.state.hasError) {
             return (
-                <div className="flex flex-col items-center justify-center min-h-[50vh] p-6 text-center">
-                    <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mb-4">
-                        <AlertTriangle className="w-8 h-8 text-red-600" />
+                <div className="flex flex-col items-center justify-center min-h-screen bg-background p-6 text-center">
+                    <div className="w-20 h-20 bg-red-100 rounded-full flex items-center justify-center mb-6 animate-in fade-in zoom-in duration-300">
+                        <AlertTriangle className="w-10 h-10 text-red-600" />
                     </div>
-                    <h2 className="text-2xl font-bold mb-2">Đã xảy ra lỗi</h2>
-                    <p className="text-muted-foreground mb-4 max-w-md">
-                        Chúng tôi gặp sự cố khi hiển thị nội dung này.
+                    <h2 className="text-3xl font-bold mb-3 tracking-tight">Đã xảy ra sự cố</h2>
+                    <p className="text-muted-foreground mb-6 max-w-md">
+                        Hệ thống đã gặp lỗi không mong muốn. Vui lòng thử lại hoặc quay về trang chủ.
                     </p>
-                    <div className="bg-muted p-4 rounded-lg text-left text-xs font-mono mb-6 max-w-2xl w-full overflow-auto">
-                        <p className="text-red-500 font-bold mb-2">{this.state.error && this.state.error.toString()}</p>
-                        <pre className="text-muted-foreground">{this.state.errorInfo && this.state.errorInfo.componentStack}</pre>
+
+                    <div className="flex gap-4">
+                        <Button variant="outline" onClick={() => window.location.href = '/'}>
+                            Về trang chủ
+                        </Button>
+                        <Button onClick={() => window.location.reload()}>
+                            Tải lại trang
+                        </Button>
                     </div>
-                    <Button onClick={() => window.location.reload()}>
-                        Tải lại trang
-                    </Button>
+
+                    {process.env.NODE_ENV !== 'production' && (
+                        <div className="mt-8 bg-muted/50 p-4 rounded-lg text-left text-xs font-mono max-w-3xl w-full overflow-auto border shadow-sm">
+                            <p className="text-red-500 font-bold mb-2">{this.state.error && this.state.error.toString()}</p>
+                            <pre className="text-muted-foreground whitespace-pre-wrap">
+                                {this.state.errorInfo && this.state.errorInfo.componentStack}
+                            </pre>
+                        </div>
+                    )}
                 </div>
             );
         }

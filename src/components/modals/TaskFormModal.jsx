@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -11,27 +11,65 @@ import { CalendarIcon, ListTodo, Plus } from 'lucide-react';
 import { format } from 'date-fns';
 import { vi } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
-export function TaskFormModal({ open, onOpenChange, type, onSubmit, accounts = [], departments = [] }) {
+export function TaskFormModal({ open, onOpenChange, type, onSubmit, accounts = [], departments = [], projects = [], initialData, mode = 'create' }) {
   const [formData, setFormData] = useState({
-    title: '',
-    description: '',
-    priority: 'medium',
-    deadline: undefined,
-    assigneeId: '',
-    departmentId: '',
+    title: initialData?.title || '',
+    description: initialData?.description || '',
+    priority: initialData?.priority || 'medium',
+    deadline: initialData?.deadline,
+    assigneeId: initialData?.assigneeId || '',
+    departmentId: initialData?.departmentId || '',
+    projectId: initialData?.projectId || '',
   });
+
+  // Sync state with props
+  useEffect(() => {
+    if (open) {
+      setFormData(prev => ({
+        ...prev,
+        title: initialData?.title || '',
+        description: initialData?.description || '',
+        priority: initialData?.priority || 'medium',
+        deadline: initialData?.deadline,
+        assigneeId: initialData?.assigneeId || '',
+        departmentId: initialData?.departmentId || '',
+        projectId: initialData?.projectId || '',
+      }));
+    }
+  }, [open, initialData]);
 
   const isMainTask = type === 'main-task';
 
   // Filter accounts based on role
   // Assuming leaders are any non-user role or specifically manager/admin/pmo/sep
   // Adjust logic as needed. For now: Leaders != 'user'
-  const leaders = accounts.filter(a => a.role !== 'user' && a.status === 'active');
-  const staff = accounts.filter(a => a.role === 'user' && a.status === 'active');
+  // Helper to identify standard user/staff roles
+  // Helper to identify standard user/staff roles
+  const isStaffRole = (r, name = '') => {
+    const role = (r || '').toLowerCase();
+    const cleanName = (name || '').toLowerCase();
 
-  const assignees = isMainTask ? leaders : staff;
+    const staffKeywords = ['user', 'staff', 'member', 'nhân viên', 'thành viên', 'giảng viên', 'gv', 'teacher', 'giáo viên'];
+    // Check if role contains any keyword
+    if (staffKeywords.some(k => role.includes(k))) return true;
+
+    // Also check name convention (e.g., starts with "GV")
+    if (cleanName.startsWith('gv') || cleanName.startsWith('giảng viên')) return true;
+
+    return false;
+  };
+
+  const leaders = accounts.filter(a => !isStaffRole(a.role, a.name) && a.status === 'active');
+  const staff = accounts.filter(a => isStaffRole(a.role, a.name) && a.status === 'active');
+
+  // Main Task -> Assign to Leader
+  // Subtask -> Assign to Staff (or anyone really, but logically Staff)
+  // If no leaders found, fallback to all accounts to prevent blocking
+  const assignees = isMainTask
+    ? (leaders.length > 0 ? leaders : accounts.filter(a => a.status === 'active'))
+    : staff;
   const handleSubmit = () => {
-    if (!formData.title.trim())
+    if (!formData.title.trim() || !formData.projectId)
       return;
     onSubmit(formData);
     setFormData({
@@ -53,12 +91,16 @@ export function TaskFormModal({ open, onOpenChange, type, onSubmit, accounts = [
           </div>
           <div>
             <DialogTitle>
-              {isMainTask ? 'Tạo Main Task' : 'Tạo Subtask'}
+              {mode === 'edit'
+                ? 'Cập nhật Công việc'
+                : (isMainTask ? 'Tạo Công việc chính' : 'Tạo Việc nhỏ')}
             </DialogTitle>
             <DialogDescription>
-              {isMainTask
-                ? 'Tạo công việc chính và gán cho Leader phụ trách'
-                : 'Tạo công việc con và phân công cho nhân viên'}
+              {mode === 'edit'
+                ? 'Thay đổi thông tin công việc'
+                : (isMainTask
+                  ? 'Tạo công việc chính và gán cho Trưởng nhóm phụ trách'
+                  : 'Tạo công việc con và phân công cho nhân viên')}
             </DialogDescription>
           </div>
         </div>
@@ -110,7 +152,7 @@ export function TaskFormModal({ open, onOpenChange, type, onSubmit, accounts = [
 
           {/* Deadline */}
           <div className="space-y-2">
-            <Label>Deadline</Label>
+            <Label>Hạn chót</Label>
             <Popover>
               <PopoverTrigger asChild>
                 <Button variant="outline" className={cn('w-full justify-start text-left font-normal', !formData.deadline && 'text-muted-foreground')}>
@@ -127,27 +169,35 @@ export function TaskFormModal({ open, onOpenChange, type, onSubmit, accounts = [
           </div>
         </div>
 
-        {/* Department (for Main Task) */}
-        {isMainTask && (<div className="space-y-2">
-          <Label>Phòng ban phụ trách</Label>
-          <Select value={formData.departmentId} onValueChange={(value) => setFormData({ ...formData, departmentId: value })}>
+        {/* Project Selection (Required) */}
+        <div className="space-y-2">
+          <Label>Dự án *</Label>
+          <Select
+            value={formData.projectId}
+            onValueChange={(value) => setFormData({ ...formData, projectId: value })}
+            disabled={!!initialData?.projectId || mode === 'edit'} // Lock if passed initially or editing
+          >
             <SelectTrigger>
-              <SelectValue placeholder="Chọn phòng ban" />
+              <SelectValue placeholder="Chọn dự án" />
             </SelectTrigger>
             <SelectContent>
-              {departments.map((dept) => (<SelectItem key={dept.id} value={dept.id}>
-                {dept.name}
-              </SelectItem>))}
+              {projects.map((proj) => (
+                <SelectItem key={proj.id} value={proj.id}>
+                  {proj.name}
+                </SelectItem>
+              ))}
             </SelectContent>
           </Select>
-        </div>)}
+        </div>
+
+        {/* Department Selection Removed per user request (Auto-inherited from Project) */}
 
         {/* Assignee */}
         <div className="space-y-2">
-          <Label>{isMainTask ? 'Gán cho Leader' : 'Phân công Nhân viên'}</Label>
+          <Label>{isMainTask ? 'Gán cho Trưởng nhóm' : 'Phân công Nhân viên'}</Label>
           <Select value={formData.assigneeId} onValueChange={(value) => setFormData({ ...formData, assigneeId: value })}>
             <SelectTrigger>
-              <SelectValue placeholder={isMainTask ? 'Chọn Leader' : 'Chọn Nhân viên'} />
+              <SelectValue placeholder={isMainTask ? 'Chọn Trưởng nhóm' : 'Chọn Nhân viên'} />
             </SelectTrigger>
             <SelectContent>
               {assignees.map((person) => (<SelectItem key={person.id} value={person.id}>
@@ -166,7 +216,7 @@ export function TaskFormModal({ open, onOpenChange, type, onSubmit, accounts = [
           Hủy
         </Button>
         <Button onClick={handleSubmit} disabled={!formData.title.trim()}>
-          {isMainTask ? 'Tạo Main Task' : 'Tạo Subtask'}
+          {mode === 'edit' ? 'Lưu thay đổi' : (isMainTask ? 'Tạo việc chính' : 'Tạo việc nhỏ')}
         </Button>
       </DialogFooter>
     </DialogContent>

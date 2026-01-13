@@ -63,36 +63,61 @@ export function useAuth() {
     return context;
 }
 // Helper hook to check permissions
+// Helper hook to check permissions
 export function usePermissions() {
     const { user } = useAuth();
-    if (!user)
-        return null;
-    const role = user.role;
+    if (!user) return null;
+
+    // Normalize role
+    const role = (user.role || '').toLowerCase();
+
+    // Helper checks
+    const isAdmin = role === 'admin';
+    const isDirector = role === 'director';
+    const isPMO = role === 'pmo';
+    const isLeader = role === 'leader';
+    const isStaff = role === 'staff';
+
     return {
         // Dashboard & Overview
         canViewDashboard: true,
+
         // Projects
-        canViewProjects: role !== 'admin',
-        canCreateProject: role === 'pmo',
-        canEditProject: role === 'pmo',
+        // Projects
+        canViewProjects: true, // All roles can at least view (Admin read-only, Director View, etc)
+        canCreateProject: isPMO,
+        canEditProject: isPMO,
+
         // Tasks
-        canViewTasks: role !== 'admin',
-        canCreateMainTask: role === 'pmo',
-        canCreateSubtask: role === 'leader',
-        canAssignTask: role === 'pmo' || role === 'leader',
-        canApproveTask: role === 'leader',
-        canAcceptTask: role === 'staff',
-        canRejectTask: role === 'staff',
-        canUpdateProgress: role === 'staff',
-        canSubmitForApproval: role === 'staff',
+        canViewTasks: true,
+        // PMO creates Main Tasks for teams, Leader creates tasks within team
+        canCreateMainTask: isPMO || isLeader,
+        // Subtasks are for breaking down work - Leader primarily, PMO if needed? Text says "PMO: Không xử lý từng subtask nhỏ".
+        // Leader: "Phân nhỏ Subtask". Staff: "Hoàn thành Subtask".
+        canCreateSubtask: isLeader,
+
+        canEditTask: isPMO || isLeader || isAdmin,
+        canDeleteTask: isPMO || isLeader || isAdmin,
+
+        canAssignTask: isPMO || isLeader, // PMO assigns Leader/Staff, Leader assigns Staff
+        canApproveTask: isPMO || isLeader, // "Review các task quan trọng" (PMO), "Duyệt task" (Leader)
+
+        // Staff Actions
+        canAcceptTask: isStaff,
+        canRejectTask: isStaff,
+        canUpdateProgress: isStaff || isLeader, // Staff updates progress, Leader monitors
+        canSubmitForApproval: isStaff,
+
         // Reports
-        canViewReports: role !== 'admin' && role !== 'staff',
-        canExportReports: role === 'pmo' || role === 'director',
-        // User Management
-        canManageUsers: role === 'admin' || role === 'pmo',
-        canManageDepartments: role === 'admin' || role === 'pmo',
+        canViewReports: isDirector || isPMO || isLeader || isAdmin,
+        canExportReports: isDirector || isPMO || isAdmin,
+
+        // User Management (Admin Only)
+        canManageUsers: isAdmin,
+        canManageDepartments: isAdmin,
+
         // System
-        canViewSystemLogs: role === 'admin',
-        canConfigureSystem: role === 'admin',
+        canViewSystemLogs: isAdmin,
+        canConfigureSystem: isAdmin,
     };
 }
