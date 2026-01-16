@@ -1,4 +1,4 @@
-import apiClient from '@core/config/api';
+import { projectApi, departmentApi, accountApi, dashboardApi, httpClient } from '@core/api';
 
 /**
  * DASHBOARD SERVICE
@@ -12,7 +12,7 @@ export const dashboardService = {
     getStats: async (type) => {
         try {
             const query = type ? `?type=${type}` : '';
-            const res = await apiClient.get(`/dashboard/stats${query}`);
+            const res = await httpClient.get(`/dashboard/stats${query}`);
 
             if (res.status !== 200) {
                 return {

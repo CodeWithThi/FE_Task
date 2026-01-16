@@ -1,4 +1,4 @@
-import apiClient from '@core/config/api';
+import { taskApi } from '@core/api';
 
 /**
  * TASK SERVICE - Real API
@@ -77,15 +77,7 @@ export const taskService = {
                 params.projectId = filters;
             }
 
-            const res = await apiClient.get('/tasks', { params });
-
-            if (res.status !== 200) {
-                return {
-                    ok: false,
-                    message: res.message || 'Không thể tải danh sách công việc',
-                    data: []
-                };
-            }
+            const res = await taskApi.getAll(params);
 
             const tasks = Array.isArray(res.data)
                 ? res.data.map(mapTaskToFrontend)
@@ -99,7 +91,7 @@ export const taskService = {
             console.error('taskService.getAllTasks error:', err);
             return {
                 ok: false,
-                message: 'Lỗi kết nối server',
+                message: err.response?.data?.message || 'Lỗi kết nối server',
                 data: []
             };
         }
@@ -120,15 +112,7 @@ export const taskService = {
      */
     async getTaskById(taskId) {
         try {
-            const res = await apiClient.get(`/tasks/${taskId}`);
-
-            if (res.status !== 200) {
-                return {
-                    ok: false,
-                    message: res.message || 'Không tìm thấy công việc',
-                    data: null
-                };
-            }
+            const res = await taskApi.getById(taskId);
 
             return {
                 ok: true,
@@ -138,7 +122,7 @@ export const taskService = {
             console.error('taskService.getTaskById error:', err);
             return {
                 ok: false,
-                message: 'Lỗi kết nối server',
+                message: err.response?.data?.message || 'Lỗi kết nối server',
                 data: null
             };
         }
@@ -158,19 +142,11 @@ export const taskService = {
                 dueDate: taskData.deadline,
                 priority: taskData.priority,
                 projectId: taskData.projectId,
-                assignedTo: taskData.assigneeId, // Assuming frontend sends ID
-                parentTaskId: taskData.parentTaskId || null  // Include parent task ID for subtasks
+                assignedTo: taskData.assigneeId,
+                parentTaskId: taskData.parentTaskId || null
             };
 
-            const res = await apiClient.post('/tasks', payload);
-
-            // Backend returns status 201 for create
-            if (res.status !== 201 && res.status !== 200) {
-                return {
-                    ok: false,
-                    message: res.message || 'Tạo công việc thất bại'
-                };
-            }
+            const res = await taskApi.create(payload);
 
             return {
                 ok: true,
@@ -181,7 +157,7 @@ export const taskService = {
             console.error('taskService.createTask error:', err);
             return {
                 ok: false,
-                message: 'Lỗi kết nối server'
+                message: err.response?.data?.message || 'Lỗi kết nối server'
             };
         }
     },
@@ -202,14 +178,7 @@ export const taskService = {
                 status: taskData.status
             };
 
-            const res = await apiClient.put(`/tasks/${taskId}`, payload);
-
-            if (res.status !== 200) {
-                return {
-                    ok: false,
-                    message: res.message || 'Cập nhật công việc thất bại'
-                };
-            }
+            const res = await taskApi.update(taskId, payload);
 
             return {
                 ok: true,
@@ -220,7 +189,7 @@ export const taskService = {
             console.error('taskService.updateTask error:', err);
             return {
                 ok: false,
-                message: 'Lỗi kết nối server'
+                message: err.response?.data?.message || 'Lỗi kết nối server'
             };
         }
     },
@@ -231,14 +200,7 @@ export const taskService = {
      */
     async deleteTask(taskId) {
         try {
-            const res = await apiClient.delete(`/tasks/${taskId}`);
-
-            if (res.status !== 200) {
-                return {
-                    ok: false,
-                    message: res.message || 'Xóa công việc thất bại'
-                };
-            }
+            await taskApi.delete(taskId);
 
             return {
                 ok: true,
@@ -248,7 +210,7 @@ export const taskService = {
             console.error('taskService.deleteTask error:', err);
             return {
                 ok: false,
-                message: 'Lỗi kết nối server'
+                message: err.response?.data?.message || 'Lỗi kết nối server'
             };
         }
     }

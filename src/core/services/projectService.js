@@ -1,4 +1,4 @@
-import apiClient from '@core/config/api';
+import { projectApi, departmentApi, accountApi, dashboardApi, httpClient } from '@core/api';
 
 /**
  * PROJECT SERVICE - Real API
@@ -46,7 +46,7 @@ export const projectService = {
             if (filters.departmentId) params.departmentId = filters.departmentId;
             if (filters.status) params.status = filters.status;
 
-            const res = await apiClient.get('/projects', { params });
+            const res = await httpClient.get('/projects', { params });
 
             // Backend returns: { status: 200, data: [...] }
             if (res.status !== 200) {
@@ -81,7 +81,7 @@ export const projectService = {
      */
     async getProjectById(projectId) {
         try {
-            const res = await apiClient.get(`/projects/${projectId}`);
+            const res = await httpClient.get(`/projects/${projectId}`);
 
             if (res.status !== 200) {
                 return {
@@ -120,7 +120,7 @@ export const projectService = {
                 endDate: projectData.endDate
             };
 
-            const res = await apiClient.post('/projects', payload);
+            const res = await httpClient.post('/projects', payload);
 
             if (res.status !== 201 && res.status !== 200) {
                 return {
@@ -157,7 +157,7 @@ export const projectService = {
                 status: projectData.status
             };
 
-            const res = await apiClient.put(`/projects/${projectId}`, payload);
+            const res = await httpClient.put(`/projects/${projectId}`, payload);
 
             if (res.status !== 200) {
                 return {
@@ -186,7 +186,7 @@ export const projectService = {
      */
     async deleteProject(projectId) {
         try {
-            const res = await apiClient.delete(`/projects/${projectId}`);
+            const res = await httpClient.delete(`/projects/${projectId}`);
 
             if (res.status !== 200) {
                 return {

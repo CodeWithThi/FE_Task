@@ -1,4 +1,4 @@
-import apiClient from '@core/config/api';
+import { userApi, httpClient } from '@core/api';
 
 /**
  * USER MANAGEMENT SERVICE (Admin only)
@@ -27,7 +27,7 @@ export const userService = {
             if (params.status) queryParams.append('status', params.status);
             if (params.includeDeleted) queryParams.append('includeDeleted', 'true');
 
-            const response = await apiClient.get(`/accounts?${queryParams.toString()}`);
+            const response = await httpClient.get(`/accounts?${queryParams.toString()}`);
 
             if (response.ok === false) {
                 return {
@@ -80,7 +80,7 @@ export const userService = {
      */
     getUserById: async (id) => {
         try {
-            const response = await apiClient.get(`/accounts/${id}`);
+            const response = await httpClient.get(`/accounts/${id}`);
 
             if (response.ok === false) {
                 return {
@@ -107,7 +107,7 @@ export const userService = {
      */
     createUser: async (userData) => {
         try {
-            const response = await apiClient.post('/accounts', userData);
+            const response = await httpClient.post('/accounts', userData);
 
             if (response.ok === false) {
                 return {
@@ -136,7 +136,7 @@ export const userService = {
     updateUser: async (id, userData) => {
         try {
             // Updated to correct backend endpoint
-            const response = await apiClient.put(`/accounts/${id}`, userData);
+            const response = await httpClient.put(`/accounts/${id}`, userData);
 
             if (response.ok === false) {
                 return {
@@ -163,7 +163,7 @@ export const userService = {
      */
     deleteUser: async (id) => {
         try {
-            const response = await apiClient.delete(`/accounts/${id}`);
+            const response = await httpClient.delete(`/accounts/${id}`);
 
             if (response.ok === false) {
                 return {
@@ -200,7 +200,7 @@ export const userService = {
     restoreUser: async (id) => {
         try {
             // Backend endpoint for restore
-            const response = await apiClient.post(`/accounts/${id}/restore`);
+            const response = await httpClient.post(`/accounts/${id}/restore`);
 
             if (response.ok === false) {
                 return {

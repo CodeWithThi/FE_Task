@@ -1,4 +1,4 @@
-import apiClient from '@core/config/api';
+import { authApi } from '@core/api';
 
 /**
  * AUTH SERVICE
@@ -13,18 +13,10 @@ export const authService = {
      */
     login: async (username, password) => {
         try {
-            const response = await apiClient.post('/auth/login', { username, password });
-
-            // apiClient already handles errors and returns { ok: false } on failure
-            if (response.ok === false) {
-                return {
-                    ok: false,
-                    message: response.message || 'Đăng nhập thất bại'
-                };
-            }
+            const response = await authApi.login({ username, password });
 
             // Extract token and user from backend structure
-            const backendData = response.data; // apiClient returns response.data (body)
+            const backendData = response.data; // axios returns response.data
             const token = backendData?.tokens?.accessToken;
             let rawUser = backendData?.user;
 
@@ -73,7 +65,7 @@ export const authService = {
             console.error('authService.login error:', error);
             return {
                 ok: false,
-                message: 'Lỗi kết nối server'
+                message: error.response?.data?.message || 'Lỗi kết nối server'
             };
         }
     },
@@ -156,28 +148,24 @@ export const authService = {
      */
     changePassword: async (oldPassword, newPassword) => {
         try {
-            const response = await apiClient.post('/auth/change-password', {
+            // Note: changePassword API might need to be added to authApi
+            // For now, using httpClient directly
+            const { httpClient } = await import('@core/api');
+            const response = await httpClient.post('/auth/change-password', {
                 oldPassword,
                 newPassword,
-                confirmPassword: newPassword // Backend might expect this
+                confirmPassword: newPassword
             });
-
-            if (response.ok === false) {
-                return {
-                    ok: false,
-                    message: response.message || 'Đổi mật khẩu thất bại'
-                };
-            }
 
             return {
                 ok: true,
-                message: response.message || 'Đổi mật khẩu thành công'
+                message: response.data?.message || 'Đổi mật khẩu thành công'
             };
         } catch (error) {
             console.error('authService.changePassword error:', error);
             return {
                 ok: false,
-                message: error.message || 'Lỗi kết nối server'
+                message: error.response?.data?.message || 'Lỗi kết nối server'
             };
         }
     },
@@ -187,15 +175,11 @@ export const authService = {
      */
     forgotPassword: async (email) => {
         try {
-            const response = await apiClient.post('/auth/forgot-password', { email });
-            // API returns { status: 200, message: "..." }
-            if (response.status === 200 || response.ok) {
-                return { ok: true, message: response.message };
-            }
-            return { ok: false, message: response.message || 'Gửi yêu cầu thất bại' };
+            const response = await authApi.forgotPassword(email);
+            return { ok: true, message: response.data?.message || 'Đã gửi email reset password' };
         } catch (error) {
             console.error('authService.forgotPassword error:', error);
-            return { ok: false, message: 'Lỗi kết nối server' };
+            return { ok: false, message: error.response?.data?.message || 'Lỗi kết nối server' };
         }
     },
 
@@ -204,19 +188,11 @@ export const authService = {
      */
     resetPassword: async (token, email, newPassword) => {
         try {
-            const response = await apiClient.post('/auth/reset-password', {
-                token,
-                email,
-                newPassword,
-                confirmPassword: newPassword // Backend might expect this
-            });
-            if (response.ok === true || response.ok === undefined) {
-                return { ok: true, message: response.message || 'Đặt lại mật khẩu thành công' };
-            }
-            return { ok: false, message: response.message || 'Đặt lại mật khẩu thất bại' };
+            const response = await authApi.resetPassword(token, email, newPassword);
+            return { ok: true, message: response.data?.message || 'Đặt lại mật khẩu thành công' };
         } catch (error) {
             console.error('authService.resetPassword error:', error);
-            return { ok: false, message: error.message || 'Lỗi kết nối server' };
+            return { ok: false, message: error.response?.data?.message || 'Lỗi kết nối server' };
         }
     },
 

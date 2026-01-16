@@ -1,9 +1,9 @@
-import apiClient from '@core/config/api';
+import { projectApi, departmentApi, accountApi, dashboardApi, httpClient } from '@core/api';
 
 export const departmentService = {
     getDepartments: async () => {
         try {
-            const res = await apiClient.get('/departments');
+            const res = await httpClient.get('/departments');
             if (res.status === 200 || res.ok) {
                 const rawData = res.data?.data || res.data || [];
                 const departments = Array.isArray(rawData) ? rawData : [];
@@ -39,7 +39,7 @@ export const departmentService = {
 
     createDepartment: async (data) => {
         try {
-            const res = await apiClient.post('/departments', data);
+            const res = await httpClient.post('/departments', data);
             if (res.ok || res.status === 201) {
                 return {
                     ok: true,
@@ -62,7 +62,7 @@ export const departmentService = {
 
     updateDepartment: async (id, data) => {
         try {
-            const res = await apiClient.put(`/departments/${id}`, data);
+            const res = await httpClient.put(`/departments/${id}`, data);
             if (res.ok || res.status === 200) {
                 return {
                     ok: true,

@@ -1,9 +1,9 @@
-import apiClient from '@core/config/api';
+import { projectApi, departmentApi, accountApi, dashboardApi, httpClient } from '@core/api';
 
 export const accountService = {
     getAccounts: async () => {
         try {
-            const res = await apiClient.get('/accounts');
+            const res = await httpClient.get('/accounts');
             if (res.status === 200 || res.ok) {
                 const rawData = res.data || res;
                 const accounts = Array.isArray(rawData) ? rawData : (rawData.data || []);
@@ -26,7 +26,7 @@ export const accountService = {
     },
     createAccount: async (data) => {
         try {
-            const res = await apiClient.post('/accounts', data);
+            const res = await httpClient.post('/accounts', data);
             if (res.status === 201 || res.status === 200 || res.ok) {
                 return {
                     ok: true,
