@@ -1,0 +1,38 @@
+{
+    "compilerOptions": {
+        "baseUrl": ".",
+        "paths": {
+            "@/*": [
+                "./src/*"
+            ],
+            "@core/*": [
+                "./src/core/*"
+            ],
+            "@features/*": [
+                "./src/features/*"
+            ],
+            "@admin/*": [
+                "./src/features/admin/*"
+            ],
+            "@pmo/*": [
+                "./src/features/pmo/*"
+            ],
+            "@leader/*": [
+                "./src/features/leader/*"
+            ],
+            "@staff/*": [
+                "./src/features/staff/*"
+            ],
+            "@shared/*": [
+                "./src/features/shared/*"
+            ]
+        }
+    },
+    "include": [
+        "src/**/*"
+    ],
+    "exclude": [
+        "node_modules",
+        "dist"
+    ]
+}

@@ -1,18 +1,18 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useAuth } from '@/contexts/AuthContext';
-import { PageHeader } from '@/components/common/PageHeader';
-import { StatCard } from '@/components/common/StatCard';
-import { ProgressBar } from '@/components/common/ProgressBar';
-import { StatusBadge } from '@/components/common/StatusBadge';
-import { PriorityBadge } from '@/components/common/PriorityBadge';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
+import { useAuth } from '@core/contexts/AuthContext';
+import { PageHeader } from '@core/components/common/PageHeader';
+import { StatCard } from '@core/components/common/StatCard';
+import { ProgressBar } from '@core/components/common/ProgressBar';
+import { StatusBadge } from '@core/components/common/StatusBadge';
+import { PriorityBadge } from '@core/components/common/PriorityBadge';
+import { Card, CardContent, CardHeader, CardTitle } from '@core/components/ui/card';
+import { Button } from '@core/components/ui/button';
 import { ConfirmActionModal } from '@/components/modals/ConfirmActionModal';
 import { toast } from 'sonner';
 import { ListTodo, Clock, CheckCircle2, AlertTriangle, ArrowRight, Calendar, Loader2 } from 'lucide-react';
-import { dashboardService } from '@/services/dashboardService';
-import { taskService } from '@/services/taskService';
+import { dashboardService } from '@core/services/dashboardService';
+import { taskService } from '@core/services/taskService';
 
 export function StaffDashboard() {
   const navigate = useNavigate();
@@ -285,3 +285,4 @@ export function StaffDashboard() {
     </div>
   </div>);
 }
+

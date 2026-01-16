@@ -1,15 +1,15 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { PageHeader } from '@/components/common/PageHeader';
-import { StatCard } from '@/components/common/StatCard';
-import { ProgressBar } from '@/components/common/ProgressBar';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { LoadingScreen } from '@/components/common/LoadingScreen';
+import { PageHeader } from '@core/components/common/PageHeader';
+import { StatCard } from '@core/components/common/StatCard';
+import { ProgressBar } from '@core/components/common/ProgressBar';
+import { Card, CardContent, CardHeader, CardTitle } from '@core/components/ui/card';
+import { Badge } from '@core/components/ui/badge';
+import { LoadingScreen } from '@core/components/common/LoadingScreen';
 import { FolderKanban, ListTodo, CheckCircle2, AlertTriangle, TrendingUp, Building2 } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, LineChart, Line } from 'recharts';
-import { dashboardService } from '@/services/dashboardService';
-import { projectService } from '@/services/projectService';
+import { dashboardService } from '@core/services/dashboardService';
+import { projectService } from '@core/services/projectService';
 import { toast } from 'sonner';
 
 const projectStatusLabels = {
@@ -196,3 +196,4 @@ export function DirectorDashboard() {
     </div>
   );
 }
+

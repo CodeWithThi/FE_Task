@@ -18,9 +18,9 @@ import {
 import { CSS } from '@dnd-kit/utilities';
 import { roleLabels, statusLabels, priorityLabels } from '@/models';
 import { SubtaskCard } from './SubtaskCard';
-import { ScrollArea } from '@/components/ui/scroll-area';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
+import { ScrollArea } from '@core/components/ui/scroll-area';
+import { Button } from '@core/components/ui/button';
+import { Input } from '@core/components/ui/input';
 import { Plus, X } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -237,3 +237,4 @@ export function KanbanBoard({ tasks, onCardClick, onAddCard, onTaskUpdate }) {
     </DndContext>
   );
 }
+

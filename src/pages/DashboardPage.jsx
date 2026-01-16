@@ -1,5 +1,5 @@
-import { useAuth } from '@/contexts/AuthContext';
-import { GlobalErrorBoundary } from '@/components/common/GlobalErrorBoundary';
+import { useAuth } from '@core/contexts/AuthContext';
+import { GlobalErrorBoundary } from '@core/components/common/GlobalErrorBoundary';
 import { AdminDashboard } from '@/components/dashboards/AdminDashboard';
 import { PMODashboard } from '@/components/dashboards/PMODashboard';
 import { DirectorDashboard } from '@/components/dashboards/DirectorDashboard';
@@ -44,3 +44,4 @@ export default function DashboardPage() {
             );
     }
 }
+

@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@core/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@core/components/ui/card';
 import { ArrowLeft, ArrowRight, Home, LayoutDashboard, FolderKanban, ListTodo, Bell, BarChart3, Users, Settings, FileText, Shield, Plus, Edit, CheckCircle, XCircle, Clock, Upload } from 'lucide-react';
 const sitemapData = [
     {
@@ -307,3 +307,4 @@ export default function SitemapPage() {
       </div>
     </div>);
 }
+

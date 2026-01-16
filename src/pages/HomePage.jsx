@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { Button } from '@/components/ui/button';
+import { Button } from '@core/components/ui/button';
 import { FolderKanban } from 'lucide-react';
 export default function HomePage() {
     return (<div className="min-h-screen bg-gradient-to-b from-background to-muted/30 flex flex-col">

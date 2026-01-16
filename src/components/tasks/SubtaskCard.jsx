@@ -1,5 +1,5 @@
-import { PriorityBadge } from '@/components/common/PriorityBadge';
-import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { PriorityBadge } from '@core/components/common/PriorityBadge';
+import { Avatar, AvatarFallback } from '@core/components/ui/avatar';
 import { Calendar, Building2 } from 'lucide-react';
 export function SubtaskCard({ task, onClick }) {
   const isOverdue = new Date(task.deadline) < new Date() && task.status !== 'completed';
@@ -42,3 +42,4 @@ export function SubtaskCard({ task, onClick }) {
     </div>
   </div>);
 }
+

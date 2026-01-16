@@ -1,11 +1,11 @@
-import { Toaster } from "@/components/ui/toaster";
-import { Toaster as Sonner } from "@/components/ui/sonner";
-import { TooltipProvider } from "@/components/ui/tooltip";
+import { Toaster } from "@core/components/ui/toaster";
+import { Toaster as Sonner } from "@core/components/ui/sonner";
+import { TooltipProvider } from "@core/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter } from "react-router-dom";
-import { AuthProvider } from "@/contexts/AuthContext";
+import { AuthProvider } from "@core/contexts/AuthContext";
 import { AppRoutes } from "@/routes/AppRoutes";
-import { GlobalErrorBoundary } from "@/components/common/GlobalErrorBoundary";
+import { GlobalErrorBoundary } from "@core/components/common/GlobalErrorBoundary";
 const queryClient = new QueryClient();
 const App = () => (<QueryClientProvider client={queryClient}>
   <AuthProvider>
@@ -21,3 +21,4 @@ const App = () => (<QueryClientProvider client={queryClient}>
   </AuthProvider>
 </QueryClientProvider>);
 export default App;
+

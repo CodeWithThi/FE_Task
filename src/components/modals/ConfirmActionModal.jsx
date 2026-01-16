@@ -1,7 +1,7 @@
 import { useState } from 'react';
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, } from '@/components/ui/alert-dialog';
-import { Textarea } from '@/components/ui/textarea';
-import { Label } from '@/components/ui/label';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, } from '@core/components/ui/alert-dialog';
+import { Textarea } from '@core/components/ui/textarea';
+import { Label } from '@core/components/ui/label';
 import { CheckCircle, XCircle, Send, RotateCcw, UserPlus, AlertTriangle, Trash2 } from 'lucide-react';
 const actionConfig = {
   delete: {
@@ -125,3 +125,4 @@ export function ConfirmActionModal({ open, onOpenChange, actionType, taskTitle, 
     </AlertDialogContent>
   </AlertDialog>);
 }
+

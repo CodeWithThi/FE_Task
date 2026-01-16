@@ -1,19 +1,19 @@
 import { useState, useEffect } from 'react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, } from '@/components/ui/dialog';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
-import { Separator } from '@/components/ui/separator';
-import { Avatar, AvatarFallback } from '@/components/ui/avatar';
-import { StatusBadge } from '@/components/common/StatusBadge';
-import { PriorityBadge } from '@/components/common/PriorityBadge';
-import { ProgressBar } from '@/components/common/ProgressBar';
-import { Checkbox } from '@/components/ui/checkbox';
-import { useAuth } from '@/contexts/AuthContext';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, } from '@core/components/ui/dialog';
+import { Button } from '@core/components/ui/button';
+import { Input } from '@core/components/ui/input';
+import { Label } from '@core/components/ui/label';
+import { Textarea } from '@core/components/ui/textarea';
+import { Separator } from '@core/components/ui/separator';
+import { Avatar, AvatarFallback } from '@core/components/ui/avatar';
+import { StatusBadge } from '@core/components/common/StatusBadge';
+import { PriorityBadge } from '@core/components/common/PriorityBadge';
+import { ProgressBar } from '@core/components/common/ProgressBar';
+import { Checkbox } from '@core/components/ui/checkbox';
+import { useAuth } from '@core/contexts/AuthContext';
 import { toast } from 'sonner';
 import { Calendar, Paperclip, Link2, Upload, Send, CheckCircle2, XCircle, Clock, FileText, ExternalLink, Trash2, Plus, Building2, User, X, } from 'lucide-react';
-import { taskService } from '@/services/taskService';
+import { taskService } from '@core/services/taskService';
 export function SubtaskDetailModal({ open, onOpenChange, task, accounts = [], onTaskUpdate }) {
   const { user } = useAuth();
   const [progress, setProgress] = useState(task?.progress || 0);
@@ -335,3 +335,4 @@ export function SubtaskDetailModal({ open, onOpenChange, task, accounts = [], on
     </DialogContent>
   </Dialog>);
 }
+

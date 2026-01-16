@@ -1,17 +1,17 @@
 import { useState, useEffect } from 'react';
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
-import { Label } from '@/components/ui/label';
-import { Calendar } from '@/components/ui/calendar';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@core/components/ui/dialog';
+import { Button } from '@core/components/ui/button';
+import { Input } from '@core/components/ui/input';
+import { Textarea } from '@core/components/ui/textarea';
+import { Label } from '@core/components/ui/label';
+import { Calendar } from '@core/components/ui/calendar';
+import { Popover, PopoverContent, PopoverTrigger } from '@core/components/ui/popover';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@core/components/ui/select';
 import { CalendarIcon, FolderKanban } from 'lucide-react';
 import { format } from 'date-fns';
 import { vi } from 'date-fns/locale';
-import { cn } from '@/lib/utils';
-import { departmentService } from '@/services/departmentService';
+import { cn } from '@core/lib/utils';
+import { departmentService } from '@core/services/departmentService';
 
 export function ProjectFormModal({ open, onOpenChange, onSubmit, initialData, mode = 'edit' }) {
   const [departments, setDepartments] = useState([]);
@@ -189,3 +189,4 @@ export function ProjectFormModal({ open, onOpenChange, onSubmit, initialData, mo
     </DialogContent>
   </Dialog>);
 }
+

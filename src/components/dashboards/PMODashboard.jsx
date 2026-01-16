@@ -1,22 +1,22 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { PageHeader } from '@/components/common/PageHeader';
-import { StatCard } from '@/components/common/StatCard';
-import { ProgressBar } from '@/components/common/ProgressBar';
-import { StatusBadge } from '@/components/common/StatusBadge';
-import { PriorityBadge } from '@/components/common/PriorityBadge';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
+import { PageHeader } from '@core/components/common/PageHeader';
+import { StatCard } from '@core/components/common/StatCard';
+import { ProgressBar } from '@core/components/common/ProgressBar';
+import { StatusBadge } from '@core/components/common/StatusBadge';
+import { PriorityBadge } from '@core/components/common/PriorityBadge';
+import { Card, CardContent, CardHeader, CardTitle } from '@core/components/ui/card';
+import { Button } from '@core/components/ui/button';
 import { ProjectFormModal } from '@/components/modals/ProjectFormModal';
 import { TaskFormModal } from '@/components/modals/TaskFormModal';
 import { toast } from 'sonner';
 import { FolderKanban, ListTodo, AlertTriangle, Eye, Clock, ArrowRight, Plus, Loader2 } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
-import { dashboardService } from '@/services/dashboardService';
-import { projectService } from '@/services/projectService';
-import { taskService } from '@/services/taskService';
-import { accountService } from '@/services/accountService';
-import { departmentService } from '@/services/departmentService';
+import { dashboardService } from '@core/services/dashboardService';
+import { projectService } from '@core/services/projectService';
+import { taskService } from '@core/services/taskService';
+import { accountService } from '@core/services/accountService';
+import { departmentService } from '@core/services/departmentService';
 
 // Mock chart data for now as backend doesn't provide this yet
 const projectProgress = [
@@ -255,3 +255,4 @@ export function PMODashboard() {
     </Card>
   </div>);
 }
+

@@ -1,10 +1,10 @@
 import { useState } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
-import { authService } from '@/services/authService';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { authService } from '@core/services/authService';
+import { Button } from '@core/components/ui/button';
+import { Input } from '@core/components/ui/input';
+import { Label } from '@core/components/ui/label';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@core/components/ui/card';
 import { Lock, Eye, EyeOff, Loader2, CheckCircle2, XCircle } from 'lucide-react';
 import { toast } from 'sonner';
 export default function ResetPasswordPage() {
@@ -148,3 +148,4 @@ export default function ResetPasswordPage() {
     </div>
   </div>);
 }
+

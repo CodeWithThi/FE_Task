@@ -1,10 +1,10 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { authService } from '@/services/authService';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { authService } from '@core/services/authService';
+import { Button } from '@core/components/ui/button';
+import { Input } from '@core/components/ui/input';
+import { Label } from '@core/components/ui/label';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@core/components/ui/card';
 import { Mail, ArrowLeft, Loader2, CheckCircle2 } from 'lucide-react';
 export default function ForgotPasswordPage() {
   const [email, setEmail] = useState('');

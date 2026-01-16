@@ -1,10 +1,10 @@
 import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { useAuth } from '@/contexts/AuthContext';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { useAuth } from '@core/contexts/AuthContext';
+import { Button } from '@core/components/ui/button';
+import { Input } from '@core/components/ui/input';
+import { Label } from '@core/components/ui/label';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@core/components/ui/card';
 import { Eye, EyeOff, Lock, User, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 export default function LoginPage() {

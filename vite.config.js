@@ -17,6 +17,13 @@ export default defineConfig(({ mode }) => ({
     resolve: {
         alias: {
             "@": path.resolve(__dirname, "./src"),
+            "@core": path.resolve(__dirname, "./src/core"),
+            "@features": path.resolve(__dirname, "./src/features"),
+            "@admin": path.resolve(__dirname, "./src/features/admin"),
+            "@pmo": path.resolve(__dirname, "./src/features/pmo"),
+            "@leader": path.resolve(__dirname, "./src/features/leader"),
+            "@staff": path.resolve(__dirname, "./src/features/staff"),
+            "@shared": path.resolve(__dirname, "./src/features/shared"),
         },
     },
 }));
