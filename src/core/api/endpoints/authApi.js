@@ -48,4 +48,11 @@ export const authApi = {
      */
     refreshToken: (refreshToken) =>
         httpClient.post('/auth/refresh', { refreshToken }),
+
+    /**
+     * Get current authenticated user
+     * @returns {Promise} Current user data
+     */
+    getMe: () =>
+        httpClient.get('/auth/me'),
 };

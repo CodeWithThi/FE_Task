@@ -48,6 +48,9 @@ export const projectService = {
 
             const res = await httpClient.get('/projects', { params });
 
+            console.log('DEBUG projectService.getAllProjects response:', res);
+            console.log('DEBUG res.data:', res.data);
+
             // Backend returns: { status: 200, data: [...] }
             if (res.status !== 200) {
                 return {
@@ -57,9 +60,13 @@ export const projectService = {
                 };
             }
 
-            const projects = Array.isArray(res.data)
-                ? res.data.map(mapProjectToFrontend)
+            // Backend wraps in { status: 200, data: actualData }
+            const backendPayload = res.data?.data || res.data;
+            const projects = Array.isArray(backendPayload)
+                ? backendPayload.map(mapProjectToFrontend)
                 : [];
+
+            console.log('DEBUG projects mapped:', projects.length, 'projects');
 
             return {
                 ok: true,
@@ -91,9 +98,11 @@ export const projectService = {
                 };
             }
 
+            const backendPayload = res.data?.data || res.data;
+
             return {
                 ok: true,
-                data: mapProjectToFrontend(res.data)
+                data: mapProjectToFrontend(backendPayload)
             };
         } catch (err) {
             console.error('projectService.getProjectById error:', err);
@@ -129,9 +138,11 @@ export const projectService = {
                 };
             }
 
+            const backendPayload = res.data?.data || res.data;
+
             return {
                 ok: true,
-                data: mapProjectToFrontend(res.data),
+                data: mapProjectToFrontend(backendPayload),
                 message: 'Tạo dự án thành công'
             };
         } catch (err) {
@@ -166,9 +177,11 @@ export const projectService = {
                 };
             }
 
+            const backendPayload = res.data?.data || res.data;
+
             return {
                 ok: true,
-                data: mapProjectToFrontend(res.data),
+                data: mapProjectToFrontend(backendPayload),
                 message: 'Cập nhật dự án thành công'
             };
         } catch (err) {

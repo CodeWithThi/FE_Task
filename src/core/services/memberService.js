@@ -1,5 +1,6 @@
 // Member Service - Real API
-import apiClient from '@core/config/api';
+
+import { httpClient } from '@core/api';
 
 /**
  * MEMBER SERVICE - Real API
@@ -13,7 +14,7 @@ export const memberService = {
      */
     getMembers: async () => {
         try {
-            const res = await apiClient.get('/members');
+            const res = await httpClient.get('/members');
             if (res.status === 200 || res.ok) {
                 const rawData = res.data || res;
                 const members = Array.isArray(rawData) ? rawData : (rawData.data || []);
@@ -45,7 +46,7 @@ export const memberService = {
      */
     async getAllMembers() {
         try {
-            const res = await apiClient.get('/members');
+            const res = await httpClient.get('/members');
 
             if (res.status === 200 || res.ok) {
                 const rawData = res.data || res;
@@ -89,7 +90,7 @@ export const memberService = {
      */
     async getMembersByDepartment(departmentId) {
         try {
-            const res = await apiClient.get(`/ departments / ${departmentId}/members`);
+            const res = await httpClient.get(`/ departments / ${departmentId}/members`);
 
             if (res.status === 200 || res.ok) {
                 const rawData = res.data || res;
@@ -129,7 +130,7 @@ export const memberService = {
      */
     async getMemberById(memberId) {
         try {
-            const res = await apiClient.get(`/members/${memberId}`);
+            const res = await httpClient.get(`/members/${memberId}`);
 
             if (res.status === 200 || res.ok) {
                 const item = res.data || res;
@@ -180,7 +181,7 @@ export const memberService = {
                 // Add other fields as per schema
             };
 
-            const res = await apiClient.post('/members', payload);
+            const res = await httpClient.post('/members', payload);
 
             if (res.status === 201 || res.status === 200 || res.ok) {
                 return {
@@ -217,7 +218,7 @@ export const memberService = {
                 Status: memberData.status
             };
 
-            const res = await apiClient.put(`/members/${memberId}`, payload);
+            const res = await httpClient.put(`/members/${memberId}`, payload);
 
             if (res.status === 200 || res.ok) {
                 return {
@@ -246,7 +247,7 @@ export const memberService = {
      */
     async deleteMember(memberId) {
         try {
-            const res = await apiClient.delete(`/members/${memberId}`);
+            const res = await httpClient.delete(`/members/${memberId}`);
 
             if (res.status === 200 || res.ok) {
                 return {

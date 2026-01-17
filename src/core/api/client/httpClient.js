@@ -13,7 +13,7 @@ import axios from 'axios';
 
 // Create axios instance with default config
 const httpClient = axios.create({
-    baseURL: import.meta.env.VITE_API_URL || 'http://localhost:3069',
+    baseURL: import.meta.env.VITE_API_URL || 'http://localhost:3069/api/v1',
     timeout: 30000, // 30 seconds
     headers: {
         'Content-Type': 'application/json',
@@ -24,7 +24,7 @@ const httpClient = axios.create({
 httpClient.interceptors.request.use(
     (config) => {
         // Get token from localStorage
-        const token = localStorage.getItem('token');
+        const token = localStorage.getItem('accessToken');
 
         if (token) {
             config.headers.Authorization = `Bearer ${token}`;
@@ -63,7 +63,7 @@ httpClient.interceptors.response.use(
                     const { token: newToken } = response.data;
 
                     // Save new token
-                    localStorage.setItem('token', newToken);
+                    localStorage.setItem('accessToken', newToken);
 
                     // Retry original request with new token
                     originalRequest.headers.Authorization = `Bearer ${newToken}`;
@@ -71,7 +71,7 @@ httpClient.interceptors.response.use(
                 }
             } catch (refreshError) {
                 // Refresh failed - logout user
-                localStorage.removeItem('token');
+                localStorage.removeItem('accessToken');
                 localStorage.removeItem('refreshToken');
                 localStorage.removeItem('user');
 

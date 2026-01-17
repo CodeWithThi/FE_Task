@@ -9,7 +9,7 @@ export function DataTable({ data, columns, keyExtractor, onRowClick, emptyMessag
       <Table className="table-fixed w-full">
         <TableHeader className="table-header-fixed">
           <TableRow className="hover:bg-transparent">
-            {columns.map((column) => (<TableHead key={column.key} className={cn('bg-slate-600 text-white font-bold uppercase', column.className)}>
+            {columns.map((column) => (<TableHead key={column.key} className={cn('bg-sidebar text-sidebar-foreground font-bold uppercase', column.className)}>
               {column.header}
             </TableHead>))}
           </TableRow>

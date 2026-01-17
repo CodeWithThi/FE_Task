@@ -24,7 +24,7 @@ export const dashboardService = {
 
             return {
                 ok: true,
-                data: res.data
+                data: res.data?.data || res.data
             };
         } catch (err) {
             console.error('dashboardService.getStats error:', err);

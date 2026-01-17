@@ -39,7 +39,7 @@ const menuItems = [
     icon: Kanban,
     label: 'Công việc',
     path: '/tasks',
-    roles: ['leader', 'staff', 'pmo', 'admin', 'director'],
+    roles: ['leader', 'staff', 'pmo', 'director'],
     section: 'project',
   },
   // Nhắc việc - PMO, Leader, Staff

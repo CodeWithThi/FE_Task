@@ -38,8 +38,14 @@ export const userService = {
 
             // Map backend data (PascalCase) to frontend structure (camelCase)
             console.log("DEBUG GET USERS RAW RESPONSE:", response);
+            console.log("DEBUG response.data:", response.data);
 
-            const rawList = Array.isArray(response.data) ? response.data : [];
+            // Backend wraps in { status: 200, data: actualData }
+            const backendPayload = response.data?.data || response.data;
+            const rawList = Array.isArray(backendPayload) ? backendPayload : [];
+
+            console.log("DEBUG backendPayload:", backendPayload);
+            console.log("DEBUG rawList:", rawList);
             const mappedData = rawList.map(acc => ({
                 aid: acc.A_ID || acc.id,
                 userName: acc.UserName || acc.username,

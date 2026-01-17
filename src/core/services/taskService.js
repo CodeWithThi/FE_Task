@@ -79,9 +79,16 @@ export const taskService = {
 
             const res = await taskApi.getAll(params);
 
-            const tasks = Array.isArray(res.data)
-                ? res.data.map(mapTaskToFrontend)
+            console.log('DEBUG taskService.getAllTasks response:', res);
+            console.log('DEBUG res.data:', res.data);
+
+            // Backend wraps in { status: 200, data: actualData }
+            const backendPayload = res.data?.data || res.data;
+            const tasks = Array.isArray(backendPayload)
+                ? backendPayload.map(mapTaskToFrontend)
                 : [];
+
+            console.log('DEBUG tasks mapped:', tasks.length, 'tasks');
 
             return {
                 ok: true,
@@ -114,9 +121,12 @@ export const taskService = {
         try {
             const res = await taskApi.getById(taskId);
 
+            // Extract from double-wrapped response
+            const backendPayload = res.data?.data || res.data;
+
             return {
                 ok: true,
-                data: mapTaskToFrontend(res.data)
+                data: mapTaskToFrontend(backendPayload)
             };
         } catch (err) {
             console.error('taskService.getTaskById error:', err);
@@ -148,9 +158,11 @@ export const taskService = {
 
             const res = await taskApi.create(payload);
 
+            const backendPayload = res.data?.data || res.data;
+
             return {
                 ok: true,
-                data: mapTaskToFrontend(res.data),
+                data: mapTaskToFrontend(backendPayload),
                 message: 'Tạo công việc thành công'
             };
         } catch (err) {
@@ -180,9 +192,11 @@ export const taskService = {
 
             const res = await taskApi.update(taskId, payload);
 
+            const backendPayload = res.data?.data || res.data;
+
             return {
                 ok: true,
-                data: mapTaskToFrontend(res.data),
+                data: mapTaskToFrontend(backendPayload),
                 message: 'Cập nhật công việc thành công'
             };
         } catch (err) {

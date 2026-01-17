@@ -69,9 +69,10 @@ export default function ProjectListPage() {
         try {
             const res = await departmentService.getDepartments();
             if (res.ok) {
+                // departmentService already maps D_ID → id, D_Name → name
                 const options = res.data.map(d => ({
-                    value: d.D_ID || d.id,
-                    label: d.D_Name || d.name
+                    value: d.id,
+                    label: d.name
                 }));
                 setDepartmentOptions(options);
             }
@@ -305,7 +306,8 @@ export default function ProjectListPage() {
     const filteredProjects = projects.filter((project) => {
         const matchesSearch = project.name.toLowerCase().includes(search.toLowerCase());
         const matchesStatus = statusFilter === 'all' || project.status === statusFilter;
-        return matchesSearch && matchesStatus;
+        const matchesDepartment = departmentFilter === 'all' || project.departmentId === departmentFilter;
+        return matchesSearch && matchesStatus && matchesDepartment;
     }).sort((a, b) => {
         const aHidden = hiddenProjects.has(a.id);
         const bHidden = hiddenProjects.has(b.id);

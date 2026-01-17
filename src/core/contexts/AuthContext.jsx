@@ -11,17 +11,32 @@ export function AuthProvider({ children }) {
     useEffect(() => {
         const checkAuth = async () => {
             const token = localStorage.getItem('accessToken');
+            const cachedUser = localStorage.getItem('user');
+
             if (token) {
                 try {
+                    // Try to fetch fresh user data from backend
                     const response = await authService.getMe();
                     if (response.ok) {
                         setUser(response.data);
+                        // Update cached user
+                        localStorage.setItem('user', JSON.stringify(response.data));
                     } else {
-                        localStorage.removeItem('accessToken');
+                        // If getMe fails but we have cached user, use it
+                        if (cachedUser) {
+                            setUser(JSON.parse(cachedUser));
+                        } else {
+                            localStorage.removeItem('accessToken');
+                        }
                     }
                 } catch (error) {
                     console.error('Auth check failed:', error);
-                    localStorage.removeItem('accessToken');
+                    // Fallback to cached user if available
+                    if (cachedUser) {
+                        setUser(JSON.parse(cachedUser));
+                    } else {
+                        localStorage.removeItem('accessToken');
+                    }
                 }
             }
             setIsLoading(false);
@@ -35,7 +50,9 @@ export function AuthProvider({ children }) {
             if (response.ok && response.data) {
                 // Save token to localStorage
                 localStorage.setItem('accessToken', response.data.token);
-                // Set user data
+                // Save user object to localStorage for persistence
+                localStorage.setItem('user', JSON.stringify(response.data.user));
+                // Set user data in state
                 setUser(response.data.user);
                 return true;
             }
@@ -48,6 +65,7 @@ export function AuthProvider({ children }) {
 
     const logout = () => {
         setUser(null);
+        localStorage.removeItem('user');
         authService.logout();
     };
 

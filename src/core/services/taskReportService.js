@@ -1,4 +1,4 @@
-import apiClient from '@core/config/api';
+import { httpClient } from '@core/api';
 
 /**
  * TASK REPORT SERVICE - Real API
@@ -16,7 +16,7 @@ export const taskReportService = {
      */
     async getReportsByTask(taskId) {
         try {
-            const res = await apiClient.get(`/tasks/${taskId}/reports`);
+            const res = await httpClient.get(`/tasks/${taskId}/reports`);
 
             if (res.status === 200 || res.ok) {
                 const rawData = res.data || res;
@@ -48,7 +48,7 @@ export const taskReportService = {
      */
     async getReportById(reportId) {
         try {
-            const res = await apiClient.get(`/task-reports/${reportId}`);
+            const res = await httpClient.get(`/task-reports/${reportId}`);
 
             if (res.status === 200 || res.ok) {
                 return {
@@ -84,7 +84,7 @@ export const taskReportService = {
                 ...additionalData
             };
 
-            const res = await apiClient.post('/task-reports', payload);
+            const res = await httpClient.post('/task-reports', payload);
 
             if (res.status === 201 || res.status === 200 || res.ok) {
                 return {
@@ -113,7 +113,7 @@ export const taskReportService = {
      */
     async updateReport(reportId, reportData) {
         try {
-            const res = await apiClient.put(`/task-reports/${reportId}`, reportData);
+            const res = await httpClient.put(`/task-reports/${reportId}`, reportData);
 
             if (res.status === 200 || res.ok) {
                 return {
@@ -142,7 +142,7 @@ export const taskReportService = {
      */
     async deleteReport(reportId) {
         try {
-            const res = await apiClient.delete(`/task-reports/${reportId}`);
+            const res = await httpClient.delete(`/task-reports/${reportId}`);
 
             if (res.status === 200 || res.ok) {
                 return {

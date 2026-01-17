@@ -12,15 +12,18 @@ import { format } from 'date-fns';
 import { vi } from 'date-fns/locale';
 import { cn } from '@core/lib/utils';
 import { departmentService } from '@core/services/departmentService';
+import { userService } from '@core/services/userService';
 
 export function ProjectFormModal({ open, onOpenChange, onSubmit, initialData, mode = 'edit' }) {
   const [departments, setDepartments] = useState([]);
+  const [members, setMembers] = useState([]);
   const [formData, setFormData] = useState(initialData || {
     name: '',
     description: '',
     startDate: undefined,
     endDate: undefined,
     departmentId: '',
+    managerId: '',
   });
 
   useEffect(() => {
@@ -53,8 +56,33 @@ export function ProjectFormModal({ open, onOpenChange, onSubmit, initialData, mo
     }
   };
 
+  const fetchMembers = async (departmentId) => {
+    if (!departmentId) {
+      setMembers([]);
+      return;
+    }
+    try {
+      const res = await userService.getUsers({ departmentId });
+      if (res.ok) {
+        setMembers(res.data);
+      }
+    } catch (error) {
+      console.error('Error fetching members:', error);
+    }
+  };
+
+  // Fetch members when department changes
+  useEffect(() => {
+    if (formData.departmentId) {
+      fetchMembers(formData.departmentId);
+    } else {
+      setMembers([]);
+      setFormData(prev => ({ ...prev, managerId: '' }));
+    }
+  }, [formData.departmentId]);
+
   const handleSubmit = () => {
-    if (!formData.name.trim() || !formData.departmentId)
+    if (!formData.name.trim() || !formData.departmentId || !formData.managerId)
       return;
     onSubmit(formData);
     if (mode === 'create') {
@@ -64,6 +92,7 @@ export function ProjectFormModal({ open, onOpenChange, onSubmit, initialData, mo
         startDate: undefined,
         endDate: undefined,
         departmentId: '',
+        managerId: '',
       });
     }
     onOpenChange(false);
@@ -118,6 +147,38 @@ export function ProjectFormModal({ open, onOpenChange, onSubmit, initialData, mo
                   {dept.D_Name || dept.name}
                 </SelectItem>
               ))}
+            </SelectContent>
+          </Select>
+        </div>
+
+        {/* Member Assignment */}
+        <div className="space-y-2">
+          <Label>Giao cho *</Label>
+          <Select
+            value={formData.managerId}
+            onValueChange={(value) => setFormData({ ...formData, managerId: value })}
+            disabled={!formData.departmentId}
+          >
+            <SelectTrigger>
+              <SelectValue placeholder={formData.departmentId ? "Chọn người phụ trách" : "Chọn phòng ban trước"} />
+            </SelectTrigger>
+            <SelectContent>
+              {members.length === 0 && formData.departmentId ? (
+                <div className="py-6 text-center text-sm text-muted-foreground">
+                  Không có thành viên trong phòng ban này
+                </div>
+              ) : (
+                members.map((member) => (
+                  <SelectItem key={member.aid} value={member.aid}>
+                    {member.member?.fullName || member.userName}
+                    {member.member?.departmentName && (
+                      <span className="text-xs text-muted-foreground ml-2">
+                        ({member.member.departmentName})
+                      </span>
+                    )}
+                  </SelectItem>
+                ))
+              )}
             </SelectContent>
           </Select>
         </div>
@@ -182,7 +243,7 @@ export function ProjectFormModal({ open, onOpenChange, onSubmit, initialData, mo
         <Button variant="outline" onClick={() => onOpenChange(false)}>
           Hủy
         </Button>
-        <Button onClick={handleSubmit} disabled={!formData.name.trim()}>
+        <Button onClick={handleSubmit} disabled={!formData.name.trim() || !formData.departmentId || !formData.managerId}>
           {mode === 'create' ? 'Tạo Dự án' : 'Lưu thay đổi'}
         </Button>
       </DialogFooter>

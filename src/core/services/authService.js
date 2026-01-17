@@ -15,8 +15,9 @@ export const authService = {
         try {
             const response = await authApi.login({ username, password });
 
-            // Extract token and user from backend structure
-            const backendData = response.data; // axios returns response.data
+            // Backend wraps data: response.data = { data: { tokens, user } }
+            // Axios returns full response, so response.data is the backend response
+            const backendData = response.data?.data || response.data; // Handle both wrapped and unwrapped
             const token = backendData?.tokens?.accessToken;
             let rawUser = backendData?.user;
 
@@ -76,10 +77,16 @@ export const authService = {
      */
     getMe: async () => {
         try {
-            const response = await apiClient.get('/auth/me');
+            const response = await authApi.getMe();
+
+            // DEBUG: Log raw response to understand structure
+            console.log('=== authService.getMe() DEBUG ===');
+            console.log('Full response:', response);
+            console.log('response.data:', response.data);
+            console.log('response.status:', response.status);
 
             if (response.status !== 200) {
-                // Fallback for ok check if apiClient didn't throw
+                // Fallback for ok check if httpClient didn't throw
                 if (response.ok === false) {
                     return {
                         ok: false,
@@ -88,16 +95,29 @@ export const authService = {
                 }
             }
 
-            // Extract user. 
-            // If backend returns { status: 200, data: { user: ... } } -> response.data.user
-            // If backend returns { status: 200, data: userObject } -> response.data
-            // Based on other services, likely response.data is the payload.
-            // Let's assume response.data might contain user nested or direct.
-            // Safe check:
-            const body = response.data || response; // In case apiClient interceptor variation
-            const rawUser = body.user || body; // Try nested 'user' first, then body itself
+            // Extract user from response
+            // axios returns: { status: 200, data: <backend_payload>, ... }
+            // Backend returns: { data: userObject } OR just userObject
+            let rawUser = null;
 
-            if (!rawUser) {
+            if (response.data) {
+                // Check if backend wrapped in { data: user }
+                if (response.data.data) {
+                    rawUser = response.data.data;
+                } else if (response.data.user) {
+                    rawUser = response.data.user;
+                } else {
+                    // Direct user object
+                    rawUser = response.data;
+                }
+            } else {
+                rawUser = response;
+            }
+
+            console.log('Extracted rawUser:', rawUser);
+
+            if (!rawUser || !rawUser.A_ID) {
+                console.error('Invalid user data:', rawUser);
                 return {
                     ok: false,
                     message: 'Dữ liệu user không hợp lệ'
@@ -106,6 +126,8 @@ export const authService = {
 
             // Normalize
             let normalizedRole = (rawUser.Role?.R_Name || rawUser.roleName || 'user').toLowerCase();
+            console.log('Original role:', rawUser.Role?.R_Name || rawUser.roleName);
+            console.log('Normalized role (before mapping):', normalizedRole);
 
             // Map backend roles to frontend roles (STRICT - 5 roles only)
             if (normalizedRole === 'admin' || normalizedRole === 'administrator' || normalizedRole === 'system') {
@@ -119,6 +141,8 @@ export const authService = {
             }
             // director, pmo, staff, leader, admin remain unchanged
 
+            console.log('Final mapped role:', normalizedRole);
+
             const user = {
                 ...rawUser,
                 id: rawUser.A_ID || rawUser.aid,
@@ -128,6 +152,8 @@ export const authService = {
                 m_id: rawUser.Member?.M_ID || rawUser.M_ID,
                 avatar: rawUser.Avatar ? `http://localhost:3069${rawUser.Avatar}` : null
             };
+
+            console.log('Final user object:', user);
 
             return {
                 ok: true,
