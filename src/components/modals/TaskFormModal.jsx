@@ -4,10 +4,12 @@ import { Button } from '@core/components/ui/button';
 import { Input } from '@core/components/ui/input';
 import { Textarea } from '@core/components/ui/textarea';
 import { Label } from '@core/components/ui/label';
+import { Badge } from '@core/components/ui/badge';
+import { Checkbox } from '@core/components/ui/checkbox';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue, } from '@core/components/ui/select';
 import { Calendar } from '@core/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@core/components/ui/popover';
-import { CalendarIcon, ListTodo, Plus } from 'lucide-react';
+import { CalendarIcon, ListTodo, Plus, X, User } from 'lucide-react';
 import { format } from 'date-fns';
 import { vi } from 'date-fns/locale';
 import { cn } from '@core/lib/utils';
@@ -16,11 +18,15 @@ export function TaskFormModal({ open, onOpenChange, type, onSubmit, accounts = [
     title: initialData?.title || '',
     description: initialData?.description || '',
     priority: initialData?.priority || 'medium',
-    deadline: initialData?.deadline,
+    startDate: initialData?.startDate ? new Date(initialData.startDate) : undefined,
+    deadline: initialData?.deadline ? new Date(initialData.deadline) : undefined,
     assigneeId: initialData?.assigneeId || '',
+    memberIds: initialData?.memberIds || (initialData?.assigneeId ? [initialData.assigneeId] : []),
     departmentId: initialData?.departmentId || '',
     projectId: initialData?.projectId || '',
   });
+
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Sync state with props
   useEffect(() => {
@@ -30,57 +36,45 @@ export function TaskFormModal({ open, onOpenChange, type, onSubmit, accounts = [
         title: initialData?.title || '',
         description: initialData?.description || '',
         priority: initialData?.priority || 'medium',
-        deadline: initialData?.deadline,
+        startDate: initialData?.startDate ? new Date(initialData.startDate) : undefined,
+        deadline: initialData?.deadline ? new Date(initialData.deadline) : undefined,
         assigneeId: initialData?.assigneeId || '',
+        memberIds: initialData?.memberIds || (initialData?.assigneeId ? [initialData.assigneeId] : []),
         departmentId: initialData?.departmentId || '',
         projectId: initialData?.projectId || '',
       }));
     }
   }, [open, initialData]);
 
+
   const isMainTask = type === 'main-task';
 
-  // Filter accounts based on role
-  // Assuming leaders are any non-user role or specifically manager/admin/pmo/sep
-  // Adjust logic as needed. For now: Leaders != 'user'
-  // Helper to identify standard user/staff roles
-  // Helper to identify standard user/staff roles
-  const isStaffRole = (r, name = '') => {
-    const role = (r || '').toLowerCase();
-    const cleanName = (name || '').toLowerCase();
+  // Get selected project's department
+  const selectedProject = projects.find(p => p.id === formData.projectId);
+  const projectDepartmentId = selectedProject?.departmentId;
 
-    const staffKeywords = ['user', 'staff', 'member', 'nhân viên', 'thành viên', 'giảng viên', 'gv', 'teacher', 'giáo viên'];
-    // Check if role contains any keyword
-    if (staffKeywords.some(k => role.includes(k))) return true;
+  // Filter accounts by project's department (if project selected)
+  const assignees = formData.projectId && projectDepartmentId
+    ? accounts.filter(a => (a.departmentId || a.Department?.D_ID) === projectDepartmentId && (a.status === 'active' || a.Status === 'active'))
+    : accounts.filter(a => (a.status === 'active' || a.Status === 'active'));
 
-    // Also check name convention (e.g., starts with "GV")
-    if (cleanName.startsWith('gv') || cleanName.startsWith('giảng viên')) return true;
-
-    return false;
-  };
-
-  const leaders = accounts.filter(a => !isStaffRole(a.role, a.name) && a.status === 'active');
-  const staff = accounts.filter(a => isStaffRole(a.role, a.name) && a.status === 'active');
-
-  // Main Task -> Assign to Leader
-  // Subtask -> Assign to Staff (or anyone really, but logically Staff)
-  // If no leaders found, fallback to all accounts to prevent blocking
-  const assignees = isMainTask
-    ? (leaders.length > 0 ? leaders : accounts.filter(a => a.status === 'active'))
-    : staff;
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     if (!formData.title.trim() || !formData.projectId)
       return;
-    onSubmit(formData);
-    setFormData({
-      title: '',
-      description: '',
-      priority: 'medium',
-      deadline: undefined,
-      assigneeId: '',
-      departmentId: '',
-    });
-    onOpenChange(false);
+
+    setIsSubmitting(true);
+    try {
+      await onSubmit({
+        ...formData,
+        // Ensure assigneeId is set to the first member (primary) or empty
+        assigneeId: formData.memberIds && formData.memberIds.length > 0 ? formData.memberIds[0] : ''
+      });
+      // Do NOT close here. Let parent handle success/failure and close via prop.
+    } catch (error) {
+      console.error("Error submitting task:", error);
+    } finally {
+      setIsSubmitting(false);
+    }
   };
   return (<Dialog open={open} onOpenChange={onOpenChange}>
     <DialogContent className="max-w-lg">
@@ -120,6 +114,42 @@ export function TaskFormModal({ open, onOpenChange, type, onSubmit, accounts = [
         </div>
 
         <div className="grid grid-cols-2 gap-4">
+          {/* Start Date */}
+          <div className="space-y-2">
+            <Label>Ngày bắt đầu</Label>
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button variant="outline" className={cn('w-full justify-start text-left font-normal', !formData.startDate && 'text-muted-foreground')}>
+                  <CalendarIcon className="mr-2 h-4 w-4" />
+                  {formData.startDate
+                    ? format(formData.startDate, 'dd/MM/yyyy', { locale: vi })
+                    : 'Chọn ngày'}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-auto p-0" align="start">
+                <Calendar mode="single" selected={formData.startDate} onSelect={(date) => setFormData({ ...formData, startDate: date })} initialFocus locale={vi} />
+              </PopoverContent>
+            </Popover>
+          </div>
+
+          {/* Deadline */}
+          <div className="space-y-2">
+            <Label>Hạn chót</Label>
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button variant="outline" className={cn('w-full justify-start text-left font-normal', !formData.deadline && 'text-muted-foreground')}>
+                  <CalendarIcon className="mr-2 h-4 w-4" />
+                  {formData.deadline
+                    ? format(formData.deadline, 'dd/MM/yyyy', { locale: vi })
+                    : 'Chọn ngày'}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-auto p-0" align="start">
+                <Calendar mode="single" selected={formData.deadline} onSelect={(date) => setFormData({ ...formData, deadline: date })} initialFocus locale={vi} />
+              </PopoverContent>
+            </Popover>
+          </div>
+
           {/* Priority */}
           <div className="space-y-2">
             <Label>Độ ưu tiên</Label>
@@ -149,24 +179,6 @@ export function TaskFormModal({ open, onOpenChange, type, onSubmit, accounts = [
               </SelectContent>
             </Select>
           </div>
-
-          {/* Deadline */}
-          <div className="space-y-2">
-            <Label>Hạn chót</Label>
-            <Popover>
-              <PopoverTrigger asChild>
-                <Button variant="outline" className={cn('w-full justify-start text-left font-normal', !formData.deadline && 'text-muted-foreground')}>
-                  <CalendarIcon className="mr-2 h-4 w-4" />
-                  {formData.deadline
-                    ? format(formData.deadline, 'dd/MM/yyyy', { locale: vi })
-                    : 'Chọn ngày'}
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent className="w-auto p-0" align="start">
-                <Calendar mode="single" selected={formData.deadline} onSelect={(date) => setFormData({ ...formData, deadline: date })} initialFocus locale={vi} />
-              </PopoverContent>
-            </Popover>
-          </div>
         </div>
 
         {/* Project Selection (Required) */}
@@ -192,22 +204,83 @@ export function TaskFormModal({ open, onOpenChange, type, onSubmit, accounts = [
 
         {/* Department Selection Removed per user request (Auto-inherited from Project) */}
 
-        {/* Assignee */}
+        {/* Assignee - Multi Select */}
         <div className="space-y-2">
-          <Label>{isMainTask ? 'Gán cho Trưởng nhóm' : 'Phân công Nhân viên'}</Label>
-          <Select value={formData.assigneeId} onValueChange={(value) => setFormData({ ...formData, assigneeId: value })}>
-            <SelectTrigger>
-              <SelectValue placeholder={isMainTask ? 'Chọn Trưởng nhóm' : 'Chọn Nhân viên'} />
-            </SelectTrigger>
-            <SelectContent>
-              {assignees.map((person) => (<SelectItem key={person.id} value={person.id}>
-                <span className="flex flex-col">
-                  <span>{person.name}</span>
-                  <span className="text-xs text-muted-foreground">{person.department}</span>
-                </span>
-              </SelectItem>))}
-            </SelectContent>
-          </Select>
+          <Label className="flex items-center justify-between">
+            <span>Người thực hiện</span>
+            {formData.memberIds?.length > 0 && (
+              <span className="text-xs text-muted-foreground">{formData.memberIds.length} người được chọn</span>
+            )}
+          </Label>
+
+          <div className="border rounded-md p-3 space-y-3">
+            {/* Selected Members Badges */}
+            {formData.memberIds?.length > 0 && (
+              <div className="flex flex-wrap gap-2 mb-2">
+                {formData.memberIds.map(id => {
+                  const member = assignees.find(a => (a.id || a.M_ID) === id) || accounts.find(a => (a.id || a.M_ID) === id);
+                  const memberName = member ? (member.name || member.UserName || member.FullName) : 'Unknown';
+                  return member ? (
+                    <Badge key={id} variant="secondary" className="pl-2 pr-1 h-7 flex items-center gap-1">
+                      <span>{memberName}</span>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        className="h-4 w-4 rounded-full hover:bg-destructive/20 hover:text-destructive"
+                        onClick={() => {
+                          const newIds = formData.memberIds.filter(mId => mId !== id);
+                          setFormData({ ...formData, memberIds: newIds, assigneeId: newIds[0] || '' });
+                        }}
+                      >
+                        <X className="h-3 w-3" />
+                      </Button>
+                    </Badge>
+                  ) : null;
+                })}
+              </div>
+            )}
+
+            {/* List Selection */}
+            <div className="max-h-[150px] overflow-y-auto space-y-1 pr-1">
+              {assignees.length === 0 ? (
+                <div className="p-2 text-sm text-muted-foreground text-center bg-muted/30 rounded-md">
+                  {formData.projectId
+                    ? 'Không có nhân viên nào trong phòng ban này'
+                    : 'Vui lòng chọn dự án để xem danh sách nhân viên'}
+                </div>
+              ) : (
+                assignees.map((person) => {
+                  const personId = person.id || person.M_ID;
+                  const personName = person.name || person.UserName || person.FullName;
+                  const personDept = person.department || person.Department?.D_Name || 'Chưa có phòng ban';
+                  const isSelected = formData.memberIds?.includes(personId);
+                  return (
+                    <div
+                      key={personId}
+                      className={`flex items-center gap-3 p-2 rounded-md hover:bg-muted/50 cursor-pointer ${isSelected ? 'bg-primary/5' : ''}`}
+                      onClick={() => {
+                        const currentIds = formData.memberIds || [];
+                        const newIds = isSelected
+                          ? currentIds.filter(id => id !== personId)
+                          : [...currentIds, personId];
+                        setFormData({ ...formData, memberIds: newIds, assigneeId: newIds[0] || '' });
+                      }}
+                    >
+                      <Checkbox
+                        checked={isSelected}
+                        onCheckedChange={() => { }} // Handle click on div
+                      />
+                      <div className="flex flex-col">
+                        <span className="text-sm font-medium">{personName}</span>
+                        <span className="text-xs text-muted-foreground">{personDept}</span>
+                      </div>
+                    </div>
+                  );
+                })
+              )}
+            </div>
+          </div>
         </div>
       </div>
 
@@ -215,8 +288,8 @@ export function TaskFormModal({ open, onOpenChange, type, onSubmit, accounts = [
         <Button variant="outline" onClick={() => onOpenChange(false)}>
           Hủy
         </Button>
-        <Button onClick={handleSubmit} disabled={!formData.title.trim()}>
-          {mode === 'edit' ? 'Lưu thay đổi' : (isMainTask ? 'Tạo việc chính' : 'Tạo việc nhỏ')}
+        <Button onClick={handleSubmit} disabled={!formData.title.trim() || isSubmitting}>
+          {isSubmitting ? 'Đang xử lý...' : (mode === 'edit' ? 'Lưu thay đổi' : (isMainTask ? 'Tạo việc chính' : 'Tạo việc nhỏ'))}
         </Button>
       </DialogFooter>
     </DialogContent>

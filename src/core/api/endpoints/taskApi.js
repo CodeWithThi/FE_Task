@@ -65,4 +65,14 @@ export const taskApi = {
      */
     assign: (id, assigneeId) =>
         httpClient.patch(`/tasks/${id}/assign`, { assigneeId }),
+
+    // Generic methods for dynamic endpoints (Trello features)
+    post: (path, data) =>
+        httpClient.post(`/tasks${path}`, data),
+
+    put: (path, data) =>
+        httpClient.put(`/tasks${path}`, data),
+
+    remove: (path) =>
+        httpClient.delete(`/tasks${path}`),
 };

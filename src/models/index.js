@@ -15,6 +15,7 @@ export const roleLabels = {
 export const statusLabels = {
     'not-assigned': 'Chưa nhận',
     'in-progress': 'Đang làm',
+    'running': 'Đang làm',
     'waiting-approval': 'Chờ duyệt',
     'returned': 'Trả lại',
     'completed': 'Hoàn thành',

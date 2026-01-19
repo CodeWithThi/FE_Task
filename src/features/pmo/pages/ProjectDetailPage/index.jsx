@@ -143,6 +143,8 @@ export default function ProjectDetailPage() {
         toast.success('Tạo Main Task thành công!');
         setIsMainTaskModalOpen(false);
         fetchProjectDetails(); // Refresh
+      } else {
+        toast.error(response.message || 'Lỗi khi tạo công việc');
       }
     } catch (error) {
       toast.error('Lỗi khi tạo công việc');
@@ -156,7 +158,8 @@ export default function ProjectDetailPage() {
       ...task,
       // Ensure mapped fields if needed
       assigneeId: task.assignee?.id,
-      projectId: project.id
+      projectId: project.id,
+      memberIds: task.Task_Member?.map(tm => tm.Member?.M_ID).filter(Boolean) || [] // Ensure memberIds are mapped
     });
     setIsEditTaskModalOpen(true);
   };

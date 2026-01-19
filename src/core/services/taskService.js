@@ -56,7 +56,21 @@ const mapTaskToFrontend = (backendTask) => {
         subtasks: backendTask.Subtasks ? backendTask.Subtasks.map(mapTaskToFrontend) : [],
         subtaskCount: backendTask.Subtasks?.length || 0,
         completedSubtasks: backendTask.Subtasks?.filter(st => st.Status?.toLowerCase() === 'completed').length || 0,
-        progress: 0
+        progress: 0,
+        Task_Member: backendTask.Task_Member || [], // Pass through for multi-member
+        checklist: backendTask.ChecklistItems?.map(i => ({ id: i.CL_ID, content: i.Content, completed: i.IsCompleted })) || [],
+        labels: backendTask.Task_Labels?.map(tl => ({ id: tl.Label.L_ID, name: tl.Label.Name, color: tl.Label.Color })) || [],
+        attachments: backendTask.Attachments?.map(a => ({ id: a.AT_ID, fileName: a.FileName, fileUrl: a.FileUrl, uploadDate: a.UploadDate })) || [],
+        comments: backendTask.TaskComments?.map(c => ({
+            id: c.TC_ID,
+            content: c.Content,
+            createdAt: c.Created_At,
+            user: {
+                id: c.Account?.M_ID,
+                name: c.Account?.UserName,
+                avatar: c.Account?.Avatar
+            }
+        })) || []
     };
 };
 
@@ -153,6 +167,7 @@ export const taskService = {
                 priority: taskData.priority,
                 projectId: taskData.projectId,
                 assignedTo: taskData.assigneeId,
+                memberIds: taskData.memberIds, // Multi-member support
                 parentTaskId: taskData.parentTaskId || null
             };
 
@@ -187,6 +202,7 @@ export const taskService = {
                 dueDate: taskData.deadline,
                 priority: taskData.priority,
                 assignedTo: taskData.assigneeId,
+                memberIds: taskData.memberIds, // Multi-member support
                 status: taskData.status
             };
 
@@ -227,8 +243,163 @@ export const taskService = {
                 message: err.response?.data?.message || 'Lỗi kết nối server'
             };
         }
+    },
+
+    // --- Trello Features ---
+    async addChecklistItem(taskId, content) {
+        try {
+            const res = await taskApi.post(`/${taskId}/checklist`, { content });
+            const item = res.data.data;
+            // Map backend PascalCase to frontend camelCase
+            return {
+                ok: true,
+                data: {
+                    id: item.CL_ID,
+                    content: item.Content,
+                    completed: item.IsCompleted || false
+                }
+            };
+        } catch (err) { return { ok: false, message: err.message }; }
+    },
+    async updateChecklistItem(itemId, data) {
+        try {
+            const res = await taskApi.put(`/checklist/${itemId}`, data);
+            return { ok: true, data: res.data.data };
+        } catch (err) { return { ok: false, message: err.message }; }
+    },
+    async deleteChecklistItem(itemId) {
+        try {
+            await taskApi.remove(`/checklist/${itemId}`);
+            return { ok: true };
+        } catch (err) { return { ok: false, message: err.message }; }
+    },
+    async addLabel(taskId, { name, color }) {
+        try {
+            const res = await taskApi.post(`/${taskId}/labels`, { name, color });
+            const backendLabel = res.data.data;
+            // Map backend PascalCase to frontend camelCase
+            return {
+                ok: true,
+                data: {
+                    id: backendLabel.L_ID,
+                    name: backendLabel.Name,
+                    color: backendLabel.Color
+                }
+            };
+        } catch (err) { return { ok: false, message: err.message }; }
+    },
+    async removeLabel(taskId, labelId) {
+        try {
+            await taskApi.remove(`/${taskId}/labels/${labelId}`);
+            return { ok: true };
+        } catch (err) { return { ok: false, message: err.message }; }
+    },
+    async addAttachment(taskId, { fileName, fileUrl }) {
+        try {
+            const res = await taskApi.post(`/${taskId}/attachments`, { fileName, fileUrl });
+            const item = res.data.data;
+            // Map backend PascalCase to frontend camelCase
+            return {
+                ok: true,
+                data: {
+                    id: item.AT_ID,
+                    fileName: item.FileName,
+                    fileUrl: item.FileUrl,
+                    uploadDate: item.UploadDate || new Date().toISOString()
+                }
+            };
+        } catch (err) { return { ok: false, message: err.message }; }
+    },
+    async deleteAttachment(taskId, attachmentId) {
+        try {
+            await taskApi.remove(`/${taskId}/attachments/${attachmentId}`);
+            return { ok: true };
+        } catch (err) { return { ok: false, message: err.message }; }
+    },
+
+    // Upload file to server
+    async uploadFile(file) {
+        try {
+            const formData = new FormData();
+            formData.append('file', file);
+
+            const response = await fetch(
+                (import.meta.env.VITE_API_URL || 'http://localhost:3069/api/v1') + '/upload/attachment',
+                {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${localStorage.getItem('accessToken')}`
+                    },
+                    body: formData
+                }
+            );
+
+            const data = await response.json();
+            if (data.ok) {
+                return {
+                    ok: true,
+                    data: {
+                        fileName: data.data.fileName,
+                        fileUrl: data.data.fileUrl
+                    }
+                };
+            }
+            return { ok: false, message: data.message };
+        } catch (err) {
+            return { ok: false, message: err.message };
+        }
+
+
+    },
+
+    // --- Comments ---
+    async addComment(taskId, content) {
+        try {
+            const res = await taskApi.post(`/${taskId}/comments`, { content });
+            const item = res.data.data;
+            return {
+                ok: true,
+                data: {
+                    id: item.TC_ID,
+                    content: item.Content,
+                    createdAt: item.Created_At,
+                    user: {
+                        id: item.Account?.M_ID,
+                        name: item.Account?.UserName,
+                        avatar: item.Account?.Avatar
+                    }
+                }
+            };
+        } catch (err) { return { ok: false, message: err.message }; }
+    },
+    async deleteComment(taskId, commentId) {
+        try {
+            await taskApi.delete(`/${taskId}/comments/${commentId}`);
+            return { ok: true };
+        } catch (err) { return { ok: false, message: err.message }; }
+    },
+    async editComment(taskId, commentId, content) {
+        try {
+            const res = await taskApi.put(`/${taskId}/comments/${commentId}`, { content });
+            const item = res.data.data;
+            return {
+                ok: true,
+                data: {
+                    id: item.TC_ID,
+                    content: item.Content,
+                    createdAt: item.Created_At,
+                    updatedAt: item.Updated_At,
+                    user: {
+                        id: item.Account?.M_ID,
+                        name: item.Account?.UserName,
+                        avatar: item.Account?.Avatar
+                    }
+                }
+            };
+        } catch (err) { return { ok: false, message: err.message }; }
     }
 };
 
 export default taskService;
+
 

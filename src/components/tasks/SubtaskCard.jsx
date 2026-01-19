@@ -1,45 +1,109 @@
-import { PriorityBadge } from '@core/components/common/PriorityBadge';
+import { useState } from 'react';
 import { Avatar, AvatarFallback } from '@core/components/ui/avatar';
-import { Calendar, Building2 } from 'lucide-react';
+import { Eye, EyeOff } from 'lucide-react';
+
 export function SubtaskCard({ task, onClick }) {
-  const isOverdue = new Date(task.deadline) < new Date() && task.status !== 'completed';
-  return (<div onClick={onClick} className="bg-card border rounded-lg p-3 hover:shadow-lg transition-all duration-200 cursor-pointer hover:border-primary/50 hover:scale-[1.02] group">
-    {/* Tên công việc */}
-    <h4 className="font-medium text-sm line-clamp-2 group-hover:text-primary transition-colors duration-200 mb-3">
-      {task.title}
-    </h4>
+  const [showLabels, setShowLabels] = useState(true);
 
-    {/* Phòng ban */}
-    <div className="flex items-center gap-2 text-xs text-muted-foreground mb-3">
-      <Building2 className="w-3 h-3" />
-      <span className="truncate">{task.department || 'Chưa có phòng ban'}</span>
-    </div>
+  // Get members from Task_Member relation
+  const members = task.Task_Member?.map(tm => ({
+    id: tm.Member?.M_ID,
+    name: tm.Member?.FullName || 'Unknown',
+    initial: (tm.Member?.FullName || 'U').charAt(0).toUpperCase()
+  })) || [];
 
-    {/* Footer */}
-    <div className="flex items-center justify-between">
-      {/* Người thực hiện */}
-      <div className="flex items-center gap-2">
-        <Avatar className="w-6 h-6 transition-transform duration-200 group-hover:scale-110">
-          <AvatarFallback className="text-xs bg-primary/10 text-primary">
-            {task.assignee?.name?.charAt(0) || 'U'}
-          </AvatarFallback>
-        </Avatar>
-        <span className="text-xs text-muted-foreground truncate max-w-[80px]">
-          {task.assignee?.name ? task.assignee.name.split(' ').slice(-2).join(' ') : 'Chưa gán'}
-        </span>
-      </div>
+  // Fallback to single assignee
+  if (members.length === 0 && task.assignee) {
+    members.push({
+      id: task.assignee.id,
+      name: task.assignee.name,
+      initial: (task.assignee.name || 'U').charAt(0).toUpperCase()
+    });
+  }
 
-      {/* Thời hạn & Độ ưu tiên */}
-      <div className="flex items-center gap-2">
-        <div className={`flex items-center gap-1 text-xs transition-colors duration-200 ${isOverdue ? 'text-destructive' : 'text-muted-foreground'}`}>
-          <Calendar className="w-3 h-3" />
-          <span>
-            {new Date(task.deadline).toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit' })}
-          </span>
+  const handleToggleLabels = (e) => {
+    e.stopPropagation();
+    setShowLabels(!showLabels);
+  };
+
+  return (
+    <div
+      onClick={onClick}
+      className="bg-white dark:bg-gray-800 rounded-lg p-3
+                 shadow-sm hover:shadow-md
+                 border border-gray-200 dark:border-gray-700
+                 cursor-pointer transition-all duration-200
+                 hover:border-blue-300 dark:hover:border-blue-600
+                 group relative"
+    >
+      {/* Eye Toggle for Labels - top right corner */}
+      {task.labels && task.labels.length > 0 && (
+        <button
+          onClick={handleToggleLabels}
+          className="absolute top-2 right-2 p-1 rounded-full opacity-0 group-hover:opacity-100
+                     bg-white/80 dark:bg-gray-700/80 hover:bg-gray-100 dark:hover:bg-gray-600 
+                     transition-all duration-200 z-10 shadow-sm"
+          title={showLabels ? 'Ẩn nhãn' : 'Hiện nhãn'}
+        >
+          {showLabels ? (
+            <Eye className="w-3.5 h-3.5 text-gray-500" />
+          ) : (
+            <EyeOff className="w-3.5 h-3.5 text-gray-400" />
+          )}
+        </button>
+      )}
+
+      {/* Color Labels at Top */}
+      {showLabels && task.labels && task.labels.length > 0 && (
+        <div className="flex flex-wrap gap-1 mb-2">
+          {task.labels.map((label, index) => (
+            <div
+              key={label.id || index}
+              className="h-2 w-12 rounded-full"
+              style={{ backgroundColor: label.color || '#94a3b8' }}
+              title={label.name}
+            />
+          ))}
         </div>
-        <PriorityBadge priority={task.priority} />
-      </div>
-    </div>
-  </div>);
-}
+      )}
 
+      {/* Title */}
+      <h4 className="text-sm font-medium text-gray-800 dark:text-gray-100 
+                     leading-snug line-clamp-2 pr-6 mb-2">
+        {task.title}
+      </h4>
+
+      {/* Footer with Members */}
+      {members.length > 0 && (
+        <div className="flex items-center justify-end">
+          <div className="flex -space-x-1.5">
+            {members.slice(0, 3).map((member, index) => (
+              <Avatar
+                key={member.id || index}
+                className="w-6 h-6 border-2 border-white dark:border-gray-800
+                         ring-1 ring-gray-200 dark:ring-gray-700"
+                title={member.name}
+              >
+                <AvatarFallback className="text-[10px] font-semibold
+                                         bg-gradient-to-br from-indigo-500 to-purple-500 
+                                         text-white">
+                  {member.initial}
+                </AvatarFallback>
+              </Avatar>
+            ))}
+            {members.length > 3 && (
+              <div className="w-6 h-6 rounded-full 
+                            bg-gray-100 dark:bg-gray-600 
+                            border-2 border-white dark:border-gray-800
+                            ring-1 ring-gray-200 dark:ring-gray-700
+                            flex items-center justify-center
+                            text-[9px] font-bold text-gray-600 dark:text-gray-300">
+                +{members.length - 3}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}

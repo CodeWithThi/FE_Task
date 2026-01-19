@@ -17,13 +17,13 @@ import { userService } from '@core/services/userService';
 export function ProjectFormModal({ open, onOpenChange, onSubmit, initialData, mode = 'edit' }) {
   const [departments, setDepartments] = useState([]);
   const [members, setMembers] = useState([]);
-  const [formData, setFormData] = useState(initialData || {
-    name: '',
-    description: '',
-    startDate: undefined,
-    endDate: undefined,
-    departmentId: '',
-    managerId: '',
+  const [formData, setFormData] = useState({
+    name: initialData?.name || '',
+    description: initialData?.description || '',
+    startDate: initialData?.startDate ? new Date(initialData.startDate) : undefined,
+    endDate: initialData?.endDate ? new Date(initialData.endDate) : undefined,
+    departmentId: initialData?.departmentId || '',
+    managerId: initialData?.managerId || '',
   });
 
   useEffect(() => {
@@ -31,7 +31,14 @@ export function ProjectFormModal({ open, onOpenChange, onSubmit, initialData, mo
       fetchDepartments();
       // Sync formData with initialData when modal opens
       if (initialData) {
-        setFormData(initialData);
+        setFormData({
+          name: initialData.name || '',
+          description: initialData.description || '',
+          startDate: initialData.startDate ? new Date(initialData.startDate) : undefined,
+          endDate: initialData.endDate ? new Date(initialData.endDate) : undefined,
+          departmentId: initialData.departmentId || '',
+          managerId: initialData.managerId || '',
+        });
       } else {
         // Reset form for create mode
         setFormData({
@@ -40,6 +47,7 @@ export function ProjectFormModal({ open, onOpenChange, onSubmit, initialData, mo
           startDate: undefined,
           endDate: undefined,
           departmentId: '',
+          managerId: '',
         });
       }
     }

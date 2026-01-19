@@ -14,11 +14,20 @@ import { toast } from 'sonner';
 export default function MyOverviewPage() {
   const navigate = useNavigate();
   const { user } = useAuth();
-  const [selectedTask, setSelectedTask] = useState(null);
+  const [selectedTaskId, setSelectedTaskId] = useState(null);
   const [showDetail, setShowDetail] = useState(false);
   const [myTasks, setMyTasks] = useState([]);
   const [upcomingTasks, setUpcomingTasks] = useState([]);
   const [overdueTasks, setOverdueTasks] = useState([]);
+
+  // Merge all tasks to find the selected one
+  const allTasks = [...myTasks, ...upcomingTasks, ...overdueTasks];
+  // Deduplicate by ID just in case they overlap (unlikely with current filter logic but safe)
+  const taskMap = new Map();
+  allTasks.forEach(t => taskMap.set(t.id, t));
+
+  const selectedTask = selectedTaskId ? taskMap.get(selectedTaskId) : null;
+
 
   useEffect(() => {
     if (user?.m_id) {
@@ -71,9 +80,14 @@ export default function MyOverviewPage() {
   };
 
   const handleTaskClick = (task) => {
-    setSelectedTask(task);
+    setSelectedTaskId(task.id);
     setShowDetail(true);
   };
+
+  const handleTaskUpdate = () => {
+    fetchMyTasks();
+  };
+
   const TaskItem = ({ task }) => {
     const isOverdue = new Date(task.deadline) < new Date() && task.status !== 'completed';
     return (<div onClick={() => handleTaskClick(task)} className="flex items-center gap-4 p-3 rounded-lg border hover:bg-muted/50 cursor-pointer transition-colors group">
@@ -227,7 +241,16 @@ export default function MyOverviewPage() {
     </Card>)}
 
     {/* Chi tiết thẻ */}
-    <SubtaskDetailModal open={showDetail} onOpenChange={setShowDetail} task={selectedTask} />
+    <SubtaskDetailModal
+      open={showDetail}
+      onOpenChange={(open) => {
+        setShowDetail(open);
+        if (!open) setSelectedTaskId(null);
+      }}
+      task={selectedTask}
+      onTaskUpdate={handleTaskUpdate}
+    />
+
   </div>);
 }
 

@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { KanbanBoard } from '@/components/tasks/KanbanBoard';
 import { SubtaskDetailModal } from '@/components/tasks/SubtaskDetailModal';
 import { TaskFormModal } from '@/components/modals/TaskFormModal';
@@ -17,6 +18,7 @@ import { userService } from '@core/services/userService';
 export default function TaskBoardPage() {
     const { user } = useAuth();
     const permissions = usePermissions();
+    const [searchParams] = useSearchParams();
     const [loading, setLoading] = useState(true);
     const [search, setSearch] = useState('');
 
@@ -28,9 +30,13 @@ export default function TaskBoardPage() {
     const [tasks, setTasks] = useState([]);
 
     // Modal State
-    const [selectedTask, setSelectedTask] = useState(null);
+    const [selectedTaskId, setSelectedTaskId] = useState(null);
     const [showDetail, setShowDetail] = useState(false);
     const [showCreateMainTask, setShowCreateMainTask] = useState(false);
+
+    // Derived selected task to ALWAYS reflect latest data from tasks array
+    const selectedTask = tasks.find(t => t.id === selectedTaskId) || null;
+
 
     // Initial Load
     useEffect(() => {
@@ -46,24 +52,26 @@ export default function TaskBoardPage() {
 
                 if (projRes.ok) {
                     setProjects(projRes.data);
-                    if (projRes.data.length > 0 && !selectedProjectId) {
+                    // Priority: URL param > existing selection > first project
+                    const urlProjectId = searchParams.get('projectId');
+                    if (urlProjectId && projRes.data.some(p => p.id === urlProjectId)) {
+                        setSelectedProjectId(urlProjectId);
+                    } else if (!selectedProjectId && projRes.data.length > 0) {
                         setSelectedProjectId(projRes.data[0].id);
                     }
                 }
 
                 if (deptRes.ok) setDepartments(deptRes.data);
                 if (userRes.ok && Array.isArray(userRes.data)) {
-                    // Normalize and Map Users for the Modal
-                    // Crucial: Use M_ID as 'id' because Tasks are assigned to Members, not Accounts
+                    // Data already mapped by userService: { aid, member: { id, fullName, departmentId, departmentName }, role: { id, name }, status }
                     const mappedUsers = userRes.data.map(u => ({
-                        id: u.M_ID || u.Member?.M_ID, // Use Member ID for assignment
-                        accountId: u.A_ID,            // Keep Account ID reference
-                        name: u.Member?.FullName || u.UserName,
-                        role: u.Role?.Role_Name ? u.Role.Role_Name.toLowerCase() : 'user',
-                        status: u.Status,
-                        departmentId: u.Member?.D_ID,
-                        // Find department name from fetched departments if possible, else raw D_ID
-                        department: deptRes.ok ? deptRes.data.find(d => (d.D_ID || d.id) === u.Member?.D_ID)?.D_Name : ''
+                        id: u.member?.id || u.aid,
+                        accountId: u.aid,
+                        name: u.member?.fullName || u.userName,
+                        role: u.role?.name?.toLowerCase() || 'user',
+                        status: u.status,
+                        departmentId: u.member?.departmentId,
+                        department: u.member?.departmentName || ''
                     }));
                     setAccounts(mappedUsers);
                 }
@@ -157,9 +165,16 @@ export default function TaskBoardPage() {
     };
 
     const handleCardClick = (task) => {
-        setSelectedTask(task);
+        setSelectedTaskId(task.id);
         setShowDetail(true);
     };
+
+    const handleTaskUpdate = async () => {
+        if (selectedProjectId) {
+            await fetchTasksByProject(selectedProjectId);
+        }
+    };
+
 
     // Client-side search filter
     const filteredTasks = tasks.filter((task) =>
@@ -276,11 +291,15 @@ export default function TaskBoardPage() {
             {/* Modals */}
             <SubtaskDetailModal
                 open={showDetail}
-                onOpenChange={setShowDetail}
+                onOpenChange={(open) => {
+                    setShowDetail(open);
+                    if (!open) setSelectedTaskId(null);
+                }}
                 task={selectedTask}
                 accounts={accounts}
-                onTaskUpdate={fetchTasksByProject}
+                onTaskUpdate={handleTaskUpdate}
             />
+
 
             <TaskFormModal
                 open={showCreateMainTask}

@@ -68,6 +68,12 @@ httpClient.interceptors.response.use(
                     // Retry original request with new token
                     originalRequest.headers.Authorization = `Bearer ${newToken}`;
                     return httpClient(originalRequest);
+                } else {
+                    // No refresh token - session expired, redirect to login
+                    localStorage.removeItem('accessToken');
+                    localStorage.removeItem('user');
+                    window.location.href = '/login';
+                    return Promise.reject(error);
                 }
             } catch (refreshError) {
                 // Refresh failed - logout user

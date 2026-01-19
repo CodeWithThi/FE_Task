@@ -38,7 +38,7 @@ export const routePermissions = {
     '/tasks': [ROLES.ADMIN, ROLES.PMO, ROLES.DIRECTOR, ROLES.LEADER, ROLES.STAFF],
     '/tasks/:id': [ROLES.ADMIN, ROLES.PMO, ROLES.DIRECTOR, ROLES.LEADER, ROLES.STAFF],
     '/my-overview': [ROLES.LEADER, ROLES.STAFF, ROLES.PMO],
-    '/tasks-board': [ROLES.LEADER, ROLES.STAFF, ROLES.PMO],
+    '/tasks-board': [ROLES.LEADER, ROLES.STAFF, ROLES.PMO, ROLES.DIRECTOR],
     '/task/:id': [ROLES.PMO, ROLES.LEADER, ROLES.STAFF, ROLES.DIRECTOR],
 
     // Features

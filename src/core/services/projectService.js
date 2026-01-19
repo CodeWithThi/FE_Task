@@ -23,13 +23,14 @@ const mapProjectToFrontend = (backendProject) => {
     return {
         id: backendProject.P_ID,
         name: backendProject.P_Name,
-        description: backendProject.P_Name,
+        description: backendProject.P_Description || backendProject.P_Name, // Fallback to name if desc is missing
         departmentId: backendProject.D_ID,
         department: backendProject.Department?.D_Name,
         startDate: backendProject.Begin_Date,
         endDate: backendProject.End_Date,
         status: status,
-        manager: backendProject.Account ? { name: backendProject.Account.UserName } : null,
+        managerId: backendProject.Created_By_A_ID, // Use Creator as Manager
+        manager: backendProject.Account ? { name: backendProject.Account.UserName, id: backendProject.Account.M_ID } : null,
         progress: 0,
         isDeleted: backendProject.IsDeleted
     };
@@ -124,6 +125,7 @@ export const projectService = {
             // Map frontend data to backend expectation
             const payload = {
                 name: projectData.name,
+                description: projectData.description,
                 departmentId: projectData.departmentId,
                 beginDate: projectData.startDate,
                 endDate: projectData.endDate
@@ -165,7 +167,9 @@ export const projectService = {
                 departmentId: projectData.departmentId,
                 beginDate: projectData.startDate,
                 endDate: projectData.endDate,
-                status: projectData.status
+
+                status: projectData.status,
+                managerId: projectData.managerId // Include managerId for update
             };
 
             const res = await httpClient.put(`/projects/${projectId}`, payload);
