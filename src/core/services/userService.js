@@ -70,7 +70,7 @@ export const userService = {
             return {
                 ok: true,
                 data: mappedData,
-                pagination: response.pagination,
+                pagination: response.data?.pagination || response.pagination,
             };
         } catch (error) {
             console.error('userService.getUsers error:', error);
