@@ -319,4 +319,91 @@
   .focus-ring {
     @apply focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background;
   }
+
+  /* Responsive utilities for mobile */
+  .mobile-full-width {
+    @apply w-full sm:w-auto;
+  }
+
+  .mobile-stack {
+    @apply flex flex-col sm:flex-row;
+  }
+
+  .mobile-center {
+    @apply text-center sm:text-left;
+  }
+
+  /* Hide on mobile, show on larger screens */
+  .hide-mobile {
+    @apply hidden sm:block;
+  }
+
+  /* Show on mobile only */
+  .show-mobile {
+    @apply block sm:hidden;
+  }
+
+  /* Touch-friendly targets for mobile */
+  .touch-target {
+    @apply min-h-[44px] min-w-[44px];
+  }
+
+  /* Safe area for mobile devices with notch */
+  .safe-area-bottom {
+    padding-bottom: env(safe-area-inset-bottom, 0);
+  }
+
+  .safe-area-top {
+    padding-top: env(safe-area-inset-top, 0);
+  }
+}
+
+/* Responsive breakpoint utilities */
+@media (max-width: 640px) {
+  /* Mobile-specific overrides */
+  .card {
+    @apply rounded-lg;
+  }
+
+  /* Smaller buttons on mobile */
+  button, .btn {
+    @apply text-sm;
+  }
+
+  /* Table responsive scroll */
+  table {
+    @apply block overflow-x-auto whitespace-nowrap;
+  }
+
+  /* Modal full screen on mobile */
+  [role="dialog"] > div {
+    @apply mx-2 max-h-[90vh] overflow-y-auto;
+  }
+}
+
+/* Tablet adjustments */
+@media (min-width: 640px) and (max-width: 1024px) {
+  .container {
+    @apply px-4;
+  }
+}
+
+/* Print styles for PDF export */
+@media print {
+  .no-print {
+    display: none !important;
+  }
+  
+  body {
+    @apply text-black bg-white;
+  }
+  
+  .sidebar, header, footer {
+    display: none !important;
+  }
+  
+  main {
+    margin: 0 !important;
+    padding: 1rem !important;
+  }
 }

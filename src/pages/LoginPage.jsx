@@ -115,7 +115,7 @@ export default function LoginPage() {
       </Card>
 
       <p className="text-center text-sm text-muted-foreground mt-6">
-        © 2024 Trung Tâm Dạy Học. Bản quyền thuộc về trung tâm.
+        © 2025 Trung Tâm Dạy Học. Bản quyền thuộc về trung tâm.
       </p>
     </div>
   </div>);
