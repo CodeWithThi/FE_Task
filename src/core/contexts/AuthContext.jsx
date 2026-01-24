@@ -109,7 +109,7 @@ export function usePermissions() {
         // Tasks
         canViewTasks: true,
         // PMO creates Main Tasks for teams, Leader creates tasks within team
-        canCreateMainTask: isPMO || isLeader,
+        canCreateMainTask: isLeader,
         // Subtasks are for breaking down work - Leader primarily, PMO if needed? Text says "PMO: Không xử lý từng subtask nhỏ".
         // Leader: "Phân nhỏ Subtask". Staff: "Hoàn thành Subtask".
         canCreateSubtask: isLeader,

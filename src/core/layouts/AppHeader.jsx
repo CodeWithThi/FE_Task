@@ -1,24 +1,73 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@core/contexts/AuthContext';
 import { roleLabels } from '@/models';
 import { useTheme } from '@core/hooks/use-theme';
-import { Search, Bell, ChevronDown, User, Lock, LogOut, Sun, Moon, Menu } from 'lucide-react';
+import { Search, Bell, ChevronDown, User, Lock, LogOut, Sun, Moon, Menu, Check } from 'lucide-react';
 import { Input } from '@core/components/ui/input';
 import { Button } from '@core/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@core/components/ui/avatar';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger, } from '@core/components/ui/dropdown-menu';
 import { Tooltip, TooltipContent, TooltipTrigger, } from '@core/components/ui/tooltip';
+import { notificationService } from '@core/services/notificationService';
+import { formatDistanceToNow } from 'date-fns';
+import { vi } from 'date-fns/locale';
 
 export function AppHeader({ isMobile = false, onMenuClick }) {
   const navigate = useNavigate();
   const { user, logout } = useAuth();
   const { theme, toggleTheme } = useTheme();
-  const [notificationCount] = useState(3);
+  const [notifications, setNotifications] = useState([]);
+  const [notificationCount, setNotificationCount] = useState(0);
+
+  const fetchNotifications = async () => {
+    const res = await notificationService.getNotifications(1, 10, false); // Get latest 10
+    if (res.ok) {
+      setNotifications(res.data);
+      const unread = res.data.filter(n => !n.IsRead).length; // Calculate unread from loaded, or ideally backend returns count
+      // For now, let's just use what we loaded or check if backend provides meta. 
+      // Backend pagination usually gives total items, not total unread.
+      // We can fetch unreadOnly=true to get count, but for dropdown we need mixed.
+      // Let's just count unread in the visible list for now + maybe a separate call for count if needed.
+      // Improving: let's just show unread count of visible items or assume backend might provide it later.
+      setNotificationCount(unread);
+    }
+  };
+
+  useEffect(() => {
+    fetchNotifications();
+    // Simple polling every 60s
+    const interval = setInterval(fetchNotifications, 60000);
+    return () => clearInterval(interval);
+  }, []);
 
   const handleLogout = () => {
     logout();
     navigate('/login');
+  };
+
+  const handleNotificationClick = async (notification) => {
+    // Mark as read
+    if (!notification.IsRead) {
+      await notificationService.markAsRead(notification.N_ID);
+      // Update local state to reflect read status instantly
+      setNotifications(prev => prev.map(n => n.N_ID === notification.N_ID ? { ...n, IsRead: true } : n));
+      setNotificationCount(prev => Math.max(0, prev - 1));
+    }
+
+    // Navigate based on type/related entity
+    // TaskId, ProjectId
+    if (notification.TaskId) {
+      navigate(`/tasks/${notification.TaskId}`);
+    } else if (notification.ProjectId) {
+      navigate(`/projects/${notification.ProjectId}`);
+    }
+  };
+
+  const handleMarkAllRead = async () => {
+    await notificationService.markAllAsRead();
+    setNotifications(prev => prev.map(n => ({ ...n, IsRead: true })));
+    setNotificationCount(0);
   };
 
   return (
@@ -92,34 +141,42 @@ export function AppHeader({ isMobile = false, onMenuClick }) {
               )}
             </button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-72 md:w-80 bg-popover">
-            <DropdownMenuLabel>Thông báo</DropdownMenuLabel>
-            <DropdownMenuSeparator />
-            <div className="max-h-80 overflow-y-auto">
-              <DropdownMenuItem
-                className="flex flex-col items-start gap-1 cursor-pointer hover:bg-muted/50 transition-colors"
-                onClick={() => navigate('/my-overview')}
-              >
-                <p className="text-sm font-medium">Công việc mới được giao</p>
-                <p className="text-xs text-muted-foreground">Bạn được giao công việc "Chuẩn bị giáo án tháng 1"</p>
-                <span className="text-xs text-muted-foreground">5 phút trước</span>
-              </DropdownMenuItem>
-              <DropdownMenuItem
-                className="flex flex-col items-start gap-1 cursor-pointer hover:bg-muted/50 transition-colors"
-                onClick={() => navigate('/tasks-board')}
-              >
-                <p className="text-sm font-medium">Công việc đã được duyệt</p>
-                <p className="text-xs text-muted-foreground">"Soạn đề kiểm tra" đã hoàn thành</p>
-                <span className="text-xs text-muted-foreground">2 giờ trước</span>
-              </DropdownMenuItem>
-              <DropdownMenuItem
-                className="flex flex-col items-start gap-1 cursor-pointer hover:bg-muted/50 transition-colors"
-                onClick={() => navigate('/projects')}
-              >
-                <p className="text-sm font-medium">Thay đổi thời hạn dự án</p>
-                <p className="text-xs text-muted-foreground">Dự án "Chương trình học kỳ 2" được gia hạn</p>
-                <span className="text-xs text-muted-foreground">1 ngày trước</span>
-              </DropdownMenuItem>
+          <DropdownMenuContent align="end" className="w-80 sm:w-96 bg-popover max-h-[80vh] overflow-hidden flex flex-col">
+            <div className="flex items-center justify-between px-4 py-2 border-b">
+              <span className="font-semibold">Thông báo</span>
+              {notificationCount > 0 && (
+                <Button variant="ghost" size="sm" onClick={handleMarkAllRead} className="h-auto px-2 py-1 text-xs text-primary">
+                  Đánh dấu tất cả đã đọc
+                </Button>
+              )}
+            </div>
+            <div className="overflow-y-auto flex-1 p-2 space-y-1">
+              {notifications.length === 0 ? (
+                <div className="text-center py-8 text-muted-foreground text-sm">
+                  Không có thông báo nào
+                </div>
+              ) : (
+                notifications.map((notif) => (
+                  <DropdownMenuItem
+                    key={notif.N_ID}
+                    className={`flex flex-col items-start gap-1 cursor-pointer transition-colors p-3 rounded-md ${!notif.IsRead ? 'bg-primary/5 hover:bg-primary/10' : 'hover:bg-muted/50'}`}
+                    onClick={() => handleNotificationClick(notif)}
+                  >
+                    <div className="flex items-start justify-between w-full">
+                      <p className={`text-sm ${!notif.IsRead ? 'font-semibold' : 'font-medium'}`}>{notif.Message}</p>
+                      {!notif.IsRead && <span className="h-2 w-2 rounded-full bg-blue-500 mt-1 shrink-0" />}
+                    </div>
+                    <span className="text-xs text-muted-foreground">
+                      {formatDistanceToNow(new Date(notif.CreatedAt), { addSuffix: true, locale: vi })}
+                    </span>
+                  </DropdownMenuItem>
+                ))
+              )}
+            </div>
+            <div className="p-2 border-t text-center">
+              <Button variant="link" size="sm" className="w-full text-xs" onClick={() => navigate('/reminders?tab=notifications')}>
+                Xem tất cả
+              </Button>
             </div>
           </DropdownMenuContent>
         </DropdownMenu>

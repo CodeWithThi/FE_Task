@@ -66,16 +66,21 @@ export function StaffDashboard() {
         // Let's assume it has what we need. For now, fetch all tasks and client filter if needed, 
         // OR query with assignedTo if we have user.m_id.
 
-        const tasksPromise = taskService.getAllTasks({ assignedTo: user.m_id || user.id });
+        // Fetch tasks assigned to the current user (using Member ID)
+        // Note: user.Member might be null if account not linked to member logic, but schema enforces usually.
+        const memberId = user.Member?.M_ID;
+        const tasksPromise = taskService.getAllTasks({ assignedTo: memberId });
 
         const [statsRes, tasksRes] = await Promise.all([statsPromise, tasksPromise]);
 
         const dashboardData = statsRes.ok ? statsRes.data : null;
-        const allTasks = tasksRes.ok ? tasksRes.data : [];
+        let allTasks = tasksRes.ok ? tasksRes.data : [];
 
-        // Filter tasks for 'me' if backend didn't (just in case)
-        // If user.m_id is present, filter.
-        const myTaskList = allTasks; // data is already filtered if we passed correct ID, or if backend handles it.
+        // Client-side fallback filter if backend didn't filter strictly (or to be safe)
+        if (memberId) {
+          allTasks = allTasks.filter(t => t.assignee?.id === memberId || t.assignee?.M_ID === memberId);
+        }
+        const myTaskList = allTasks;
 
         const now = new Date();
         const overdue = myTaskList.filter(t => t.deadline && new Date(t.deadline) < now && t.status !== 'done' && t.status !== 'completed');

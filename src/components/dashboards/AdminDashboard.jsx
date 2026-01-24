@@ -6,6 +6,10 @@ import { Card, CardContent, CardHeader, CardTitle } from '@core/components/ui/ca
 import { Button } from '@core/components/ui/button';
 import { Users, Building2, Settings, Shield, Activity, Database, ArrowRight, } from 'lucide-react';
 import { dashboardService } from '@core/services/dashboardService';
+import { logService } from '@core/services/logService';
+import { formatDistanceToNow } from 'date-fns';
+import { vi } from 'date-fns/locale';
+import { Avatar, AvatarFallback, AvatarImage } from '@core/components/ui/avatar';
 
 const quickActions = [
   { icon: Users, label: 'Quản lý người dùng', path: '/users', color: 'text-primary' },
@@ -14,10 +18,7 @@ const quickActions = [
 ];
 
 // Mock logs for now (or TODO: Fetch from API)
-const recentLogs = [
-  { id: '1', user: 'System', action: 'Hệ thống khởi động', time: 'Vừa xong' },
-  { id: '2', user: 'Admin', action: 'Đồng bộ dữ liệu', time: '5 phút trước' },
-];
+
 
 export function AdminDashboard() {
   const navigate = useNavigate();
@@ -28,12 +29,16 @@ export function AdminDashboard() {
     totalTasks: 0
   });
 
+  const [recentLogs, setRecentLogs] = useState([]);
+
   useEffect(() => {
     fetchStats();
+    fetchLogs();
 
     // Auto-refresh every 30 seconds to update online users count
     const interval = setInterval(() => {
       fetchStats();
+      fetchLogs();
     }, 30000);
 
     return () => clearInterval(interval);
@@ -47,6 +52,17 @@ export function AdminDashboard() {
       }
     } catch (error) {
       console.error("Failed to fetch dashboard stats", error);
+    }
+  };
+
+  const fetchLogs = async () => {
+    try {
+      const res = await logService.getLogs(1, 5); // Get top 5 recent logs
+      if (res.ok) {
+        setRecentLogs(res.data);
+      }
+    } catch (error) {
+      console.error("Failed to fetch recent logs", error);
     }
   };
 
@@ -103,32 +119,46 @@ export function AdminDashboard() {
 
       {/* Recent Activity Logs */}
       <Card className="lg:col-span-2">
-        <CardHeader className="flex flex-row items-center justify-between">
+        <CardHeader className="flex flex-row items-center justify-between pb-2">
           <CardTitle className="text-lg flex items-center gap-2">
-            <Activity className="w-5 h-5 text-primary" />
+            <Activity className="w-5 h-5 text-blue-500" />
             Nhật ký hoạt động gần đây
           </CardTitle>
-          <Button variant="ghost" size="sm" className="text-primary" onClick={() => navigate('/logs')}>
-            Xem tất cả <ArrowRight className="w-4 h-4 ml-1" />
+          <Button variant="ghost" size="sm" className="text-xs text-blue-600 hover:text-blue-800" onClick={() => navigate('/logs')}>
+            Xem tất cả <ArrowRight className="w-3 h-3 ml-1" />
           </Button>
         </CardHeader>
         <CardContent>
-          <div className="space-y-3">
-            {recentLogs.map((log) => (<div key={log.id} className="flex items-center justify-between p-3 rounded-lg border hover:bg-muted/50">
-              <div className="flex items-center gap-3">
-                <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-primary font-medium text-sm">
-                  {log.user.charAt(0)}
+          <div className="space-y-4">
+            {recentLogs.length === 0 ? (
+              <div className="text-center py-8 text-muted-foreground text-sm">Chưa có hoạt động nào</div>
+            ) : (
+              recentLogs.map((log) => (
+                <div key={log.LogID} className="flex items-start gap-3 pb-3 border-b last:border-0 last:pb-0">
+                  <Avatar className="w-8 h-8 mt-1">
+                    <AvatarImage src={log.Actor?.Member?.Avatar} />
+                    <AvatarFallback className="bg-blue-100 text-blue-700 text-xs">{(log.Actor?.UserName || 'U').charAt(0).toUpperCase()}</AvatarFallback>
+                  </Avatar>
+                  <div className="flex-1 space-y-1">
+                    <div className="flex items-center justify-between">
+                      <p className="text-sm font-medium leading-none">
+                        {log.Actor?.Member?.FullName || log.Actor?.UserName}
+                      </p>
+                      <span className="text-xs text-muted-foreground whitespace-nowrap">
+                        {formatDistanceToNow(new Date(log.CreatedAt), { addSuffix: true, locale: vi })}
+                      </span>
+                    </div>
+                    <p className="text-sm text-muted-foreground line-clamp-1">
+                      {log.Message}
+                    </p>
+                  </div>
                 </div>
-                <div>
-                  <p className="text-sm font-medium">{log.user}</p>
-                  <p className="text-sm text-muted-foreground">{log.action}</p>
-                </div>
-              </div>
-              <span className="text-xs text-muted-foreground">{log.time}</span>
-            </div>))}
+              ))
+            )}
           </div>
         </CardContent>
       </Card>
+
     </div>
   </div>);
 }

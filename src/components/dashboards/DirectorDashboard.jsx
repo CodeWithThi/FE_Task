@@ -11,6 +11,7 @@ import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContaine
 import { dashboardService } from '@core/services/dashboardService';
 import { projectService } from '@core/services/projectService';
 import { toast } from 'sonner';
+import { taskService } from '@core/services/taskService';
 
 const projectStatusLabels = {
   'active': 'Đang thực hiện',
@@ -34,18 +35,37 @@ export function DirectorDashboard() {
     const fetchData = async () => {
       setLoading(true);
       try {
-        const [statsRes, projectsRes] = await Promise.all([
+        const [statsRes, projectsRes, tasksRes] = await Promise.all([
           dashboardService.getStats(),
-          projectService.getAllProjects()
+          projectService.getAllProjects(),
+          taskService.getAllTasks({ isDeleted: false })
         ]);
 
-        if (statsRes.ok) {
-          setStats(statsRes.data);
+        if (statsRes.ok) setStats(statsRes.data);
+        if (projectsRes.ok) setProjects(projectsRes.data.slice(0, 4));
+        if (tasksRes.ok) {
+          // Calculate overdue
+          const allTasks = tasksRes.data;
+          const now = new Date();
+          const overdueCount = allTasks.filter(t => {
+            if (!t.deadline) return false;
+            const isCompleted = ['completed', 'done', 'cancelled'].includes(t.status);
+            return !isCompleted && new Date(t.deadline) < now;
+          }).length;
+
+          // We need to store this somewhere. 
+          // stats state structure: { tasksByStatus: ... }
+          // We can add it to stats or local state. 
+          // Let's assume we modify stats object or add local state.
+          // Simplest: modify local derived variable, but we need to store it first.
+          setStats(prev => prev ? ({ ...prev, overdueTasks: overdueCount }) : ({ overdueTasks: overdueCount }));
+          // Wait, setStats(statsRes.data) happens above. 
+          // Better: combine logic.
+          if (statsRes.ok) {
+            setStats({ ...statsRes.data, overdueTasks: overdueCount });
+          }
         }
 
-        if (projectsRes.ok) {
-          setProjects(projectsRes.data.slice(0, 4)); // Get recent 4 projects
-        }
       } catch (error) {
         console.error('Error fetching dashboard data:', error);
         toast.error('Không thể tải dữ liệu dashboard');
@@ -66,7 +86,7 @@ export function DirectorDashboard() {
   const completed = tasksByStatus.find(s => s.status === 'completed')?.count || 0;
   const inProgress = tasksByStatus.find(s => s.status === 'in-progress' || s.status === 'processing')?.count || 0;
   const pending = tasksByStatus.find(s => s.status === 'pending' || s.status === 'todo')?.count || 0;
-  const overdue = 0; // Backend doesn't provide this yet
+  const overdue = stats?.overdueTasks || 0;
 
   const statusData = stats ? [
     { name: 'Hoàn thành', value: completed, color: 'hsl(142, 71%, 45%)' },

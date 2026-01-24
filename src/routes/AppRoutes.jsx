@@ -21,7 +21,7 @@ const ChangePasswordPage = lazy(() => import("@features/shared/profile/ChangePas
 const UsersPage = lazy(() => import("@features/admin/pages/UsersPage"));
 const DepartmentsPage = lazy(() => import("@features/admin/pages/DepartmentsPage"));
 const SettingsPage = lazy(() => import("@features/admin/pages/SettingsPage"));
-const LogsPage = lazy(() => import("@features/admin/pages/LogsPage"));
+const LogsPage = lazy(() => import("@features/admin/pages/LogsPage/index"));
 
 // PMO/Director pages - lazy loaded
 const ProjectListPage = lazy(() => import("@features/pmo/pages/ProjectListPage"));
@@ -35,6 +35,7 @@ const TaskListPage = lazy(() => import("@features/shared/tasks/TaskListPage"));
 const TaskDetailPage = lazy(() => import("@features/shared/tasks/TaskDetailPage"));
 const WorkspacePage = lazy(() => import("@features/shared/projects/WorkspacePage"));
 const RemindersPage = lazy(() => import("@features/shared/reminders/RemindersPage"));
+
 
 export function AppRoutes() {
     const { isAuthenticated, isLoading, user } = useAuth();
@@ -143,6 +144,8 @@ export function AppRoutes() {
                         <LogsPage />
                     </ProtectedRoute>
                 } />
+
+
 
                 {/* Profile routes - accessible by all authenticated users */}
                 <Route path="/profile" element={

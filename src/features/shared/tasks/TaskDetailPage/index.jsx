@@ -319,7 +319,7 @@ export default function TaskDetailPage() {
                  2. Else If User is Leader/Manager -> Show Management Actions 
                  3. Else (Staff but not assignee yet, or unassigned) -> Show Work Actions (Receive)
               */}
-              {(user && (user.aid === task.assignee?.id || user.memberId === task.assignee?.id || (!task.assignee && !permissions?.canCreateSubtask))) ? (
+              {(user && !['pmo'].includes((user.role || '').toLowerCase()) && (user.aid === task.assignee?.id || user.memberId === task.assignee?.id || (!task.assignee && !permissions?.canCreateSubtask))) ? (
                 // WORK ACTIONS (Assignee or Staff picking up task)
                 <>
                   {/* Not Assigned -> Receive Task */}
