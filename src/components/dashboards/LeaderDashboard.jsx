@@ -12,6 +12,8 @@ import { toast } from 'sonner';
 import { ListTodo, Users, Clock, CheckCircle2, UserCheck, ArrowRight, Plus, Loader2 } from 'lucide-react';
 import { dashboardService } from '@core/services/dashboardService';
 import { taskService } from '@core/services/taskService';
+import { projectService } from '@core/services/projectService';
+import { TaskFormModal } from '../modals/TaskFormModal';
 
 export function LeaderDashboard() {
   const { user } = useAuth();
@@ -20,41 +22,51 @@ export function LeaderDashboard() {
     teamSize: 0,
     totalTasks: 0,
     pendingApprovals: 0,
-    completedWeek: 0
+    completedWeek: 0,
+    personalStats: {
+      inProgress: 0,
+      dueSoon: 0,
+      overdue: 0
+    }
   });
   const [pendingApprovals, setPendingApprovals] = useState([]);
   const [teamTasks, setTeamTasks] = useState([]);
   const [teamMembers, setTeamMembers] = useState([]);
+  const [showTaskModal, setShowTaskModal] = useState(false);
+  const [projects, setProjects] = useState([]);
 
   useEffect(() => {
     const fetchData = async () => {
       try {
         setLoading(true);
-        const [statsRes, tasksRes] = await Promise.all([
+        const [statsRes, tasksRes, projectsRes] = await Promise.all([
           dashboardService.getStats(),
-          taskService.getAllTasks()
+          taskService.getAllTasks(),
+          projectService.getAllProjects()
         ]);
 
         const allTasks = tasksRes.ok ? tasksRes.data : [];
         const dashboardData = statsRes.ok ? statsRes.data : null;
 
+        // Load Projects
+        if (projectsRes.ok) {
+          setProjects(projectsRes.data || []);
+        }
+
         // 0. Get Trusted Team Members from Stats (Backend Scoped)
-        // If getting stats failed, we might show nothing or all. Safety first: show all if stats fail? 
-        // No, show nothing is safer for privacy. But let's assume stats works.
         const teamMemberIds = new Set();
         let validTeamMembers = [];
 
         if (dashboardData && dashboardData.members && Array.isArray(dashboardData.members.workload)) {
-          dashboardData.members.workload.forEach(m => teamMemberIds.add(m.id));
-          validTeamMembers = dashboardData.members.workload;
+          // Filter out System/Admin accounts
+          validTeamMembers = dashboardData.members.workload.filter(m => {
+            const name = (m.name || '').toLowerCase();
+            return !name.includes('system') && !name.includes('admin') && !name.includes('quản trị');
+          });
+          validTeamMembers.forEach(m => teamMemberIds.add(m.id));
         }
 
         // Filter tasks to only those assigned to my team members
-        // If teamMemberIds is empty (e.g. no members), we shouldn't show global tasks.
-        // But if stats failed, we might want to fallback? 
-        // Let's rely on dashboardData. If it's valid, filter. If not, fallback to all (dev mode) or empty.
-        // Given the requirement to "fix" blank dashboard, let's filter carefully.
-
         const scopedTasks = dashboardData ? allTasks.filter(t => t.assignee && teamMemberIds.has(t.assignee.id)) : [];
 
         // 1. Pending Approvals
@@ -64,32 +76,24 @@ export function LeaderDashboard() {
         // 2. Team Tasks
         setTeamTasks(scopedTasks);
 
-        // 3. Team Members (Use data from stats directly as it's cleaner, but we need task counts from task list to be sync)
-        // actually stats.workload has activeTasks count. 
-        // But we want 'completed' count too.
-        // Let's re-calculate using scopedTasks to ensure sync.
-
+        // 3. Team Members Map
         const memberMap = new Map();
-
-        // Initialize with all team members (even those with 0 tasks)
         validTeamMembers.forEach(m => {
           memberMap.set(m.id, {
             id: m.id,
             name: m.name,
             tasks: 0,
-            completed: 0
+            completed: 0,
+            department: m.department // Keep department info if available for modal
           });
         });
 
         scopedTasks.forEach(task => {
-          if (task.assignee && task.assignee.id) {
-            // Note: assignee.id should already be in map if we filtered correctly
-            if (memberMap.has(task.assignee.id)) {
-              const member = memberMap.get(task.assignee.id);
-              member.tasks++;
-              if (task.status === 'completed' || task.status === 'done') {
-                member.completed++;
-              }
+          if (task.assignee && task.assignee.id && memberMap.has(task.assignee.id)) {
+            const member = memberMap.get(task.assignee.id);
+            member.tasks++;
+            if (task.status === 'completed' || task.status === 'done') {
+              member.completed++;
             }
           }
         });
@@ -97,13 +101,11 @@ export function LeaderDashboard() {
 
         // 4. Stats
         setStats({
-          teamSize: validTeamMembers.length, // Use trusted size
+          teamSize: validTeamMembers.length,
           totalTasks: scopedTasks.length,
           pendingApprovals: pending.length,
-          completedWeek: scopedTasks.filter(t => {
-            if (t.status !== 'completed' && t.status !== 'done') return false;
-            return true;
-          }).length
+          completedWeek: scopedTasks.filter(t => t.status === 'completed' || t.status === 'done').length,
+          personalStats: dashboardData.personalStats || { inProgress: 0, dueSoon: 0, overdue: 0 }
         });
 
       } catch (error) {
@@ -119,21 +121,11 @@ export function LeaderDashboard() {
 
   const handleApprove = async (task) => {
     try {
-      const res = await taskService.updateTask(task.id, { status: 'in-progress' }); // Or 'completed'? Usually waiting-approval -> done? Or leader approves subtask?
-      // Let's assume 'completed' if it was waiting for approval to finish? 
-      // Or 'in-progress' if it was a proposal?
-      // Usually Subtask: Staff submit -> Leader approve -> Completed.
-      // Let's set to 'completed' for now, or check business logic.
-      // Re-reading logic: "Staff: nhận/từ chối, cập nhật tiến độ, gửi trình duyệt".
-      // Leader: "Duyệt/trả lại".
-      // If Leader approves, it likely becomes 'completed'.
-
       const finalStatus = 'completed';
       const updateRes = await taskService.updateTask(task.id, { status: finalStatus });
 
       if (updateRes.ok) {
         toast.success('Đã duyệt công việc');
-        // Remove from pending
         setPendingApprovals(prev => prev.filter(t => t.id !== task.id));
         setTeamTasks(prev => prev.map(t => t.id === task.id ? { ...t, status: finalStatus, progress: 100 } : t));
       } else {
@@ -159,118 +151,226 @@ export function LeaderDashboard() {
     }
   };
 
+  const handleCreateTask = async (taskData) => {
+    try {
+      const res = await taskService.createTask(taskData);
+      if (res.ok || res.status === 201) {
+        toast.success('Giao việc thành công');
+        setShowTaskModal(false);
+        // Optimistic update or reload? 
+        // Reload is safer to get full assignee object/relations
+        // But let's verify if we can just append
+        // For simplicity reusing scopedTasks logic, might be best to trigger a mini-reload or rely on real-time. 
+        // Or manual append:
+        const newTask = res.data;
+        if (newTask) {
+          setTeamTasks(prev => [newTask, ...prev]);
+          // Also update stats manually?
+          setStats(prev => ({ ...prev, totalTasks: prev.totalTasks + 1 }));
+        }
+      } else {
+        toast.error('Không thể giao việc');
+      }
+    } catch (err) {
+      console.error(err);
+      toast.error('Lỗi khi tạo công việc');
+    }
+  };
+
   if (loading) {
     return <div className="flex h-96 items-center justify-center"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>;
   }
 
-  return (<div>
-    <PageHeader title="Tổng quan - Trưởng nhóm" description="Quản lý công việc và nhân sự của đội nhóm" />
-
-    {/* Stats Grid */}
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-      <StatCard title="Nhân sự hoạt động" value={stats.teamSize} icon={Users} variant="primary" />
-      <StatCard title="Tổng công việc" value={stats.totalTasks} icon={ListTodo} variant="default" />
-      <StatCard title="Chờ duyệt" value={stats.pendingApprovals} icon={Clock} variant="warning" />
-      <StatCard title="Đã hoàn thành" value={stats.completedWeek} icon={CheckCircle2} variant="success" />
-    </div>
-
-    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
-      {/* Team Members */}
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between">
-          <CardTitle className="text-lg flex items-center gap-2">
-            <Users className="w-5 h-5 text-primary" />
-            Hiệu suất nhân sự
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-4">
-            {teamMembers.length === 0 ? <p className="text-sm text-muted">Chưa có dữ liệu nhân sự</p> :
-              teamMembers.map((member) => (<div key={member.id} className="flex items-center gap-3 p-2 rounded-lg hover:bg-muted transition-colors">
-                <Avatar className="h-10 w-10">
-                  <AvatarFallback className="bg-primary/10 text-primary">
-                    {member.name ? member.name.charAt(0) : '?'}
-                  </AvatarFallback>
-                </Avatar>
-                <div className="flex-1">
-                  <p className="text-sm font-medium">{member.name}</p>
-                  <p className="text-xs text-muted-foreground">
-                    {member.completed}/{member.tasks} công việc hoàn thành
-                  </p>
-                </div>
-                <div className="text-right">
-                  <span className="text-sm font-medium text-primary">
-                    {member.tasks ? Math.round((member.completed / member.tasks) * 100) : 0}%
-                  </span>
-                </div>
-              </div>))}
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Pending Approvals */}
-      <Card className="lg:col-span-2">
-        <CardHeader className="flex flex-row items-center justify-between">
-          <CardTitle className="text-lg flex items-center gap-2">
-            <UserCheck className="w-5 h-5 text-status-waiting" />
-            Công việc chờ duyệt ({pendingApprovals.length})
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-3">
-            {pendingApprovals.length === 0 ? <p className="text-sm text-muted">Không có công việc chờ duyệt</p> :
-              pendingApprovals.map((item) => (<div key={item.id} className="flex items-center justify-between p-3 rounded-lg border bg-status-waiting-bg/30">
-                <div className="flex-1">
-                  <div className="flex items-center gap-2 mb-1">
-                    <span className="font-medium">{item.title}</span>
-                    <PriorityBadge priority={item.priority} />
-                  </div>
-                  <p className="text-sm text-muted-foreground">
-                    Gửi bởi: {item.assignee?.name} • {item.deadline ? new Date(item.deadline).toLocaleDateString('vi-VN') : 'N/A'}
-                  </p>
-                </div>
-                <div className="flex gap-2">
-                  <Button size="sm" variant="outline" onClick={() => handleReject(item)}>
-                    Trả lại
-                  </Button>
-                  <Button size="sm" onClick={() => handleApprove(item)}>
-                    Duyệt
-                  </Button>
-                </div>
-              </div>))}
-          </div>
-        </CardContent>
-      </Card>
-    </div>
-
-    {/* Team Tasks */}
-    <Card>
-      <CardHeader className="flex flex-row items-center justify-between">
-        <CardTitle className="text-lg flex items-center gap-2">
-          <ListTodo className="w-5 h-5 text-primary" />
-          Công việc đội nhóm
-        </CardTitle>
-      </CardHeader>
-      <CardContent>
-        <div className="space-y-3">
-          {teamTasks.length === 0 ? <p className="text-sm text-muted">Không có công việc nào</p> :
-            teamTasks.slice(0, 10).map((task) => (<div key={task.id} className="flex items-center gap-4 p-4 rounded-lg border hover:bg-muted/50 transition-colors cursor-pointer">
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2 mb-1">
-                  <span className="font-medium truncate">{task.title}</span>
-                  <StatusBadge status={task.status} />
-                </div>
-                <p className="text-sm text-muted-foreground">
-                  {task.assignee?.name || 'Chưa gán'} • Hạn: {task.deadline ? new Date(task.deadline).toLocaleDateString('vi-VN') : 'N/A'}
-                </p>
-              </div>
-              <div className="w-32">
-                <ProgressBar value={task.progress} size="sm" />
-              </div>
-            </div>))}
+  return (
+    <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight text-gray-900">
+            Xin chào, {user?.name ? user.name.split(' ').slice(-1) : 'Leader'}! 👋
+          </h1>
+          <p className="text-muted-foreground text-base mt-1">
+            Tổng quan công việc hôm nay.
+          </p>
         </div>
-      </CardContent>
-    </Card>
-  </div>);
-}
+        <div className="text-sm font-medium text-gray-500 bg-white px-4 py-2 rounded-lg border shadow-sm">
+          {new Date().toLocaleDateString('vi-VN', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
+        </div>
+      </div>
 
+      {/* 1. Top Stats Cards - Balanced Size */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        {/* Card 1: Team Tasks */}
+        <div className="bg-white p-6 rounded-2xl border shadow-sm flex items-center justify-between hover:shadow-md transition-shadow">
+          <div>
+            <p className="text-sm font-medium text-gray-500 uppercase tracking-wider">Việc đội nhóm</p>
+            <div className="flex items-baseline gap-3 mt-2">
+              <h3 className="text-3xl font-bold text-gray-900">{stats.totalTasks}</h3>
+              <span className="text-xs text-green-700 font-semibold flex items-center bg-green-50 px-2 py-1 rounded-full border border-green-100">
+                <ArrowRight className="w-3.5 h-3.5 mr-1" /> Hoạt động
+              </span>
+            </div>
+          </div>
+          <div className="p-3 bg-blue-50 text-blue-600 rounded-xl">
+            <ListTodo className="w-6 h-6" />
+          </div>
+        </div>
+
+        {/* Card 2: Pending */}
+        <div className="bg-white p-6 rounded-2xl border shadow-sm flex items-center justify-between hover:shadow-md transition-shadow">
+          <div>
+            <p className="text-sm font-medium text-gray-500 uppercase tracking-wider">Chờ duyệt</p>
+            <div className="flex items-baseline gap-3 mt-2">
+              <h3 className="text-3xl font-bold text-gray-900">{stats.pendingApprovals}</h3>
+              {stats.pendingApprovals > 0 ?
+                <span className="text-xs text-amber-700 font-semibold bg-amber-50 px-2 py-1 rounded-full border border-amber-100 animate-pulse">Cần xử lý</span> :
+                <span className="text-xs text-gray-500 font-semibold bg-gray-50 px-2 py-1 rounded-full border border-gray-100">Đã xong</span>
+              }
+            </div>
+          </div>
+          <div className="p-3 bg-amber-50 text-amber-600 rounded-xl">
+            <Clock className="w-6 h-6" />
+          </div>
+        </div>
+
+        {/* Card 3: Completed Week */}
+        <div className="bg-white p-6 rounded-2xl border shadow-sm flex items-center justify-between hover:shadow-md transition-shadow">
+          <div>
+            <p className="text-sm font-medium text-gray-500 uppercase tracking-wider">Hoàn thành tuần</p>
+            <div className="flex items-baseline gap-3 mt-2">
+              <h3 className="text-3xl font-bold text-gray-900">{stats.completedWeek}</h3>
+              <span className="text-xs text-emerald-700 font-semibold bg-emerald-50 px-2 py-1 rounded-full border border-emerald-100">Tốt</span>
+            </div>
+          </div>
+          <div className="p-3 bg-emerald-50 text-emerald-600 rounded-xl">
+            <CheckCircle2 className="w-6 h-6" />
+          </div>
+        </div>
+      </div>
+
+      {/* Grid Layout - Balanced Spacing & Equal Height */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-stretch h-full">
+
+        {/* 2. Pending Approvals */}
+        <Card className="border-none shadow-sm h-full flex flex-col">
+          <CardHeader className="py-5 px-6 border-b flex flex-row items-center justify-between bg-white rounded-t-xl shrink-0">
+            <CardTitle className="text-lg font-bold flex items-center gap-2 text-gray-800">
+              <UserCheck className="w-5 h-5 text-purple-600" />
+              Chờ duyệt
+            </CardTitle>
+            {stats.pendingApprovals > 0 && <span className="text-xs bg-purple-100 text-purple-700 px-2.5 py-1 rounded-full font-bold">{stats.pendingApprovals}</span>}
+          </CardHeader>
+          <CardContent className="p-0 bg-gray-50/30 flex-1 overflow-auto min-h-[400px]">
+            {pendingApprovals.length === 0 ?
+              <div className="h-full flex flex-col items-center justify-center py-12 text-center text-muted-foreground bg-white">
+                <div className="w-16 h-16 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-3">
+                  <CheckCircle2 className="w-8 h-8 text-gray-300" />
+                </div>
+                <p className="text-base font-medium text-gray-900">Không có yêu cầu nào</p>
+                <p className="text-sm text-muted-foreground mt-1">Tuyệt vời, bạn đã xử lý hết!</p>
+              </div>
+              :
+              <div className="divide-y divide-gray-100">
+                {pendingApprovals.slice(0, 5).map((item) => (
+                  <div key={item.id} className="p-5 bg-white hover:bg-purple-50/20 transition-colors">
+                    <div className="flex justify-between items-start gap-4 mb-3">
+                      <h4 className="font-semibold text-base text-gray-900 line-clamp-1 flex-1" title={item.title}>{item.title}</h4>
+                      <PriorityBadge priority={item.priority} />
+                    </div>
+
+                    <div className="flex items-center justify-between mb-4">
+                      <div className="flex items-center gap-2 text-sm text-gray-600">
+                        <Avatar className="h-6 w-6 border">
+                          <AvatarFallback className="text-[10px] bg-purple-100 text-purple-700">{item.assignee?.name?.charAt(0)}</AvatarFallback>
+                        </Avatar>
+                        <span className="truncate max-w-[140px] font-medium">{item.assignee?.name}</span>
+                      </div>
+                      <div className="flex items-center gap-1.5 text-xs text-gray-500 bg-gray-50 px-2 py-1 rounded">
+                        <Clock className="w-3.5 h-3.5" />
+                        <span>{item.deadline ? new Date(item.deadline).toLocaleDateString('vi-VN') : 'Không hạn'}</span>
+                      </div>
+                    </div>
+
+                    <div className="flex gap-3">
+                      <Button size="sm" variant="outline" className="h-9 flex-1 border-gray-200 hover:bg-red-50 hover:text-red-700 hover:border-red-200 transition-colors" onClick={() => handleReject(item)}>
+                        Từ chối
+                      </Button>
+                      <Button size="sm" className="h-9 flex-1 bg-purple-600 hover:bg-purple-700 shadow-sm" onClick={() => handleApprove(item)}>
+                        Duyệt ngay
+                      </Button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            }
+          </CardContent>
+        </Card>
+
+        {/* 3. Team Tasks */}
+        <Card className="border-none shadow-sm h-full flex flex-col">
+          <CardHeader className="py-5 px-6 border-b flex flex-row items-center justify-between bg-white rounded-t-xl shrink-0">
+            <CardTitle className="text-lg font-bold flex items-center gap-2 text-gray-800">
+              <ListTodo className="w-5 h-5 text-indigo-600" />
+              Việc đội nhóm
+            </CardTitle>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-8 text-sm text-indigo-600 hover:text-indigo-700 hover:bg-indigo-50"
+              onClick={() => setShowTaskModal(true)}
+            >
+              <Plus className="w-4 h-4 mr-1" /> Giao việc
+            </Button>
+          </CardHeader>
+          <CardContent className="p-0 bg-white flex-1 overflow-auto min-h-[400px]">
+            {teamTasks.length === 0 ?
+              <div className="h-full flex flex-col items-center justify-center py-12 text-center text-muted-foreground">
+                <div className="w-16 h-16 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-3">
+                  <ListTodo className="w-8 h-8 text-gray-300" />
+                </div>
+                <p className="text-base font-medium text-gray-900">Chưa có công việc nào</p>
+                <p className="text-sm text-muted-foreground mt-1">Danh sách công việc của nhóm đang trống</p>
+              </div>
+              :
+              <div className="divide-y divide-gray-50">
+                {teamTasks.slice(0, 8).map((task) => (
+                  <div key={task.id} className="flex items-center gap-4 p-4 hover:bg-gray-50 transition-colors group cursor-pointer">
+                    <div className="flex-1 min-w-0 space-y-1">
+                      <div className="flex items-center justify-between mb-1.5">
+                        <span className="font-semibold text-sm text-gray-900 truncate pr-2 group-hover:text-indigo-700 transition-colors">{task.title}</span>
+                        <StatusBadge status={task.status} />
+                      </div>
+                      <div className="flex items-center gap-3 text-xs text-muted-foreground">
+                        <div className="flex items-center gap-1.5">
+                          <span className="w-1.5 h-1.5 rounded-full bg-gray-300"></span>
+                          {task.assignee?.name || 'Chưa gán'}
+                        </div>
+                        <span>•</span>
+                        <span>{task.deadline ? new Date(task.deadline).toLocaleDateString('vi-VN') : 'N/A'}</span>
+                      </div>
+                    </div>
+                    <div className="w-20 text-right">
+                      <span className="text-[11px] font-bold text-gray-600 block mb-1">{task.progress}%</span>
+                      <ProgressBar value={task.progress} size="sm" className="h-2" />
+                    </div>
+                    <ArrowRight className="w-4 h-4 text-gray-300 group-hover:text-indigo-500 opacity-0 group-hover:opacity-100 transition-all" />
+                  </div>
+                ))}
+              </div>
+            }
+          </CardContent>
+        </Card>
+      </div>
+
+      <TaskFormModal
+        open={showTaskModal}
+        onOpenChange={setShowTaskModal}
+        title="Giao việc mới cho nhân viên"
+        type="sub-task"
+        onSubmit={handleCreateTask}
+        accounts={teamMembers}
+        projects={projects}
+        mode="create"
+      />
+    </div>
+  );
+}

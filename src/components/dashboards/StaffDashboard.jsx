@@ -1,293 +1,254 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@core/contexts/AuthContext';
-import { PageHeader } from '@core/components/common/PageHeader';
-import { StatCard } from '@core/components/common/StatCard';
-import { ProgressBar } from '@core/components/common/ProgressBar';
-import { StatusBadge } from '@core/components/common/StatusBadge';
-import { PriorityBadge } from '@core/components/common/PriorityBadge';
 import { Card, CardContent, CardHeader, CardTitle } from '@core/components/ui/card';
 import { Button } from '@core/components/ui/button';
-import { ConfirmActionModal } from '@/components/modals/ConfirmActionModal';
-import { toast } from 'sonner';
-import { ListTodo, Clock, CheckCircle2, AlertTriangle, ArrowRight, Calendar, Loader2 } from 'lucide-react';
-import { dashboardService } from '@core/services/dashboardService';
+import { Avatar, AvatarFallback } from '@core/components/ui/avatar';
+import { ProgressBar, ProgressLegend, PriorityLegend } from '@core/components/common/ProgressBar';
+import { SubtaskDetailModal } from '@/components/tasks/SubtaskDetailModal';
+import { Kanban, Clock, AlertTriangle, CheckCircle2, ArrowRight, Calendar, } from 'lucide-react';
 import { taskService } from '@core/services/taskService';
+import { toast } from 'sonner';
 
 export function StaffDashboard() {
   const navigate = useNavigate();
   const { user } = useAuth();
-  const [actionModal, setActionModal] = useState({
-    open: false,
-    type: 'accept',
-    taskTitle: '',
-    taskId: null
-  });
-
-  const [loading, setLoading] = useState(true);
-  const [stats, setStats] = useState({
-    myTasks: 0,
-    upcoming: 0,
-    overdue: 0,
-    completed: 0
-  });
+  const [selectedTaskId, setSelectedTaskId] = useState(null);
+  const [showDetail, setShowDetail] = useState(false);
   const [myTasks, setMyTasks] = useState([]);
-  const [upcomingDeadlines, setUpcomingDeadlines] = useState([]);
+  const [upcomingTasks, setUpcomingTasks] = useState([]);
   const [overdueTasks, setOverdueTasks] = useState([]);
 
+  // Merge all tasks to find the selected one
+  const allTasks = [...myTasks, ...upcomingTasks, ...overdueTasks];
+  // Deduplicate by ID just in case they overlap (unlikely with current filter logic but safe)
+  const taskMap = new Map();
+  allTasks.forEach(t => taskMap.set(t.id, t));
+
+  const selectedTask = selectedTaskId ? taskMap.get(selectedTaskId) : null;
+
+
   useEffect(() => {
-    const fetchData = async () => {
-      if (!user) return;
-      try {
-        setLoading(true);
-        // 1. Fetch Stats
-        const statsPromise = dashboardService.getStats();
-
-        // 2. Fetch My Tasks (using a filter or if backend supports 'me' filter)
-        // The taskService logic: getAllTasks(filters). 
-        // We'll filter by assignedTo = user.id (which is A_ID or M_ID?)
-        // taskService.createTask passes 'assignedTo'.
-        // Ideally backend `listTasks` filters by `Assigned_ID_M_ID`.
-        // We need the user's M_ID. 'user' object from useAuth usually has it? 
-        // Let's assume user.id or user.m_id. 
-        // The dashboardService.getStats already returns "me" stats.
-
-        // For the LIST of tasks, we need to call taskService.
-        // If we don't know M_ID, we might rely on the backend to filter for 'me' via token?
-        // The backend code for listTasks checks: if (assignedTo) where.Assigned_ID_M_ID = assignedTo.
-        // It doesn't auto-scope to 'me' if not Pmo/Admin.
-        // But wait, user object from login has `user` which comes from `authService.login` -> `response.data.user`.
-        // Does that user object have M_ID? 
-
-        // Let's just try fetching all tasks and filtering on client if we can't filter by API yet 
-        // OR better, pass user.id if available.
-        // Assuming user object has id (A_ID) or m_id (M_ID). 
-        // The backend login returns `user` which is the Account object usually, or customized? 
-        // Let's assume it has what we need. For now, fetch all tasks and client filter if needed, 
-        // OR query with assignedTo if we have user.m_id.
-
-        // Fetch tasks assigned to the current user (using Member ID)
-        // Note: user.Member might be null if account not linked to member logic, but schema enforces usually.
-        const memberId = user.Member?.M_ID;
-        const tasksPromise = taskService.getAllTasks({ assignedTo: memberId });
-
-        const [statsRes, tasksRes] = await Promise.all([statsPromise, tasksPromise]);
-
-        const dashboardData = statsRes.ok ? statsRes.data : null;
-        let allTasks = tasksRes.ok ? tasksRes.data : [];
-
-        // Client-side fallback filter if backend didn't filter strictly (or to be safe)
-        if (memberId) {
-          allTasks = allTasks.filter(t => t.assignee?.id === memberId || t.assignee?.M_ID === memberId);
-        }
-        const myTaskList = allTasks;
-
-        const now = new Date();
-        const overdue = myTaskList.filter(t => t.deadline && new Date(t.deadline) < now && t.status !== 'done' && t.status !== 'completed');
-        const upcoming = myTaskList.filter(t => {
-          if (!t.deadline || t.status === 'done' || t.status === 'completed') return false;
-          const d = new Date(t.deadline);
-          const diff = (d - now) / (1000 * 60 * 60 * 24);
-          return diff >= 0 && diff <= 3;
-        });
-        const completed = myTaskList.filter(t => t.status === 'done' || t.status === 'completed');
-
-        if (dashboardData) {
-          setStats({
-            myTasks: dashboardData.me?.assignedTasks || myTaskList.length,
-            upcoming: upcoming.length,
-            overdue: overdue.length,
-            completed: completed.length // This might need a time range check for "this month"
-          });
-        }
-
-        setMyTasks(myTaskList.slice(0, 5));
-        setOverdueTasks(overdue);
-        setUpcomingDeadlines(upcoming.map(t => ({
-          id: t.id,
-          title: t.title,
-          deadline: t.deadline,
-          daysLeft: Math.ceil((new Date(t.deadline) - now) / (1000 * 60 * 60 * 24))
-        })));
-
-      } catch (error) {
-        console.error('Failed to load staff dashboard', error);
-        toast.error('Không thể tải dữ liệu');
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchData();
+    if (user?.m_id) {
+      fetchMyTasks();
+    }
   }, [user]);
 
-  const handleAction = (type, task) => {
-    setActionModal({ open: true, type, taskTitle: task.title, taskId: task.id });
-  };
-
-  const handleConfirmAction = async (reason) => {
-    if (!actionModal.taskId) return;
-
+  const fetchMyTasks = async () => {
     try {
-      // Map action types to task status updates
-      let newStatus = '';
-      let payload = {};
-
-      switch (actionModal.type) {
-        case 'accept': newStatus = 'in-progress'; break;
-        case 'reject': newStatus = 'rejected'; break; // or deleted?
-        case 'submit': newStatus = 'waiting-approval'; break;
-        // approve/return/transfer might be leader actions
-        default: return;
-      }
-
-      const res = await taskService.updateTask(actionModal.taskId, { status: newStatus });
-
+      const res = await taskService.getAllTasks({ assignedTo: user.m_id });
       if (res.ok) {
-        toast.success('Cập nhật trạng thái thành công');
-        // Refresh list
-        const updatedTasks = myTasks.map(t => t.id === actionModal.taskId ? { ...t, status: newStatus } : t);
-        setMyTasks(updatedTasks);
-      } else {
-        toast.error(res.message);
+        const allTasks = res.data;
+        const now = new Date();
+        const threeDaysFromNow = new Date();
+        threeDaysFromNow.setDate(now.getDate() + 3);
+
+        const inProgress = [];
+        const upcoming = [];
+        const overdue = [];
+
+        allTasks.forEach(t => {
+          const deadline = t.deadline ? new Date(t.deadline) : null;
+          const isCompleted = t.status === 'completed';
+
+          // Overdue: Not completed AND deadline passed
+          if (deadline && deadline < now && !isCompleted) {
+            overdue.push(t);
+          }
+
+          // Upcoming: Not completed AND deadline within 3 days AND not overdue
+          else if (deadline && deadline <= threeDaysFromNow && deadline >= now && !isCompleted) {
+            upcoming.push(t);
+          }
+
+          // In Progress: status is in-progress (and maybe others?)
+          // Or just show everything assigned that is active? 
+          // Let's stick to status 'in-progress' as "Doing" list.
+          if (t.status === 'in-progress') {
+            inProgress.push(t);
+          }
+        });
+
+        setMyTasks(inProgress);
+        setUpcomingTasks(upcoming);
+        setOverdueTasks(overdue);
       }
-    } catch (err) {
-      toast.error('Có lỗi xảy ra');
+    } catch (error) {
+      console.error("Failed to fetch my tasks", error);
     }
   };
 
-  if (loading) {
-    return <div className="flex h-96 items-center justify-center"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>;
-  }
+  const handleTaskClick = (task) => {
+    setSelectedTaskId(task.id);
+    setShowDetail(true);
+  };
 
-  return (<div>
-    <PageHeader title="Tổng quan - Công việc của tôi" description="Nhận việc, cập nhật tiến độ và gửi trình duyệt" />
+  const handleTaskUpdate = () => {
+    fetchMyTasks();
+  };
 
-    {/* Stats Grid */}
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-      <StatCard title="Công việc của tôi" value={stats.myTasks} icon={ListTodo} variant="primary" />
-      <StatCard title="Sắp đến hạn (3 ngày)" value={stats.upcoming} icon={Clock} variant="warning" />
-      <StatCard title="Trễ hạn" value={stats.overdue} icon={AlertTriangle} variant="danger" />
-      <StatCard title="Hoàn thành" value={stats.completed} icon={CheckCircle2} variant="success" />
+  const TaskItem = ({ task }) => {
+    const isOverdue = new Date(task.deadline) < new Date() && task.status !== 'completed';
+    return (<div onClick={() => handleTaskClick(task)} className="flex items-center gap-4 p-3 rounded-lg border hover:bg-muted/50 cursor-pointer transition-colors group">
+      <Avatar className="w-8 h-8">
+        <AvatarFallback className="text-xs bg-primary/10 text-primary">
+          {task.assignee?.name?.charAt(0) || user?.name?.charAt(0) || '?'}
+        </AvatarFallback>
+      </Avatar>
+      <div className="flex-1 min-w-0">
+        <div className="flex items-center gap-3">
+          {/* Màu độ ưu tiên trên tiêu đề */}
+          <span className={`w-2 h-2 rounded-full flex-shrink-0 ${task.priority === 'high' ? 'bg-priority-high' :
+            task.priority === 'medium' ? 'bg-priority-medium' : 'bg-priority-low'}`} />
+          <p className="font-medium text-sm truncate group-hover:text-primary transition-colors flex-1">
+            {task.title}
+          </p>
+          {/* Progress bar cùng dòng với tiêu đề */}
+          <div className="w-24 flex-shrink-0">
+            <ProgressBar value={task.progress} size="sm" showLabel={false} />
+          </div>
+          <span className="text-xs font-medium text-muted-foreground w-8 text-right">
+            {task.progress}%
+          </span>
+        </div>
+        <p className="text-xs text-muted-foreground mt-1">{task.projectName || 'General'}</p>
+      </div>
+      <div className="flex items-center gap-2">
+        <div className={`flex items-center gap-1 text-xs ${isOverdue ? 'text-destructive' : 'text-muted-foreground'}`}>
+          <Calendar className="w-3 h-3" />
+          {task.deadline ? new Date(task.deadline).toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit' }) : 'N/A'}
+        </div>
+      </div>
+      <ArrowRight className="w-4 h-4 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
+    </div>);
+  };
+  return (<div className="space-y-6">
+    {/* Header */}
+    <div className="flex items-center justify-between">
+      <div>
+        <h1 className="text-2xl font-bold">Xin chào, {user?.name ? user.name.split(' ').slice(-1) : 'Bạn'}!</h1>
+        <p className="text-muted-foreground">Tổng quan công việc của bạn</p>
+      </div>
+      <Button onClick={() => navigate('/tasks-board')}>
+        <Kanban className="w-4 h-4 mr-2" />
+        Vào bảng công việc
+      </Button>
     </div>
 
-    {/* Confirm Action Modal */}
-    <ConfirmActionModal open={actionModal.open} onOpenChange={(open) => setActionModal({ ...actionModal, open })} actionType={actionModal.type} taskTitle={actionModal.taskTitle} onConfirm={handleConfirmAction} />
-
-    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-      {/* My Tasks */}
-      <div className="lg:col-span-2 space-y-6">
-        {/* Overdue Warning */}
-        {overdueTasks.length > 0 && (<Card className="border-status-overdue/30 bg-status-overdue-bg">
-          <CardHeader className="pb-3">
-            <CardTitle className="text-lg flex items-center gap-2 text-status-overdue">
-              <AlertTriangle className="w-5 h-5" />
-              Công việc trễ hạn
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-2">
-              {overdueTasks.map((task) => (<div key={task.id} className="flex items-center justify-between p-3 rounded-lg bg-card border border-status-overdue/20">
-                <div className="flex items-center gap-2">
-                  <span className="font-medium">{task.title}</span>
-                  <PriorityBadge priority={task.priority} />
-                </div>
-                <span className="text-sm text-status-overdue font-medium">
-                  Trễ {task.daysOverdue || Math.floor((new Date() - new Date(task.deadline)) / (1000 * 60 * 60 * 24))} ngày
-                </span>
-              </div>))}
-            </div>
-          </CardContent>
-        </Card>)}
-
-        {/* Current Tasks */}
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between">
-            <CardTitle className="text-lg flex items-center gap-2">
-              <ListTodo className="w-5 h-5 text-primary" />
-              Công việc của tôi
-            </CardTitle>
-            <Button variant="ghost" size="sm" className="text-primary" onClick={() => navigate('/tasks')}>
-              Xem tất cả <ArrowRight className="w-4 h-4 ml-1" />
-            </Button>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              {myTasks.length === 0 ? <p className="text-sm text-muted">Không có công việc nào</p> :
-                myTasks.map((task) => (<div key={task.id} className="p-4 rounded-lg border hover:bg-muted/50 transition-colors cursor-pointer" onClick={() => navigate(`/tasks/${task.id}`)}>
-                  <div className="flex items-start justify-between mb-3">
-                    <div>
-                      <div className="flex items-center gap-2 mb-1">
-                        <span className="font-medium">{task.title}</span>
-                      </div>
-                      <p className="text-sm text-muted-foreground">{task.projectName || 'Dự án'}</p>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <PriorityBadge priority={task.priority} />
-                      <StatusBadge status={task.status} />
-                    </div>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <div className="flex-1 mr-4">
-                      <ProgressBar value={task.progress} size="sm" />
-                    </div>
-                    <span className="text-sm text-muted-foreground">
-                      Hạn: {task.deadline ? new Date(task.deadline).toLocaleDateString('vi-VN') : 'N/A'}
-                    </span>
-                  </div>
-                  {task.status === 'in-progress' && (<div className="flex gap-2 mt-3 pt-3 border-t" onClick={(e) => e.stopPropagation()}>
-                    <Button size="sm" variant="outline" className="flex-1">
-                      Cập nhật tiến độ
-                    </Button>
-                    <Button size="sm" className="flex-1" onClick={() => handleAction('submit', task)}>
-                      Gửi duyệt
-                    </Button>
-                  </div>)}
-                  {task.status === 'pending' && (<div className="flex gap-2 mt-3 pt-3 border-t" onClick={(e) => e.stopPropagation()}>
-                    <Button size="sm" className="flex-1" onClick={() => handleAction('accept', task)}>
-                      Nhận việc
-                    </Button>
-                    <Button size="sm" variant="outline" className="flex-1" onClick={() => handleAction('reject', task)}>
-                      Từ chối
-                    </Button>
-                  </div>)}
-                  {/* Note: 'pending' in frontend might map to 'not-assigned' or 'pending' in backend. StatusBadge handles it? */}
-                </div>))}
-            </div>
-          </CardContent>
-        </Card>
+    {/* Chú thích màu */}
+    <div className="flex flex-wrap items-center gap-6 p-4 bg-card rounded-lg border">
+      <div>
+        <p className="text-xs font-medium text-muted-foreground mb-2">Tiến độ</p>
+        <ProgressLegend />
       </div>
+      <div className="h-8 w-px bg-border" />
+      <div>
+        <p className="text-xs font-medium text-muted-foreground mb-2">Độ ưu tiên</p>
+        <PriorityLegend />
+      </div>
+    </div>
 
-      {/* Upcoming Deadlines */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-lg flex items-center gap-2">
-            <Calendar className="w-5 h-5 text-primary" />
-            Sắp đến hạn
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-3">
-            {upcomingDeadlines.length === 0 ? <p className="text-sm text-muted">Không có deadline sắp tới</p> :
-              upcomingDeadlines.map((item) => (<div key={item.id} className="p-3 rounded-lg border hover:bg-muted/50 transition-colors cursor-pointer" onClick={() => navigate(`/tasks/${item.id}`)}>
-                <p className="font-medium text-sm mb-1">{item.title}</p>
-                <div className="flex items-center justify-between">
-                  <span className="text-xs text-muted-foreground">
-                    {item.deadline ? new Date(item.deadline).toLocaleDateString('vi-VN') : 'N/A'}
-                  </span>
-                  <span className={`text-xs font-medium ${item.daysLeft <= 1
-                    ? 'text-status-overdue'
-                    : item.daysLeft <= 3
-                      ? 'text-yellow-600 dark:text-yellow-400'
-                      : 'text-muted-foreground'}`}>
-                    Còn {item.daysLeft} ngày
-                  </span>
-                </div>
-              </div>))}
+    {/* Thống kê nhanh */}
+    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <Card className="border-l-4 border-l-[hsl(var(--status-in-progress))] transition-all duration-200 hover:shadow-lg hover:scale-[1.02]">
+        <CardContent className="p-4">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-lg bg-[hsl(var(--status-in-progress-bg))] flex items-center justify-center transition-colors duration-200">
+              <Clock className="w-5 h-5 text-[hsl(var(--status-in-progress))]" />
+            </div>
+            <div>
+              <p className="text-2xl font-bold">{myTasks.length}</p>
+              <p className="text-sm text-muted-foreground">Đang thực hiện</p>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card className="border-l-4 border-l-[hsl(var(--status-pending))] transition-all duration-200 hover:shadow-lg hover:scale-[1.02]">
+        <CardContent className="p-4">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-lg bg-[hsl(var(--status-pending-bg))] flex items-center justify-center transition-colors duration-200">
+              <AlertTriangle className="w-5 h-5 text-[hsl(var(--status-pending))]" />
+            </div>
+            <div>
+              <p className="text-2xl font-bold">{upcomingTasks.length}</p>
+              <p className="text-sm text-muted-foreground">Sắp đến hạn</p>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card className="border-l-4 border-l-[hsl(var(--status-overdue))] transition-all duration-200 hover:shadow-lg hover:scale-[1.02]">
+        <CardContent className="p-4">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-lg bg-[hsl(var(--status-overdue-bg))] flex items-center justify-center transition-colors duration-200">
+              <AlertTriangle className="w-5 h-5 text-[hsl(var(--status-overdue))]" />
+            </div>
+            <div>
+              <p className="text-2xl font-bold">{overdueTasks.length}</p>
+              <p className="text-sm text-muted-foreground">Trễ hạn</p>
+            </div>
           </div>
         </CardContent>
       </Card>
     </div>
+
+    {/* Công việc đang làm */}
+    <Card className="transition-all duration-200">
+      <CardHeader className="flex flex-row items-center justify-between pb-2">
+        <CardTitle className="text-lg flex items-center gap-2">
+          <Clock className="w-5 h-5 text-[hsl(var(--status-in-progress))]" />
+          Công việc đang thực hiện
+        </CardTitle>
+        <Button variant="ghost" size="sm" onClick={() => navigate('/tasks-board')} className="transition-all duration-200 hover:scale-105">
+          Xem tất cả
+          <ArrowRight className="w-4 h-4 ml-1" />
+        </Button>
+      </CardHeader>
+      <CardContent className="space-y-2">
+        {myTasks.length > 0 ? (myTasks.map(task => <TaskItem key={task.id} task={task} />)) : (<div className="text-center py-8 text-muted-foreground">
+          <CheckCircle2 className="w-12 h-12 mx-auto mb-2 opacity-50" />
+          <p>Không có công việc nào đang thực hiện</p>
+        </div>)}
+      </CardContent>
+    </Card>
+
+    {/* Sắp đến hạn */}
+    {upcomingTasks.length > 0 && (<Card className="border-[hsl(var(--status-pending)/0.3)] transition-all duration-200">
+      <CardHeader className="pb-2">
+        <CardTitle className="text-lg flex items-center gap-2">
+          <AlertTriangle className="w-5 h-5 text-[hsl(var(--status-pending))]" />
+          Sắp đến hạn (trong 3 ngày)
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-2">
+        {upcomingTasks.map(task => <TaskItem key={task.id} task={task} />)}
+      </CardContent>
+    </Card>)}
+
+    {/* Trễ hạn */}
+    {overdueTasks.length > 0 && (<Card className="border-[hsl(var(--status-overdue)/0.3)] transition-all duration-200">
+      <CardHeader className="pb-2">
+        <CardTitle className="text-lg flex items-center gap-2 text-destructive">
+          <AlertTriangle className="w-5 h-5" />
+          Trễ hạn - Cần xử lý ngay
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-2">
+        {overdueTasks.map(task => <TaskItem key={task.id} task={task} />)}
+      </CardContent>
+    </Card>)}
+
+    {/* Chi tiết thẻ */}
+    <SubtaskDetailModal
+      open={showDetail}
+      onOpenChange={(open) => {
+        setShowDetail(open);
+        if (!open) setSelectedTaskId(null);
+      }}
+      task={selectedTask}
+      onTaskUpdate={handleTaskUpdate}
+    />
+
   </div>);
 }
-
