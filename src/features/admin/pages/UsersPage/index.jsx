@@ -392,7 +392,7 @@ export default function UsersPage() {
               </div>
               <div className="space-y-2">
                 <Label htmlFor="password">Mật khẩu *</Label>
-                <Input id="password" name="password" type="password" required />
+                <Input id="password" name="password" type="password" autoComplete="new-password" required />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="phoneNumber">Số điện thoại</Label>

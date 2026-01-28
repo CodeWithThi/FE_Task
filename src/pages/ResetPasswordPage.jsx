@@ -91,7 +91,7 @@ export default function ResetPasswordPage() {
               <Label htmlFor="newPassword">Mật khẩu mới</Label>
               <div className="relative">
                 <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                <Input id="newPassword" type={showNewPassword ? 'text' : 'password'} placeholder="••••••••" value={newPassword} onChange={(e) => {
+                <Input id="newPassword" type={showNewPassword ? 'text' : 'password'} placeholder="••••••••" autoComplete="new-password" value={newPassword} onChange={(e) => {
                   setNewPassword(e.target.value);
                   if (errors.newPassword)
                     setErrors({ ...errors, newPassword: '' });
@@ -108,7 +108,7 @@ export default function ResetPasswordPage() {
               <Label htmlFor="confirmPassword">Xác nhận mật khẩu mới</Label>
               <div className="relative">
                 <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                <Input id="confirmPassword" type={showConfirmPassword ? 'text' : 'password'} placeholder="••••••••" value={confirmPassword} onChange={(e) => {
+                <Input id="confirmPassword" type={showConfirmPassword ? 'text' : 'password'} placeholder="••••••••" autoComplete="new-password" value={confirmPassword} onChange={(e) => {
                   setConfirmPassword(e.target.value);
                   if (errors.confirmPassword)
                     setErrors({ ...errors, confirmPassword: '' });

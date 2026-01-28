@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Dialog, DialogContent, DialogTitle } from '@core/components/ui/dialog';
+import { Dialog, DialogContent, DialogTitle, DialogDescription } from '@core/components/ui/dialog';
 import { Button } from '@core/components/ui/button';
 import { Input } from '@core/components/ui/input';
 import { Textarea } from '@core/components/ui/textarea';
@@ -447,6 +447,9 @@ export function SubtaskDetailModal({ open, onOpenChange, task, accounts = [], on
                 <DialogTitle className="text-xl font-semibold text-gray-900 dark:text-gray-100 leading-tight">
                   {task.title}
                 </DialogTitle>
+                <DialogDescription className="sr-only">
+                  Chi tiết công việc: {task.title}
+                </DialogDescription>
                 <div className="text-sm text-muted-foreground flex gap-2">
                   <span>trong danh sách <span className="underline decoration-dotted">{task.departmentName || task.department || 'Chung'}</span></span>
                 </div>

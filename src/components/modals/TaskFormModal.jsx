@@ -91,9 +91,9 @@ export function TaskFormModal({ open, onOpenChange, type, onSubmit, accounts = [
       return activeAccounts;
     }
 
-    // If project selected but no department ID (data issue), show all active accounts
+    // If project selected but no department ID (might be intentional for global projects)
     if (!projectDepartmentId) {
-      console.warn('Project selected but no departmentId found:', selectedProject);
+      console.debug('Project has no departmentId, showing all active accounts:', selectedProject);
       return activeAccounts;
     }
 

@@ -73,7 +73,7 @@ export default function LoginPage() {
               <Label htmlFor="username">Tên đăng nhập</Label>
               <div className="relative">
                 <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                <Input id="username" type="text" placeholder="Nhập tên đăng nhập" value={username} onChange={(e) => {
+                <Input id="username" type="text" placeholder="Nhập tên đăng nhập" autoComplete="username" value={username} onChange={(e) => {
                   setUsername(e.target.value);
                   if (errors.username)
                     setErrors({ ...errors, username: undefined });
@@ -86,7 +86,7 @@ export default function LoginPage() {
               <Label htmlFor="password">Mật khẩu</Label>
               <div className="relative">
                 <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                <Input id="password" type={showPassword ? 'text' : 'password'} placeholder="••••••••" value={password} onChange={(e) => {
+                <Input id="password" type={showPassword ? 'text' : 'password'} placeholder="••••••••" autoComplete="current-password" value={password} onChange={(e) => {
                   setPassword(e.target.value);
                   if (errors.password)
                     setErrors({ ...errors, password: undefined });
