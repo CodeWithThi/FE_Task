@@ -356,6 +356,84 @@
   .safe-area-top {
     padding-top: env(safe-area-inset-top, 0);
   }
+
+  /* ========================================
+   * SEO & UX 2026 - Visual Hierarchy Utilities
+   * ======================================== */
+
+  /* Whitespace utilities - Khoảng trắng hợp lý */
+  .content-spacing {
+    @apply space-y-4 md:space-y-6;
+  }
+
+  .section-spacing {
+    @apply my-6 md:my-8 lg:my-10;
+  }
+
+  .relaxed-spacing {
+    @apply py-6 md:py-8 lg:py-12;
+  }
+
+  /* Readability utilities - Tính dễ đọc */
+  .prose-content {
+    @apply text-base leading-relaxed text-foreground;
+  }
+
+  .prose-content p {
+    @apply mb-4;
+  }
+
+  .prose-content h2 {
+    @apply text-xl font-semibold mt-6 mb-3;
+  }
+
+  .prose-content h3 {
+    @apply text-lg font-medium mt-4 mb-2;
+  }
+
+  .prose-content ul, .prose-content ol {
+    @apply ml-5 mb-4 space-y-1;
+  }
+
+  .prose-content li {
+    @apply list-disc;
+  }
+
+  /* High contrast text for accessibility */
+  .high-contrast {
+    @apply text-foreground font-medium;
+  }
+
+  /* CTA visibility */
+  .cta-prominent {
+    @apply shadow-md hover:shadow-lg transform hover:scale-[1.02] transition-all duration-200;
+  }
+
+  /* Above the fold priority content */
+  .above-fold {
+    @apply min-h-[50vh] flex flex-col justify-center;
+  }
+
+  /* Content max width for readability */
+  .readable-width {
+    @apply max-w-prose;
+  }
+
+  .readable-wide {
+    @apply max-w-3xl;
+  }
+
+  /* Reduced motion for accessibility */
+  @media (prefers-reduced-motion: reduce) {
+    .animate-fade-in,
+    .card-hover,
+    .btn-hover,
+    .icon-hover {
+      animation: none !important;
+      transform: none !important;
+      transition: none !important;
+    }
+  }
 }
 
 /* Responsive breakpoint utilities */

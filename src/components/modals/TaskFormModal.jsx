@@ -51,12 +51,61 @@ export function TaskFormModal({ open, onOpenChange, type, onSubmit, accounts = [
 
   // Get selected project's department
   const selectedProject = projects.find(p => p.id === formData.projectId);
-  const projectDepartmentId = selectedProject?.departmentId;
+  const projectDepartmentId = selectedProject?.departmentId || selectedProject?.D_ID;
+
+  // Helper to extract department ID from account (handles various backend structures)
+  const getAccountDepartmentId = (account) => {
+    return account.departmentId
+      || account.D_ID
+      || account.Department?.D_ID
+      || account.Member?.D_ID
+      || account.Member?.Department?.D_ID
+      || null;
+  };
 
   // Filter accounts by project's department (if project selected)
-  const assignees = formData.projectId && projectDepartmentId
-    ? accounts.filter(a => (a.departmentId || a.Department?.D_ID) === projectDepartmentId && (a.status === 'active' || a.Status === 'active'))
-    : accounts.filter(a => (a.status === 'active' || a.Status === 'active'));
+  // Strictly filter - only show employees from the project's department
+  const assignees = (() => {
+    const activeAccounts = accounts.filter(a =>
+      (a.status === 'active' || a.Status === 'active' || a.Status === 'Active')
+    );
+
+    // DEBUG: Log data structure when project is selected
+    if (formData.projectId && accounts.length > 0) {
+      console.log('DEBUG TaskFormModal filter:', {
+        projectId: formData.projectId,
+        projectDepartmentId,
+        selectedProject,
+        totalAccounts: accounts.length,
+        activeAccounts: activeAccounts.length,
+        sampleAccountDeptIds: activeAccounts.slice(0, 5).map(a => ({
+          name: a.name || a.UserName || a.FullName,
+          deptId: getAccountDepartmentId(a),
+          raw: { departmentId: a.departmentId, D_ID: a.D_ID, Department: a.Department, Member: a.Member }
+        }))
+      });
+    }
+
+    // If no project selected, show all active accounts
+    if (!formData.projectId) {
+      return activeAccounts;
+    }
+
+    // If project selected but no department ID (data issue), show all active accounts
+    if (!projectDepartmentId) {
+      console.warn('Project selected but no departmentId found:', selectedProject);
+      return activeAccounts;
+    }
+
+    // Strictly filter by project's department
+    const filtered = activeAccounts.filter(a => {
+      const accDeptId = getAccountDepartmentId(a);
+      return accDeptId === projectDepartmentId;
+    });
+
+    console.log('DEBUG: Filtered result:', filtered.length, 'accounts match department', projectDepartmentId);
+    return filtered;
+  })();
 
   const handleSubmit = async () => {
     if (!formData.title.trim() || !formData.projectId)

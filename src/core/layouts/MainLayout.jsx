@@ -2,6 +2,8 @@ import { useState, useEffect } from 'react';
 import { AppSidebar } from './AppSidebar';
 import { AppHeader } from './AppHeader';
 import { AppFooter } from './AppFooter';
+import { SkipLink } from '@core/components/common/SkipLink';
+import { Breadcrumb } from '@core/components/common/Breadcrumb';
 import { cn } from '@core/lib/utils';
 import { useIsMobile } from '@core/hooks/use-mobile';
 
@@ -25,11 +27,15 @@ export function MainLayout({ children }) {
 
   return (
     <div className="min-h-screen flex w-full bg-background transition-colors duration-300">
+      {/* Skip Link for Accessibility */}
+      <SkipLink targetId="main-content" />
+
       {/* Mobile Overlay */}
       {isMobile && mobileOpen && (
         <div
           className="fixed inset-0 bg-black/50 z-30 transition-opacity duration-300"
           onClick={handleOverlayClick}
+          aria-hidden="true"
         />
       )}
 
@@ -52,7 +58,16 @@ export function MainLayout({ children }) {
           isMobile={isMobile}
           onMenuClick={() => setMobileOpen(!mobileOpen)}
         />
-        <main className="flex-1 p-4 md:p-6 animate-fade-in">
+        <main
+          id="main-content"
+          className="flex-1 p-4 md:p-6 animate-fade-in"
+          role="main"
+          tabIndex={-1}
+        >
+          {/* Breadcrumb Navigation */}
+          <Breadcrumb />
+
+          {/* Page Content */}
           {children}
         </main>
         <AppFooter />
@@ -60,4 +75,3 @@ export function MainLayout({ children }) {
     </div>
   );
 }
-

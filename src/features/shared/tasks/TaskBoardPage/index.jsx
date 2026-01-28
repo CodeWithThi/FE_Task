@@ -99,10 +99,8 @@ export default function TaskBoardPage() {
             const res = await taskService.getTasksByProject(projectId);
             if (res.ok) {
                 let fetchedTasks = res.data;
-                // Filter for Staff: Only see tasks where they are Assignee
-                if (user?.role === 'staff') {
-                    fetchedTasks = fetchedTasks.filter(t => t.assignee?.id === user.id || t.assigneeId === user.id);
-                }
+                // Filter for Staff REMOVED: Backend handles scoping via Task_Member.
+                // Trust the backend response.
                 setTasks(fetchedTasks);
             }
         } catch (error) {

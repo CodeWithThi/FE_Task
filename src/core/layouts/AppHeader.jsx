@@ -72,7 +72,7 @@ export function AppHeader({ isMobile = false, onMenuClick }) {
 
   return (
     <header className="h-16 bg-sidebar border-b border-sidebar-border flex items-center justify-between px-4 md:px-6 sticky top-0 z-30 transition-colors duration-300">
-      {/* Left side: Menu button (mobile) + Search */}
+      {/* Left side: Menu button (mobile) */}
       <div className="flex items-center gap-3">
         {/* Hamburger Menu Button - Mobile Only */}
         {isMobile && (
@@ -86,15 +86,6 @@ export function AppHeader({ isMobile = false, onMenuClick }) {
             <span className="sr-only">Mở menu</span>
           </Button>
         )}
-
-        {/* Search - Hidden on mobile, visible on tablet+ */}
-        <div className="relative hidden sm:block w-64 md:w-80">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-sidebar-muted" />
-          <Input
-            placeholder="Tìm kiếm dự án, công việc..."
-            className="pl-10 bg-sidebar-accent border-sidebar-border text-sidebar-foreground placeholder:text-sidebar-muted focus-visible:ring-1 focus-visible:ring-sidebar-ring transition-colors duration-200"
-          />
-        </div>
       </div>
 
       {/* Right side: Actions */}
