@@ -14,8 +14,9 @@ const badgeVariants = cva("inline-flex items-center rounded-full border px-2.5 p
         variant: "default",
     },
 });
-function Badge({ className, variant, ...props }) {
-    return <div className={cn(badgeVariants({ variant }), className)} {...props}/>;
-}
+const Badge = React.forwardRef(({ className, variant, ...props }, ref) => {
+    return <div ref={ref} className={cn(badgeVariants({ variant }), className)} {...props} />;
+});
+Badge.displayName = "Badge";
 export { Badge, badgeVariants };
 

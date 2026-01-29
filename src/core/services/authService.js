@@ -49,7 +49,14 @@ export const authService = {
                 id: rawUser.A_ID || rawUser.aid,
                 username: rawUser.UserName || rawUser.username,
                 name: rawUser.Account_Name || rawUser.Name || rawUser.name || rawUser.UserName || rawUser.username,
+                email: rawUser.Email || rawUser.email,
+                phone: rawUser.Member?.PhoneNumber || rawUser.PhoneNumber || rawUser.phone,
+                phoneNumber: rawUser.Member?.PhoneNumber || rawUser.PhoneNumber || rawUser.phone,
                 role: normalizedRole,
+                department: rawUser.Member?.Department?.D_Name || rawUser.departmentName || rawUser.department,
+                departmentId: rawUser.Member?.Department?.D_ID || rawUser.departmentId,
+                status: rawUser.Status || rawUser.status || 'active',
+                lockReason: rawUser.LockReason || rawUser.lockReason || null,
                 m_id: rawUser.Member?.M_ID || rawUser.M_ID,
                 avatar: rawUser.Avatar ? `http://localhost:3069${rawUser.Avatar}` : null
             };
@@ -148,7 +155,14 @@ export const authService = {
                 id: rawUser.A_ID || rawUser.aid,
                 username: rawUser.UserName || rawUser.username,
                 name: rawUser.Account_Name || rawUser.Name || rawUser.name || rawUser.UserName || rawUser.username,
+                email: rawUser.Email || rawUser.email,
+                phone: rawUser.Member?.PhoneNumber || rawUser.PhoneNumber || rawUser.phone,
+                phoneNumber: rawUser.Member?.PhoneNumber || rawUser.PhoneNumber || rawUser.phone,
                 role: normalizedRole,
+                department: rawUser.Member?.Department?.D_Name || rawUser.departmentName || rawUser.department,
+                departmentId: rawUser.Member?.Department?.D_ID || rawUser.departmentId,
+                status: rawUser.Status || rawUser.status || 'active',
+                lockReason: rawUser.LockReason || rawUser.lockReason || null,
                 m_id: rawUser.Member?.M_ID || rawUser.M_ID,
                 avatar: rawUser.Avatar ? `http://localhost:3069${rawUser.Avatar}` : null
             };
@@ -219,6 +233,29 @@ export const authService = {
         } catch (error) {
             console.error('authService.resetPassword error:', error);
             return { ok: false, message: error.response?.data?.message || 'Lỗi kết nối server' };
+        }
+    },
+
+    /**
+     * Update user profile (phone number)
+     * Returns: { ok: boolean, message }
+     */
+    updateProfile: async (profileData) => {
+        try {
+            const { httpClient } = await import('@core/api');
+            const response = await httpClient.put('/auth/profile', profileData);
+
+            return {
+                ok: true,
+                data: response.data?.data || response.data,
+                message: response.data?.message || 'Cập nhật thông tin thành công'
+            };
+        } catch (error) {
+            console.error('authService.updateProfile error:', error);
+            return {
+                ok: false,
+                message: error.response?.data?.message || 'Lỗi kết nối server'
+            };
         }
     },
 
