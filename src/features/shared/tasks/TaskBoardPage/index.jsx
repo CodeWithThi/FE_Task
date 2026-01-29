@@ -181,10 +181,13 @@ export default function TaskBoardPage() {
 
     if (loading && projects.length === 0) return <LoadingScreen />;
 
-    // Logic to determine if we block the view
-    // Block if: User is PMO/Admin, Project Selected, but NO TASKS exist (Need Main Task)
+    // Logic to determine if we block the view for PMO to create first Main Task
+    // Block if: User is PMO, Project Selected, but NO TASKS exist (Need Main Task)
+    const userRole = (user?.role || user?.roleName || '').toLowerCase();
+    const isPMO = userRole === 'pmo';
+
     const isBlockingEmptyState =
-        (user?.role === 'pmo' || user?.role === 'admin') &&
+        isPMO &&
         selectedProjectId &&
         tasks.length === 0 &&
         !search; // Only block if not searching

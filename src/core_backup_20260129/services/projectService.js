@@ -1,0 +1,230 @@
+import { projectApi, departmentApi, accountApi, dashboardApi, httpClient } from '@core/api';
+
+/**
+ * PROJECT SERVICE - Real API
+ * Connects to backend API at /projects
+ * Standardizes backend schema (P_Name, Begin_Date) to frontend schema (name, startDate)
+ */
+
+// Adapter to transform Backend Project -> Frontend Project
+const mapProjectToFrontend = (backendProject) => {
+    if (!backendProject) return null;
+
+    // Normalize status to lowercase to match frontend keys
+    let status = 'active'; // Default
+    if (backendProject.Status) {
+        const s = backendProject.Status.toLowerCase();
+        if (s.includes('complete') || s === 'completed') status = 'completed';
+        else if (s.includes('hold') || s === 'on-hold') status = 'on-hold';
+        else if (s.includes('active')) status = 'active';
+        else status = s; // Fallback
+    }
+
+    return {
+        id: backendProject.P_ID,
+        name: backendProject.P_Name,
+        description: backendProject.P_Description || backendProject.P_Name, // Fallback to name if desc is missing
+        departmentId: backendProject.D_ID,
+        department: backendProject.Department?.D_Name,
+        startDate: backendProject.Begin_Date,
+        endDate: backendProject.End_Date,
+        status: status,
+        managerId: backendProject.Created_By_A_ID, // Use Creator as Manager
+        manager: backendProject.Account ? { name: backendProject.Account.UserName, id: backendProject.Account.M_ID } : null,
+        progress: 0,
+        isDeleted: backendProject.IsDeleted
+    };
+};
+
+export const projectService = {
+    /**
+     * Get all projects
+     * GET /projects
+     */
+    async getAllProjects(filters = {}) {
+        try {
+            const params = {};
+            if (filters.departmentId) params.departmentId = filters.departmentId;
+            if (filters.status) params.status = filters.status;
+
+            const res = await httpClient.get('/projects', { params });
+
+            console.log('DEBUG projectService.getAllProjects response:', res);
+            console.log('DEBUG res.data:', res.data);
+
+            // Backend returns: { status: 200, data: [...] }
+            if (res.status !== 200) {
+                return {
+                    ok: false,
+                    message: res.message || 'Không thể tải danh sách dự án',
+                    data: []
+                };
+            }
+
+            // Backend wraps in { status: 200, data: actualData }
+            const backendPayload = res.data?.data || res.data;
+            const projects = Array.isArray(backendPayload)
+                ? backendPayload.map(mapProjectToFrontend)
+                : [];
+
+            console.log('DEBUG projects mapped:', projects.length, 'projects');
+
+            return {
+                ok: true,
+                data: projects
+            };
+        } catch (err) {
+            console.error('projectService.getAllProjects error:', err);
+            return {
+                ok: false,
+                message: 'Lỗi kết nối server',
+                data: []
+            };
+        }
+    },
+
+    /**
+     * Get project by ID
+     * GET /projects/:id
+     */
+    async getProjectById(projectId) {
+        try {
+            const res = await httpClient.get(`/projects/${projectId}`);
+
+            if (res.status !== 200) {
+                return {
+                    ok: false,
+                    message: res.message || 'Không tìm thấy dự án',
+                    data: null
+                };
+            }
+
+            const backendPayload = res.data?.data || res.data;
+
+            return {
+                ok: true,
+                data: mapProjectToFrontend(backendPayload)
+            };
+        } catch (err) {
+            console.error('projectService.getProjectById error:', err);
+            return {
+                ok: false,
+                message: 'Lỗi kết nối server',
+                data: null
+            };
+        }
+    },
+
+    /**
+     * Create new project
+     * POST /projects
+     * Payload: { name, departmentId, beginDate, endDate }
+     */
+    async createProject(projectData) {
+        try {
+            // Map frontend data to backend expectation
+            const payload = {
+                name: projectData.name,
+                description: projectData.description,
+                departmentId: projectData.departmentId,
+                beginDate: projectData.startDate,
+                endDate: projectData.endDate
+            };
+
+            const res = await httpClient.post('/projects', payload);
+
+            if (res.status !== 201 && res.status !== 200) {
+                return {
+                    ok: false,
+                    message: res.message || 'Tạo dự án thất bại'
+                };
+            }
+
+            const backendPayload = res.data?.data || res.data;
+
+            return {
+                ok: true,
+                data: mapProjectToFrontend(backendPayload),
+                message: 'Tạo dự án thành công'
+            };
+        } catch (err) {
+            console.error('projectService.createProject error:', err);
+            return {
+                ok: false,
+                message: 'Lỗi kết nối server'
+            };
+        }
+    },
+
+    /**
+     * Update project
+     * PUT /projects/:id
+     */
+    async updateProject(projectId, projectData) {
+        try {
+            const payload = {
+                name: projectData.name,
+                departmentId: projectData.departmentId,
+                beginDate: projectData.startDate,
+                endDate: projectData.endDate,
+
+                status: projectData.status,
+                managerId: projectData.managerId // Include managerId for update
+            };
+
+            const res = await httpClient.put(`/projects/${projectId}`, payload);
+
+            if (res.status !== 200) {
+                return {
+                    ok: false,
+                    message: res.message || 'Cập nhật dự án thất bại'
+                };
+            }
+
+            const backendPayload = res.data?.data || res.data;
+
+            return {
+                ok: true,
+                data: mapProjectToFrontend(backendPayload),
+                message: 'Cập nhật dự án thành công'
+            };
+        } catch (err) {
+            console.error('projectService.updateProject error:', err);
+            return {
+                ok: false,
+                message: 'Lỗi kết nối server'
+            };
+        }
+    },
+
+    /**
+     * Delete project (soft delete)
+     * DELETE /projects/:id
+     */
+    async deleteProject(projectId) {
+        try {
+            const res = await httpClient.delete(`/projects/${projectId}`);
+
+            if (res.status !== 200) {
+                return {
+                    ok: false,
+                    message: res.message || 'Xóa dự án thất bại'
+                };
+            }
+
+            return {
+                ok: true,
+                message: 'Xóa dự án thành công'
+            };
+        } catch (err) {
+            console.error('projectService.deleteProject error:', err);
+            return {
+                ok: false,
+                message: 'Lỗi kết nối server'
+            };
+        }
+    }
+};
+
+export default projectService;
+

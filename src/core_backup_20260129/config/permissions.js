@@ -124,68 +124,11 @@ export function getDashboardComponentForRole(role) {
     }
 }
 
-/**
- * Action-based permissions for granular UI control
- * Determines which actions each role can perform
- */
-export const actionPermissions = {
-    // Project actions
-    'project:create': [ROLES.PMO],
-    'project:edit': [ROLES.PMO],
-    'project:delete': [ROLES.PMO],
-    'project:view': [ROLES.DIRECTOR, ROLES.PMO, ROLES.LEADER, ROLES.STAFF],
-    'project:approve': [ROLES.DIRECTOR],
-    'project:accept': [ROLES.LEADER],
-
-    // Task actions
-    'task:create_main': [ROLES.PMO],
-    'task:create_subtask': [ROLES.PMO, ROLES.LEADER],
-    'task:edit': [ROLES.PMO, ROLES.LEADER],
-    'task:delete': [ROLES.PMO],
-    'task:view': [ROLES.DIRECTOR, ROLES.PMO, ROLES.LEADER, ROLES.STAFF],
-    'task:assign': [ROLES.PMO, ROLES.LEADER],
-    'task:approve': [ROLES.PMO, ROLES.LEADER],
-    'task:update_progress': [ROLES.STAFF, ROLES.LEADER],
-    'task:escalate': [ROLES.STAFF, ROLES.LEADER],
-
-    // System actions
-    'user:manage': [ROLES.ADMIN],
-    'user:view': [ROLES.ADMIN, ROLES.PMO],
-    'department:manage': [ROLES.ADMIN],
-    'logs:view': [ROLES.ADMIN],
-    'settings:edit': [ROLES.ADMIN],
-    'reports:view': [ROLES.DIRECTOR, ROLES.PMO, ROLES.LEADER],
-};
-
-/**
- * Check if user can perform a specific action
- * @param {string} action - Action to check (e.g., 'task:create_main')
- * @param {string} userRole - User's role
- * @returns {boolean} True if user can perform the action
- */
-export function canPerformAction(action, userRole) {
-    const normalizedRole = userRole?.toLowerCase();
-
-    // Admin has all system permissions but NOT workflow permissions
-    if (normalizedRole === ROLES.ADMIN) {
-        // Admin only has access to system actions
-        const systemActions = ['user:manage', 'user:view', 'department:manage', 'logs:view', 'settings:edit'];
-        return systemActions.some(a => action.startsWith(a.split(':')[0])) || actionPermissions[action]?.includes(ROLES.ADMIN);
-    }
-
-    const permissions = actionPermissions[action];
-    if (!permissions) return false;
-
-    return permissions.includes(normalizedRole);
-}
-
 export default {
     ROLES,
     routePermissions,
-    actionPermissions,
     getDefaultRouteForRole,
     hasPermission,
-    canPerformAction,
     getDashboardComponentForRole,
 };
 

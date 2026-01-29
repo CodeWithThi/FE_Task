@@ -100,45 +100,34 @@ export function usePermissions() {
         // Dashboard & Overview
         canViewDashboard: true,
 
-        // Project Permissions
-        // ========================================
-        // PMO: Full project management
-        // Director: View + approve/reject only
-        // Leader: View + accept for department
-        // Staff: View assigned only
-        // Admin: No project access (system only)
-        // ========================================
-        canViewProjects: !isAdmin, // Admin doesn't participate in workflow
+        // Projects
+        // Projects
+        canViewProjects: true, // All roles can at least view (Admin read-only, Director View, etc)
         canCreateProject: isPMO,
         canEditProject: isPMO,
-        canApproveProject: isDirector, // Director approves/rejects
-        canAcceptProject: isLeader, // Leader accepts for their department
 
-        // Task Permissions
-        // ========================================
-        // PMO: Create Main Tasks, full control
-        // Leader: Create Subtasks, manage team tasks
-        // Staff: Update progress on assigned tasks only
-        // Director: View-only
-        // Admin: No task access
-        // ========================================
-        canViewTasks: !isAdmin,
-        canCreateMainTask: isPMO, // FIXED: Only PMO creates Main Tasks
-        canCreateSubtask: isPMO || isLeader, // Leader creates subtasks for team
-        canEditTask: isPMO || isLeader,
-        canDeleteTask: isPMO,
-        canAssignTask: isPMO || isLeader,
-        canApproveTask: isPMO || isLeader,
+        // Tasks
+        canViewTasks: true,
+        // PMO creates Main Tasks for teams, Leader creates tasks within team
+        canCreateMainTask: isLeader,
+        // Subtasks are for breaking down work - Leader primarily, PMO if needed? Text says "PMO: Không xử lý từng subtask nhỏ".
+        // Leader: "Phân nhỏ Subtask". Staff: "Hoàn thành Subtask".
+        canCreateSubtask: isLeader,
 
-        // Staff-specific actions
+        canEditTask: isPMO || isLeader || isAdmin,
+        canDeleteTask: isPMO || isLeader || isAdmin,
+
+        canAssignTask: isPMO || isLeader, // PMO assigns Leader/Staff, Leader assigns Staff
+        canApproveTask: isPMO || isLeader, // "Review các task quan trọng" (PMO), "Duyệt task" (Leader)
+
+        // Staff Actions
         canAcceptTask: isStaff,
         canRejectTask: isStaff,
-        canUpdateProgress: isStaff || isLeader,
+        canUpdateProgress: isStaff || isLeader, // Staff updates progress, Leader monitors
         canSubmitForApproval: isStaff,
-        canEscalate: isStaff || isLeader,
 
-        // Reports (Director, PMO, Leader can view)
-        canViewReports: isDirector || isPMO || isLeader,
+        // Reports
+        canViewReports: isDirector || isPMO || isLeader || isAdmin,
         canExportReports: isDirector || isPMO || isAdmin,
 
         // User Management (Admin Only)

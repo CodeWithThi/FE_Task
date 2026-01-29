@@ -12,14 +12,57 @@ import { vi } from 'date-fns/locale';
 import { Avatar, AvatarFallback, AvatarImage } from '@core/components/ui/avatar';
 import { Badge } from '@core/components/ui/badge';
 
+// System Log Action Colors - chỉ dành cho nhật ký hệ thống
 const actionColors = {
+  // Authentication
   'login': 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400',
-  'create_task': 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400',
-  'update_task': 'bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-400',
-  'delete_task': 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400',
-  'create_project': 'bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-400',
-  'task_completed': 'bg-green-100 text-green-800',
-  'task_approved': 'bg-indigo-100 text-indigo-800'
+  'logout': 'bg-gray-100 text-gray-800 dark:bg-gray-900/30 dark:text-gray-400',
+  'login_failed': 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400',
+  'password_reset': 'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400',
+  'password_change': 'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400',
+
+  // User Management
+  'user_create': 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400',
+  'user_update': 'bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-400',
+  'user_delete': 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400',
+  'user_restore': 'bg-teal-100 text-teal-800 dark:bg-teal-900/30 dark:text-teal-400',
+
+  // Configuration
+  'config_change': 'bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-400',
+  'role_change': 'bg-indigo-100 text-indigo-800 dark:bg-indigo-900/30 dark:text-indigo-400',
+  'permission_change': 'bg-violet-100 text-violet-800 dark:bg-violet-900/30 dark:text-violet-400',
+
+  // Department
+  'department_create': 'bg-cyan-100 text-cyan-800 dark:bg-cyan-900/30 dark:text-cyan-400',
+  'department_update': 'bg-cyan-100 text-cyan-800 dark:bg-cyan-900/30 dark:text-cyan-400',
+  'department_delete': 'bg-rose-100 text-rose-800 dark:bg-rose-900/30 dark:text-rose-400',
+
+  // Project
+  'create_project': 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-400',
+  'update_project': 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400',
+  'delete_project': 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400',
+};
+
+// Action Labels for display
+const actionLabels = {
+  'login': 'Đăng nhập',
+  'logout': 'Đăng xuất',
+  'login_failed': 'Đăng nhập thất bại',
+  'password_reset': 'Đặt lại mật khẩu',
+  'password_change': 'Đổi mật khẩu',
+  'user_create': 'Tạo người dùng',
+  'user_update': 'Cập nhật người dùng',
+  'user_delete': 'Xóa người dùng',
+  'user_restore': 'Khôi phục người dùng',
+  'config_change': 'Thay đổi cấu hình',
+  'role_change': 'Thay đổi vai trò',
+  'permission_change': 'Thay đổi quyền',
+  'department_create': 'Tạo phòng ban',
+  'department_update': 'Cập nhật phòng ban',
+  'department_delete': 'Xóa phòng ban',
+  'create_project': 'Tạo dự án',
+  'update_project': 'Cập nhật dự án',
+  'delete_project': 'Xóa dự án',
 };
 
 export default function LogsPage() {
@@ -79,15 +122,18 @@ export default function LogsPage() {
                 value={filters.type}
                 onValueChange={(val) => setFilters(prev => ({ ...prev, type: val }))}
               >
-                <SelectTrigger className="w-[180px]">
+                <SelectTrigger className="w-[200px]">
                   <SelectValue placeholder="Loại hành động" />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">Tất cả hành động</SelectItem>
-                  <SelectItem value="login">Đăng nhập (Login)</SelectItem>
-                  <SelectItem value="create_task">Tạo công việc</SelectItem>
-                  <SelectItem value="update_task">Cập nhật công việc</SelectItem>
-                  <SelectItem value="delete_task">Xóa công việc</SelectItem>
+                  <SelectItem value="login">Đăng nhập</SelectItem>
+                  <SelectItem value="logout">Đăng xuất</SelectItem>
+                  <SelectItem value="password_change">Đổi mật khẩu</SelectItem>
+                  <SelectItem value="user_create">Tạo người dùng</SelectItem>
+                  <SelectItem value="user_update">Cập nhật người dùng</SelectItem>
+                  <SelectItem value="user_delete">Xóa người dùng</SelectItem>
+                  <SelectItem value="user_restore">Khôi phục người dùng</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -152,7 +198,7 @@ export default function LogsPage() {
                     </TableCell>
                     <TableCell>
                       <Badge variant="secondary" className={actionColors[log.Action] || ''}>
-                        {log.Action}
+                        {actionLabels[log.Action] || log.Action}
                       </Badge>
                     </TableCell>
                     <TableCell>
