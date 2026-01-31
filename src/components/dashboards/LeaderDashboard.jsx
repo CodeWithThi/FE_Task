@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@core/contexts/AuthContext';
 import { PageHeader } from '@core/components/common/PageHeader';
 import { StatCard } from '@core/components/common/StatCard';
@@ -9,13 +10,14 @@ import { Card, CardContent, CardHeader, CardTitle } from '@core/components/ui/ca
 import { Button } from '@core/components/ui/button';
 import { Avatar, AvatarFallback } from '@core/components/ui/avatar';
 import { toast } from 'sonner';
-import { ListTodo, Users, Clock, CheckCircle2, UserCheck, ArrowRight, Plus, Loader2 } from 'lucide-react';
+import { ListTodo, Users, Clock, CheckCircle2, UserCheck, ArrowRight, Plus, Loader2, AlertTriangle } from 'lucide-react';
 import { dashboardService } from '@core/services/dashboardService';
 import { taskService } from '@core/services/taskService';
 import { projectService } from '@core/services/projectService';
 import { TaskFormModal } from '../modals/TaskFormModal';
 
 export function LeaderDashboard() {
+  const navigate = useNavigate();
   const { user } = useAuth();
   const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState({
@@ -99,13 +101,21 @@ export function LeaderDashboard() {
         });
         setTeamMembers(Array.from(memberMap.values()));
 
-        // 4. Stats
+        // 4. Stats - calculate overdue tasks
+        const now = new Date();
+        const overdueTasks = scopedTasks.filter(t => {
+          if (!t.deadline) return false;
+          const isCompleted = ['completed', 'done', 'cancelled'].includes(t.status);
+          return !isCompleted && new Date(t.deadline) < now;
+        });
+
         setStats({
           teamSize: validTeamMembers.length,
           totalTasks: scopedTasks.length,
           pendingApprovals: pending.length,
           completedWeek: scopedTasks.filter(t => t.status === 'completed' || t.status === 'done').length,
-          personalStats: dashboardData.personalStats || { inProgress: 0, dueSoon: 0, overdue: 0 }
+          overdueTasks: overdueTasks.length,
+          personalStats: dashboardData?.personalStats || { inProgress: 0, dueSoon: 0, overdue: 0 }
         });
 
       } catch (error) {
@@ -197,52 +207,75 @@ export function LeaderDashboard() {
         </div>
       </div>
 
-      {/* 1. Top Stats Cards - Balanced Size */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        {/* Card 1: Team Tasks */}
-        <div className="bg-white p-6 rounded-2xl border shadow-sm flex items-center justify-between hover:shadow-md transition-shadow">
+      {/* 1. Top Stats Cards - 4 columns, reordered by importance */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        {/* Card 1: Trễ hạn (Overdue) - Most critical */}
+        <div className="bg-gradient-to-br from-red-50 to-rose-100/50 p-5 rounded-2xl border border-red-200/60 shadow-sm flex items-center justify-between hover:shadow-md hover:scale-[1.02] transition-all cursor-pointer">
           <div>
-            <p className="text-sm font-medium text-gray-500 uppercase tracking-wider">Việc đội nhóm</p>
-            <div className="flex items-baseline gap-3 mt-2">
-              <h3 className="text-3xl font-bold text-gray-900">{stats.totalTasks}</h3>
-              <span className="text-xs text-green-700 font-semibold flex items-center bg-green-50 px-2 py-1 rounded-full border border-green-100">
-                <ArrowRight className="w-3.5 h-3.5 mr-1" /> Hoạt động
-              </span>
-            </div>
-          </div>
-          <div className="p-3 bg-blue-50 text-blue-600 rounded-xl">
-            <ListTodo className="w-6 h-6" />
-          </div>
-        </div>
-
-        {/* Card 2: Pending */}
-        <div className="bg-white p-6 rounded-2xl border shadow-sm flex items-center justify-between hover:shadow-md transition-shadow">
-          <div>
-            <p className="text-sm font-medium text-gray-500 uppercase tracking-wider">Chờ duyệt</p>
-            <div className="flex items-baseline gap-3 mt-2">
-              <h3 className="text-3xl font-bold text-gray-900">{stats.pendingApprovals}</h3>
-              {stats.pendingApprovals > 0 ?
-                <span className="text-xs text-amber-700 font-semibold bg-amber-50 px-2 py-1 rounded-full border border-amber-100 animate-pulse">Cần xử lý</span> :
-                <span className="text-xs text-gray-500 font-semibold bg-gray-50 px-2 py-1 rounded-full border border-gray-100">Đã xong</span>
+            <p className="text-sm font-medium text-red-600 uppercase tracking-wider">Trễ hạn</p>
+            <div className="flex items-baseline gap-2 mt-1">
+              <h3 className="text-3xl font-bold text-red-700">{stats.overdueTasks || 0}</h3>
+              {(stats.overdueTasks || 0) > 0 ?
+                <span className="text-xs text-red-600 font-semibold bg-red-100 px-2 py-0.5 rounded-full border border-red-200 animate-pulse">
+                  Cần xử lý
+                </span> :
+                <span className="text-xs text-emerald-600 font-semibold bg-emerald-100 px-2 py-0.5 rounded-full border border-emerald-200">
+                  Tốt
+                </span>
               }
             </div>
           </div>
-          <div className="p-3 bg-amber-50 text-amber-600 rounded-xl">
-            <Clock className="w-6 h-6" />
+          <div className="p-3 bg-gradient-to-br from-red-500 to-rose-600 text-white rounded-xl shadow-lg shadow-red-500/30">
+            <AlertTriangle className="w-5 h-5" />
           </div>
         </div>
 
-        {/* Card 3: Completed Week */}
-        <div className="bg-white p-6 rounded-2xl border shadow-sm flex items-center justify-between hover:shadow-md transition-shadow">
+        {/* Card 2: Team Tasks */}
+        <div className="bg-gradient-to-br from-blue-50 to-indigo-100/50 p-5 rounded-2xl border border-blue-200/60 shadow-sm flex items-center justify-between hover:shadow-md hover:scale-[1.02] transition-all cursor-pointer">
           <div>
-            <p className="text-sm font-medium text-gray-500 uppercase tracking-wider">Hoàn thành tuần</p>
-            <div className="flex items-baseline gap-3 mt-2">
-              <h3 className="text-3xl font-bold text-gray-900">{stats.completedWeek}</h3>
-              <span className="text-xs text-emerald-700 font-semibold bg-emerald-50 px-2 py-1 rounded-full border border-emerald-100">Tốt</span>
+            <p className="text-sm font-medium text-blue-600 uppercase tracking-wider">Việc đội nhóm</p>
+            <div className="flex items-baseline gap-2 mt-1">
+              <h3 className="text-3xl font-bold text-blue-700">{stats.totalTasks}</h3>
+              <span className="text-xs text-emerald-600 font-semibold bg-emerald-100 px-2 py-0.5 rounded-full border border-emerald-200">
+                Hoạt động
+              </span>
             </div>
           </div>
-          <div className="p-3 bg-emerald-50 text-emerald-600 rounded-xl">
-            <CheckCircle2 className="w-6 h-6" />
+          <div className="p-3 bg-gradient-to-br from-blue-500 to-indigo-600 text-white rounded-xl shadow-lg shadow-blue-500/30">
+            <ListTodo className="w-5 h-5" />
+          </div>
+        </div>
+
+        {/* Card 3: Pending Approvals */}
+        <div className="bg-gradient-to-br from-amber-50 to-orange-100/50 p-5 rounded-2xl border border-amber-200/60 shadow-sm flex items-center justify-between hover:shadow-md hover:scale-[1.02] transition-all cursor-pointer">
+          <div>
+            <p className="text-sm font-medium text-amber-600 uppercase tracking-wider">Chờ duyệt</p>
+            <div className="flex items-baseline gap-2 mt-1">
+              <h3 className="text-3xl font-bold text-amber-700">{stats.pendingApprovals}</h3>
+              {stats.pendingApprovals > 0 ?
+                <span className="text-xs text-amber-700 font-semibold bg-amber-100 px-2 py-0.5 rounded-full border border-amber-200 animate-pulse">Cần xử lý</span> :
+                <span className="text-xs text-gray-500 font-semibold bg-gray-100 px-2 py-0.5 rounded-full border border-gray-200">Đã xong</span>
+              }
+            </div>
+          </div>
+          <div className="p-3 bg-gradient-to-br from-amber-500 to-orange-500 text-white rounded-xl shadow-lg shadow-amber-500/30">
+            <Clock className="w-5 h-5" />
+          </div>
+        </div>
+
+        {/* Card 4: Completed */}
+        <div className="bg-gradient-to-br from-emerald-50 to-green-100/50 p-5 rounded-2xl border border-emerald-200/60 shadow-sm flex items-center justify-between hover:shadow-md hover:scale-[1.02] transition-all cursor-pointer">
+          <div>
+            <p className="text-sm font-medium text-emerald-600 uppercase tracking-wider">Hoàn thành</p>
+            <div className="flex items-baseline gap-2 mt-1">
+              <h3 className="text-3xl font-bold text-emerald-700">{stats.completedWeek}</h3>
+              <span className="text-xs text-emerald-600 font-semibold bg-emerald-100 px-2 py-0.5 rounded-full border border-emerald-200">
+                Tốt
+              </span>
+            </div>
+          </div>
+          <div className="p-3 bg-gradient-to-br from-emerald-500 to-green-600 text-white rounded-xl shadow-lg shadow-emerald-500/30">
+            <CheckCircle2 className="w-5 h-5" />
           </div>
         </div>
       </div>
@@ -333,7 +366,11 @@ export function LeaderDashboard() {
               :
               <div className="divide-y divide-gray-50">
                 {teamTasks.slice(0, 8).map((task) => (
-                  <div key={task.id} className="flex items-center gap-4 p-4 hover:bg-gray-50 transition-colors group cursor-pointer">
+                  <div
+                    key={task.id}
+                    className="flex items-center gap-4 p-4 hover:bg-indigo-50/50 transition-colors group cursor-pointer border-l-2 border-transparent hover:border-indigo-500"
+                    onClick={() => navigate(`/tasks/${task.id}`)}
+                  >
                     <div className="flex-1 min-w-0 space-y-1">
                       <div className="flex items-center justify-between mb-1.5">
                         <span className="font-semibold text-sm text-gray-900 truncate pr-2 group-hover:text-indigo-700 transition-colors">{task.title}</span>
@@ -348,11 +385,11 @@ export function LeaderDashboard() {
                         <span>{task.deadline ? new Date(task.deadline).toLocaleDateString('vi-VN') : 'N/A'}</span>
                       </div>
                     </div>
-                    <div className="w-20 text-right">
-                      <span className="text-[11px] font-bold text-gray-600 block mb-1">{task.progress}%</span>
-                      <ProgressBar value={task.progress} size="sm" className="h-2" />
+                    <div className="w-16 flex items-center gap-2">
+                      <ProgressBar value={task.progress || 0} size="sm" showLabel={false} />
+                      <span className="text-xs font-semibold text-indigo-600 w-8 text-right">{task.progress || 0}%</span>
                     </div>
-                    <ArrowRight className="w-4 h-4 text-gray-300 group-hover:text-indigo-500 opacity-0 group-hover:opacity-100 transition-all" />
+                    <ArrowRight className="w-4 h-4 text-gray-300 group-hover:text-indigo-500 transition-colors" />
                   </div>
                 ))}
               </div>

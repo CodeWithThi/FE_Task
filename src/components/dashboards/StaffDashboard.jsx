@@ -4,7 +4,7 @@ import { useAuth } from '@core/contexts/AuthContext';
 import { Card, CardContent, CardHeader, CardTitle } from '@core/components/ui/card';
 import { Button } from '@core/components/ui/button';
 import { Avatar, AvatarFallback } from '@core/components/ui/avatar';
-import { ProgressBar, ProgressLegend, PriorityLegend } from '@core/components/common/ProgressBar';
+import { ProgressBar } from '@core/components/common/ProgressBar';
 import { SubtaskDetailModal } from '@/components/tasks/SubtaskDetailModal';
 import { Kanban, Clock, AlertTriangle, CheckCircle2, ArrowRight, Calendar, } from 'lucide-react';
 import { taskService } from '@core/services/taskService';
@@ -87,157 +87,198 @@ export function StaffDashboard() {
     fetchMyTasks();
   };
 
+  // Calculate total personal tasks (all tasks assigned to me)
+  const totalPersonalTasks = myTasks.length + upcomingTasks.length + overdueTasks.length;
+
   const TaskItem = ({ task }) => {
     const isOverdue = new Date(task.deadline) < new Date() && task.status !== 'completed';
-    return (<div onClick={() => handleTaskClick(task)} className="flex items-center gap-4 p-3 rounded-lg border hover:bg-muted/50 cursor-pointer transition-colors group">
-      <Avatar className="w-8 h-8">
-        <AvatarFallback className="text-xs bg-primary/10 text-primary">
+    return (<div onClick={() => handleTaskClick(task)} className="flex items-center gap-4 p-4 rounded-xl border hover:bg-indigo-50/50 cursor-pointer transition-all group border-l-2 border-l-transparent hover:border-l-indigo-500 hover:shadow-sm">
+      <Avatar className="w-10 h-10">
+        <AvatarFallback className="text-sm bg-gradient-to-br from-indigo-100 to-purple-100 text-indigo-700 font-semibold">
           {task.assignee?.name?.charAt(0) || user?.name?.charAt(0) || '?'}
         </AvatarFallback>
       </Avatar>
       <div className="flex-1 min-w-0">
-        <div className="flex items-center gap-3">
-          {/* Màu độ ưu tiên trên tiêu đề */}
-          <span className={`w-2 h-2 rounded-full flex-shrink-0 ${task.priority === 'high' ? 'bg-priority-high' :
-            task.priority === 'medium' ? 'bg-priority-medium' : 'bg-priority-low'}`} />
-          <p className="font-medium text-sm truncate group-hover:text-primary transition-colors flex-1">
-            {task.title}
-          </p>
-          {/* Progress bar cùng dòng với tiêu đề */}
-          <div className="w-24 flex-shrink-0">
-            <ProgressBar value={task.progress} size="sm" showLabel={false} />
-          </div>
-          <span className="text-xs font-medium text-muted-foreground w-8 text-right">
-            {task.progress}%
-          </span>
-        </div>
-        <p className="text-xs text-muted-foreground mt-1">{task.projectName || 'General'}</p>
+        <p className="font-semibold text-sm text-gray-900 truncate group-hover:text-indigo-700 transition-colors">
+          {task.title}
+        </p>
+        <p className="text-xs text-muted-foreground mt-0.5">{task.projectName || 'General'}</p>
       </div>
-      <div className="flex items-center gap-2">
-        <div className={`flex items-center gap-1 text-xs ${isOverdue ? 'text-destructive' : 'text-muted-foreground'}`}>
+      <div className="flex items-center gap-3">
+        <div className="w-20 flex items-center gap-2">
+          <ProgressBar value={task.progress || 0} size="sm" showLabel={false} />
+          <span className="text-xs font-semibold text-indigo-600 w-8 text-right">{task.progress || 0}%</span>
+        </div>
+        <div className={`flex items-center gap-1 text-xs px-2 py-1 rounded-full ${isOverdue ? 'bg-red-50 text-red-600' : 'bg-gray-100 text-gray-600'}`}>
           <Calendar className="w-3 h-3" />
           {task.deadline ? new Date(task.deadline).toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit' }) : 'N/A'}
         </div>
       </div>
-      <ArrowRight className="w-4 h-4 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
+      <ArrowRight className="w-4 h-4 text-gray-300 group-hover:text-indigo-500 transition-colors" />
     </div>);
   };
-  return (<div className="space-y-6">
+  return (<div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
     {/* Header */}
-    <div className="flex items-center justify-between">
+    <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
       <div>
-        <h1 className="text-2xl font-bold">Xin chào, {user?.name ? user.name.split(' ').slice(-1) : 'Bạn'}!</h1>
-        <p className="text-muted-foreground">Tổng quan công việc của bạn</p>
+        <h1 className="text-3xl font-bold tracking-tight text-gray-900">
+          Xin chào, {user?.name ? user.name.split(' ').slice(-1) : 'Bạn'}! 👋
+        </h1>
+        <p className="text-muted-foreground text-base mt-1">
+          Tổng quan công việc của bạn
+        </p>
       </div>
-      <Button onClick={() => navigate('/tasks-board')}>
-        <Kanban className="w-4 h-4 mr-2" />
-        Vào bảng công việc
-      </Button>
-    </div>
-
-    {/* Chú thích màu */}
-    <div className="flex flex-wrap items-center gap-6 p-4 bg-card rounded-lg border">
-      <div>
-        <p className="text-xs font-medium text-muted-foreground mb-2">Tiến độ</p>
-        <ProgressLegend />
-      </div>
-      <div className="h-8 w-px bg-border" />
-      <div>
-        <p className="text-xs font-medium text-muted-foreground mb-2">Độ ưu tiên</p>
-        <PriorityLegend />
-      </div>
-    </div>
-
-    {/* Thống kê nhanh */}
-    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-      <Card className="border-l-4 border-l-[hsl(var(--status-in-progress))] transition-all duration-200 hover:shadow-lg hover:scale-[1.02]">
-        <CardContent className="p-4">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-lg bg-[hsl(var(--status-in-progress-bg))] flex items-center justify-center transition-colors duration-200">
-              <Clock className="w-5 h-5 text-[hsl(var(--status-in-progress))]" />
-            </div>
-            <div>
-              <p className="text-2xl font-bold">{myTasks.length}</p>
-              <p className="text-sm text-muted-foreground">Đang thực hiện</p>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
-      <Card className="border-l-4 border-l-[hsl(var(--status-pending))] transition-all duration-200 hover:shadow-lg hover:scale-[1.02]">
-        <CardContent className="p-4">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-lg bg-[hsl(var(--status-pending-bg))] flex items-center justify-center transition-colors duration-200">
-              <AlertTriangle className="w-5 h-5 text-[hsl(var(--status-pending))]" />
-            </div>
-            <div>
-              <p className="text-2xl font-bold">{upcomingTasks.length}</p>
-              <p className="text-sm text-muted-foreground">Sắp đến hạn</p>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
-      <Card className="border-l-4 border-l-[hsl(var(--status-overdue))] transition-all duration-200 hover:shadow-lg hover:scale-[1.02]">
-        <CardContent className="p-4">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-lg bg-[hsl(var(--status-overdue-bg))] flex items-center justify-center transition-colors duration-200">
-              <AlertTriangle className="w-5 h-5 text-[hsl(var(--status-overdue))]" />
-            </div>
-            <div>
-              <p className="text-2xl font-bold">{overdueTasks.length}</p>
-              <p className="text-sm text-muted-foreground">Trễ hạn</p>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-    </div>
-
-    {/* Công việc đang làm */}
-    <Card className="transition-all duration-200">
-      <CardHeader className="flex flex-row items-center justify-between pb-2">
-        <CardTitle className="text-lg flex items-center gap-2">
-          <Clock className="w-5 h-5 text-[hsl(var(--status-in-progress))]" />
-          Công việc đang thực hiện
-        </CardTitle>
-        <Button variant="ghost" size="sm" onClick={() => navigate('/tasks-board')} className="transition-all duration-200 hover:scale-105">
-          Xem tất cả
-          <ArrowRight className="w-4 h-4 ml-1" />
+      <div className="flex items-center gap-3">
+        <div className="text-sm font-medium text-gray-500 bg-white px-4 py-2 rounded-lg border shadow-sm">
+          {new Date().toLocaleDateString('vi-VN', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
+        </div>
+        <Button onClick={() => navigate('/tasks-board')} className="bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 shadow-lg shadow-indigo-500/25">
+          <Kanban className="w-4 h-4 mr-2" />
+          Vào bảng công việc
         </Button>
-      </CardHeader>
-      <CardContent className="space-y-2">
-        {myTasks.length > 0 ? (myTasks.map(task => <TaskItem key={task.id} task={task} />)) : (<div className="text-center py-8 text-muted-foreground">
-          <CheckCircle2 className="w-12 h-12 mx-auto mb-2 opacity-50" />
-          <p>Không có công việc nào đang thực hiện</p>
-        </div>)}
-      </CardContent>
-    </Card>
+      </div>
+    </div>
 
-    {/* Sắp đến hạn */}
-    {upcomingTasks.length > 0 && (<Card className="border-[hsl(var(--status-pending)/0.3)] transition-all duration-200">
-      <CardHeader className="pb-2">
-        <CardTitle className="text-lg flex items-center gap-2">
-          <AlertTriangle className="w-5 h-5 text-[hsl(var(--status-pending))]" />
-          Sắp đến hạn (trong 3 ngày)
-        </CardTitle>
-      </CardHeader>
-      <CardContent className="space-y-2">
-        {upcomingTasks.map(task => <TaskItem key={task.id} task={task} />)}
-      </CardContent>
-    </Card>)}
+    {/* 4 KPI Cards */}
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      {/* Card 1: Việc cá nhân */}
+      <div className="bg-gradient-to-br from-violet-50 to-purple-100/50 p-5 rounded-2xl border border-violet-200/60 shadow-sm flex items-center justify-between hover:shadow-md hover:scale-[1.02] transition-all cursor-pointer">
+        <div>
+          <p className="text-sm font-medium text-violet-600 uppercase tracking-wider">Việc cá nhân</p>
+          <div className="flex items-baseline gap-2 mt-1">
+            <h3 className="text-3xl font-bold text-violet-700">{totalPersonalTasks}</h3>
+            <span className="text-xs text-violet-600 font-semibold bg-violet-100 px-2 py-0.5 rounded-full border border-violet-200">
+              Tổng cộng
+            </span>
+          </div>
+        </div>
+        <div className="p-3 bg-gradient-to-br from-violet-500 to-purple-600 text-white rounded-xl shadow-lg shadow-violet-500/30">
+          <Kanban className="w-5 h-5" />
+        </div>
+      </div>
 
-    {/* Trễ hạn */}
-    {overdueTasks.length > 0 && (<Card className="border-[hsl(var(--status-overdue)/0.3)] transition-all duration-200">
-      <CardHeader className="pb-2">
-        <CardTitle className="text-lg flex items-center gap-2 text-destructive">
+      {/* Card 2: Đang thực hiện */}
+      <div className="bg-gradient-to-br from-blue-50 to-indigo-100/50 p-5 rounded-2xl border border-blue-200/60 shadow-sm flex items-center justify-between hover:shadow-md hover:scale-[1.02] transition-all cursor-pointer">
+        <div>
+          <p className="text-sm font-medium text-blue-600 uppercase tracking-wider">Đang thực hiện</p>
+          <div className="flex items-baseline gap-2 mt-1">
+            <h3 className="text-3xl font-bold text-blue-700">{myTasks.length}</h3>
+            <span className="text-xs text-blue-600 font-semibold bg-blue-100 px-2 py-0.5 rounded-full border border-blue-200">
+              Hoạt động
+            </span>
+          </div>
+        </div>
+        <div className="p-3 bg-gradient-to-br from-blue-500 to-indigo-600 text-white rounded-xl shadow-lg shadow-blue-500/30">
+          <Clock className="w-5 h-5" />
+        </div>
+      </div>
+
+      {/* Card 3: Sắp đến hạn */}
+      <div className="bg-gradient-to-br from-amber-50 to-orange-100/50 p-5 rounded-2xl border border-amber-200/60 shadow-sm flex items-center justify-between hover:shadow-md hover:scale-[1.02] transition-all cursor-pointer">
+        <div>
+          <p className="text-sm font-medium text-amber-600 uppercase tracking-wider">Sắp đến hạn</p>
+          <div className="flex items-baseline gap-2 mt-1">
+            <h3 className="text-3xl font-bold text-amber-700">{upcomingTasks.length}</h3>
+            {upcomingTasks.length > 0 ?
+              <span className="text-xs text-amber-700 font-semibold bg-amber-100 px-2 py-0.5 rounded-full border border-amber-200 animate-pulse">Chú ý</span> :
+              <span className="text-xs text-gray-500 font-semibold bg-gray-100 px-2 py-0.5 rounded-full border border-gray-200">Tốt</span>
+            }
+          </div>
+        </div>
+        <div className="p-3 bg-gradient-to-br from-amber-500 to-orange-500 text-white rounded-xl shadow-lg shadow-amber-500/30">
           <AlertTriangle className="w-5 h-5" />
-          Trễ hạn - Cần xử lý ngay
-        </CardTitle>
-      </CardHeader>
-      <CardContent className="space-y-2">
-        {overdueTasks.map(task => <TaskItem key={task.id} task={task} />)}
-      </CardContent>
-    </Card>)}
+        </div>
+      </div>
+
+      {/* Card 4: Trễ hạn */}
+      <div className="bg-gradient-to-br from-red-50 to-rose-100/50 p-5 rounded-2xl border border-red-200/60 shadow-sm flex items-center justify-between hover:shadow-md hover:scale-[1.02] transition-all cursor-pointer">
+        <div>
+          <p className="text-sm font-medium text-red-600 uppercase tracking-wider">Trễ hạn</p>
+          <div className="flex items-baseline gap-2 mt-1">
+            <h3 className="text-3xl font-bold text-red-700">{overdueTasks.length}</h3>
+            {overdueTasks.length > 0 ?
+              <span className="text-xs text-red-600 font-semibold bg-red-100 px-2 py-0.5 rounded-full border border-red-200 animate-pulse">Cần xử lý</span> :
+              <span className="text-xs text-emerald-600 font-semibold bg-emerald-100 px-2 py-0.5 rounded-full border border-emerald-200">Tốt</span>
+            }
+          </div>
+        </div>
+        <div className="p-3 bg-gradient-to-br from-red-500 to-rose-600 text-white rounded-xl shadow-lg shadow-red-500/30">
+          <AlertTriangle className="w-5 h-5" />
+        </div>
+      </div>
+    </div>
+
+    {/* 2-Column Grid Layout for Task Sections */}
+    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      {/* Left: Trễ hạn */}
+      <div className="bg-white rounded-xl shadow-sm border-l-4 border-l-red-500 p-5">
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="text-lg font-bold flex items-center gap-2 text-red-600">
+            <AlertTriangle className="w-5 h-5" />
+            Trễ hạn
+          </h3>
+          {overdueTasks.length > 0 && (
+            <span className="text-xs bg-red-100 text-red-700 px-2.5 py-1 rounded-full font-semibold">
+              {overdueTasks.length}
+            </span>
+          )}
+        </div>
+        <div className="space-y-3">
+          {overdueTasks.length > 0 ? (
+            overdueTasks.map(task => <TaskItem key={task.id} task={task} />)
+          ) : (
+            <div className="text-center py-8 text-muted-foreground">
+              <CheckCircle2 className="w-10 h-10 mx-auto mb-2 text-emerald-400" />
+              <p className="text-sm font-medium text-gray-600">Không có việc trễ hạn</p>
+              <p className="text-xs text-gray-400 mt-1">Tuyệt vời!</p>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Right: Đang thực hiện */}
+      <div className="bg-white rounded-xl shadow-sm border-l-4 border-l-blue-400 p-5">
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="text-lg font-bold flex items-center gap-2 text-blue-600">
+            <Clock className="w-5 h-5" />
+            Đang thực hiện
+          </h3>
+          <Button variant="ghost" size="sm" onClick={() => navigate('/tasks-board')} className="text-blue-600 hover:text-blue-700 hover:bg-blue-50 h-8 text-sm">
+            Xem tất cả
+            <ArrowRight className="w-4 h-4 ml-1" />
+          </Button>
+        </div>
+        <div className="space-y-3">
+          {myTasks.length > 0 ? (
+            myTasks.map(task => <TaskItem key={task.id} task={task} />)
+          ) : (
+            <div className="text-center py-8 text-muted-foreground">
+              <CheckCircle2 className="w-10 h-10 mx-auto mb-2 text-gray-300" />
+              <p className="text-sm font-medium text-gray-600">Không có việc đang làm</p>
+              <p className="text-xs text-gray-400 mt-1">Bắt đầu một công việc mới</p>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+
+    {/* Sắp đến hạn - Full width below */}
+    {upcomingTasks.length > 0 && (
+      <div className="bg-white rounded-xl shadow-sm border-l-4 border-l-amber-400 p-5">
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="text-lg font-bold flex items-center gap-2 text-amber-600">
+            <AlertTriangle className="w-5 h-5" />
+            Sắp đến hạn (trong 3 ngày)
+          </h3>
+          <span className="text-xs bg-amber-100 text-amber-700 px-2.5 py-1 rounded-full font-semibold animate-pulse">
+            {upcomingTasks.length}
+          </span>
+        </div>
+        <div className="space-y-3">
+          {upcomingTasks.map(task => <TaskItem key={task.id} task={task} />)}
+        </div>
+      </div>
+    )}
 
     {/* Chi tiết thẻ */}
     <SubtaskDetailModal
