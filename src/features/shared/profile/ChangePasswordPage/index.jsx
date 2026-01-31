@@ -98,6 +98,8 @@ export default function ChangePasswordPage() {
       </CardHeader>
       <CardContent>
         <form onSubmit={handleSubmit} className="space-y-6">
+          {/* Accessibility: Hidden username field for password managers */}
+          <input type="text" autoComplete="username" style={{ display: 'none' }} />
           {/* Current Password */}
           <div className="space-y-2">
             <Label htmlFor="oldPassword">Mật khẩu hiện tại</Label>
@@ -107,7 +109,7 @@ export default function ChangePasswordPage() {
                 if (errors.oldPassword) {
                   setErrors({ ...errors, oldPassword: '' });
                 }
-              }} placeholder="Nhập mật khẩu hiện tại" className={errors.oldPassword ? 'border-destructive' : ''} />
+              }} placeholder="Nhập mật khẩu hiện tại" autoComplete="current-password" className={errors.oldPassword ? 'border-destructive' : ''} />
               <button type="button" className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground" onClick={() => setShowOldPassword(!showOldPassword)}>
                 {showOldPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
               </button>
@@ -124,7 +126,7 @@ export default function ChangePasswordPage() {
                 if (errors.newPassword) {
                   setErrors({ ...errors, newPassword: '' });
                 }
-              }} placeholder="Nhập mật khẩu mới" className={errors.newPassword ? 'border-destructive' : ''} />
+              }} placeholder="Nhập mật khẩu mới" autoComplete="new-password" className={errors.newPassword ? 'border-destructive' : ''} />
               <button type="button" className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground" onClick={() => setShowNewPassword(!showNewPassword)}>
                 {showNewPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
               </button>
@@ -141,7 +143,7 @@ export default function ChangePasswordPage() {
                 if (errors.confirmPassword) {
                   setErrors({ ...errors, confirmPassword: '' });
                 }
-              }} placeholder="Nhập lại mật khẩu mới" className={errors.confirmPassword ? 'border-destructive' : ''} />
+              }} placeholder="Nhập lại mật khẩu mới" autoComplete="new-password" className={errors.confirmPassword ? 'border-destructive' : ''} />
               <button type="button" className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground" onClick={() => setShowConfirmPassword(!showConfirmPassword)}>
                 {showConfirmPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
               </button>
