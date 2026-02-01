@@ -129,43 +129,89 @@ export function PMODashboard() {
     const fetchData = async () => {
       try {
         setLoading(true);
+
+        // Fetch stats from backend - this already has calculated stats
         const statsRes = await dashboardService.getStats();
         const dashboardData = statsRes.ok ? statsRes.data : null;
+        console.log('DEBUG PMO dashboardData:', dashboardData);
 
+        // Fetch projects
         const projectsRes = await projectService.getAllProjects({ status: 'active' });
         const projects = projectsRes.ok ? projectsRes.data : [];
+        console.log('DEBUG PMO projects:', projects.length);
 
+        // Fetch all tasks
         const tasksRes = await taskService.getAllTasks({ isDeleted: false });
         const allTasks = tasksRes.ok ? tasksRes.data : [];
+        console.log('DEBUG PMO allTasks:', allTasks.length);
 
         const now = new Date();
 
-        // Calculate task stats
-        const overdue = allTasks.filter(t => {
+        // Helper to normalize status for comparison
+        const normalizeStatus = (status) => {
+          if (!status) return 'not-assigned';
+          const s = status.toLowerCase().replace(/_/g, '-');
+          return s;
+        };
+
+        // Calculate task stats from allTasks directly (more reliable)
+        const pendingStatuses = ['pending', 'not-assigned', 'not_assigned', 'todo', 'waiting'];
+        const runningStatuses = ['in-progress', 'in_progress', 'processing', 'doing', 'running'];
+        const completedStatuses = ['completed', 'done', 'finished', 'closed'];
+
+        // Overdue: tasks with deadline in the past that are NOT completed
+        const overdueTasks = allTasks.filter(t => {
           if (!t.deadline) return false;
-          const isCompleted = ['completed', 'done', 'cancelled'].includes(t.status);
-          return !isCompleted && new Date(t.deadline) < now;
+          const normalized = normalizeStatus(t.status);
+          const isCompleted = completedStatuses.includes(normalized) || normalized === 'cancelled';
+          if (isCompleted) return false;
+          const deadline = new Date(t.deadline);
+          return deadline < now;
         });
 
-        const pendingStatuses = ['pending', 'not-assigned', 'not_assigned', 'todo'];
-        const runningStatuses = ['in-progress', 'in_progress', 'processing', 'doing'];
-        const completedStatuses = ['completed', 'done'];
+        // Pending: tasks that are not assigned or waiting
+        const pendingCount = allTasks.filter(t => {
+          const normalized = normalizeStatus(t.status);
+          return pendingStatuses.includes(normalized);
+        }).length;
 
-        const pendingCount = allTasks.filter(t => pendingStatuses.includes(t.status || 'not_assigned')).length;
-        const runningCount = allTasks.filter(t => runningStatuses.includes(t.status)).length;
-        const completedCount = allTasks.filter(t => completedStatuses.includes(t.status)).length;
+        // Running: tasks in progress
+        const runningCount = allTasks.filter(t => {
+          const normalized = normalizeStatus(t.status);
+          return runningStatuses.includes(normalized);
+        }).length;
 
-        if (dashboardData) {
-          const activeProj = dashboardData.projectsByStatus?.find(p => p.status === 'active')?.count || projects.length;
+        // Completed: tasks that are done
+        const completedCount = allTasks.filter(t => {
+          const normalized = normalizeStatus(t.status);
+          return completedStatuses.includes(normalized);
+        }).length;
 
-          setStats({
-            activeProjects: activeProj,
-            runningTasks: runningCount,
-            overdueTasks: overdue.length,
-            pendingTasks: pendingCount,
-            completedTasks: completedCount
-          });
+        // Active projects count
+        let activeProjectCount = projects.length;
+        if (dashboardData?.projectsByStatus) {
+          const activeProj = dashboardData.projectsByStatus.find(p =>
+            p.status?.toLowerCase() === 'active' || p.status?.toLowerCase() === 'in_progress'
+          );
+          if (activeProj) activeProjectCount = activeProj.count;
         }
+
+        // Set stats
+        setStats({
+          activeProjects: activeProjectCount,
+          runningTasks: runningCount,
+          overdueTasks: overdueTasks.length,
+          pendingTasks: pendingCount,
+          completedTasks: completedCount
+        });
+
+        console.log('DEBUG PMO stats calculated:', {
+          activeProjects: activeProjectCount,
+          runningTasks: runningCount,
+          overdueTasks: overdueTasks.length,
+          pendingTasks: pendingCount,
+          completedTasks: completedCount
+        });
 
         // Chart data with better colors - store fullName for tooltip
         const newChartData = projects.slice(0, 5).map(p => {
@@ -182,7 +228,10 @@ export function PMODashboard() {
           let actual = 0;
           const pTasks = p.Task || p.tasks || [];
           if (pTasks.length > 0) {
-            const completed = pTasks.filter(t => ['completed', 'done'].includes(t.Status || t.status)).length;
+            const completed = pTasks.filter(t => {
+              const s = normalizeStatus(t.Status || t.status);
+              return completedStatuses.includes(s);
+            }).length;
             actual = Math.round((completed / pTasks.length) * 100);
           }
 
@@ -199,14 +248,17 @@ export function PMODashboard() {
           const pTasks = p.Task || p.tasks || [];
           let progress = 0;
           if (pTasks.length > 0) {
-            const completed = pTasks.filter(t => ['completed', 'done'].includes(t.Status || t.status)).length;
+            const completed = pTasks.filter(t => {
+              const s = normalizeStatus(t.Status || t.status);
+              return completedStatuses.includes(s);
+            }).length;
             progress = Math.round((completed / pTasks.length) * 100);
           }
           return { ...p, progress, taskCount: pTasks.length };
         }));
 
-        // Overdue items
-        setOverdueItems(overdue.slice(0, 5).map(t => ({
+        // Overdue items for warning section
+        setOverdueItems(overdueTasks.slice(0, 5).map(t => ({
           id: t.id,
           title: t.title,
           project: t.projectName || 'Unknown',

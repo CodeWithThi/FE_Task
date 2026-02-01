@@ -10,6 +10,39 @@ import { taskApi } from '@core/api';
 const mapTaskToFrontend = (backendTask) => {
     if (!backendTask) return null;
 
+    // Helper to parse date string and create local Date (avoiding UTC shift)
+    // IMPORTANT: Manually parse to completely bypass JavaScript's timezone interpretation
+    const parseLocalDate = (dateStr) => {
+        if (!dateStr) return null;
+
+        // If it's already a Date object, normalize to noon
+        if (dateStr instanceof Date) {
+            return new Date(
+                dateStr.getFullYear(),
+                dateStr.getMonth(),
+                dateStr.getDate(),
+                12, 0, 0, 0
+            );
+        }
+
+        // Manually extract year, month, day from string "YYYY-MM-DD..." format
+        // This bypasses ALL timezone interpretation by JavaScript
+        const str = String(dateStr);
+        const match = str.match(/^(\d{4})-(\d{2})-(\d{2})/);
+        if (match) {
+            const year = parseInt(match[1], 10);
+            const month = parseInt(match[2], 10) - 1; // JS months are 0-indexed
+            const day = parseInt(match[3], 10);
+            // Create date at noon local time to avoid any edge cases
+            return new Date(year, month, day, 12, 0, 0, 0);
+        }
+
+        // Fallback for other formats
+        const d = new Date(dateStr);
+        if (isNaN(d.getTime())) return null;
+        return new Date(d.getFullYear(), d.getMonth(), d.getDate(), 12, 0, 0, 0);
+    };
+
     // Normalize Status
     let status = 'not-assigned';
     if (backendTask.Status) {
@@ -43,9 +76,9 @@ const mapTaskToFrontend = (backendTask) => {
         departmentName: backendTask.Department?.D_Name || backendTask.Project?.Department?.D_Name,
         priority: priority,
         status: status,
-        startDate: backendTask.Begin_Date,
-        deadline: backendTask.Due_Date,
-        completedAt: backendTask.Complete_At,
+        startDate: parseLocalDate(backendTask.Begin_Date),
+        deadline: parseLocalDate(backendTask.Due_Date),
+        completedAt: parseLocalDate(backendTask.Complete_At),
         assignee: backendTask.Member ? {
             name: backendTask.Member.FullName,
             id: backendTask.Member.M_ID,
@@ -159,11 +192,22 @@ export const taskService = {
      */
     async createTask(taskData) {
         try {
+            // Helper to format date as YYYY-MM-DD string (NO timezone transformation)
+            const formatLocalDate = (date) => {
+                if (!date) return undefined;
+                const d = date instanceof Date ? date : new Date(date);
+                if (isNaN(d.getTime())) return undefined;
+                const year = d.getFullYear();
+                const month = String(d.getMonth() + 1).padStart(2, '0');
+                const day = String(d.getDate()).padStart(2, '0');
+                return `${year}-${month}-${day}`;
+            };
+
             const payload = {
                 title: taskData.title,
                 description: taskData.description,
-                beginDate: taskData.startDate,
-                dueDate: taskData.deadline,
+                beginDate: formatLocalDate(taskData.startDate),
+                dueDate: formatLocalDate(taskData.deadline),
                 priority: taskData.priority,
                 projectId: taskData.projectId,
                 assignedTo: taskData.assigneeId,
@@ -195,15 +239,30 @@ export const taskService = {
      */
     async updateTask(taskId, taskData) {
         try {
+            // Helper to format date as YYYY-MM-DD string (NO timezone transformation)
+            // IMPORTANT: Do NOT use toISOString() - it converts to UTC and shifts the date!
+            const formatLocalDate = (date) => {
+                if (!date) return undefined;
+                const d = date instanceof Date ? date : new Date(date);
+                if (isNaN(d.getTime())) return undefined;
+                // Extract LOCAL date components only
+                const year = d.getFullYear();
+                const month = String(d.getMonth() + 1).padStart(2, '0');
+                const day = String(d.getDate()).padStart(2, '0');
+                // Return date-only string, no time, no timezone
+                return `${year}-${month}-${day}`;
+            };
+
             const payload = {
                 title: taskData.title,
                 description: taskData.description,
-                beginDate: taskData.startDate,
-                dueDate: taskData.deadline,
+                beginDate: formatLocalDate(taskData.startDate),
+                dueDate: formatLocalDate(taskData.deadline),
                 priority: taskData.priority,
                 assignedTo: taskData.assigneeId,
                 memberIds: taskData.memberIds, // Multi-member support
-                status: taskData.status
+                status: taskData.status,
+                progress: taskData.progress // Add progress support
             };
 
             const res = await taskApi.update(taskId, payload);
@@ -219,6 +278,7 @@ export const taskService = {
             console.error('taskService.updateTask error:', err);
             return {
                 ok: false,
+                status: err.response?.status,
                 message: err.response?.data?.message || 'Lỗi kết nối server'
             };
         }

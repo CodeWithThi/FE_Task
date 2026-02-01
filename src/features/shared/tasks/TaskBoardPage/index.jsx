@@ -275,12 +275,24 @@ export default function TaskBoardPage() {
                                 try {
                                     const res = await taskService.updateTask(task.id, { status: newStatus });
                                     if (!res.ok) {
-                                        throw new Error('Update failed');
+                                        // Pass specific status for UI handling
+                                        const error = new Error(res.message || 'Cập nhật thất bại');
+                                        error.status = res.status;
+                                        throw error;
                                     }
                                     toast.success('Cập nhật trạng thái thành công');
                                 } catch (error) {
                                     console.error(error);
-                                    toast.error('Cập nhật thất bại');
+                                    if (error.status === 403) {
+                                        // Simplify specific staff restriction message
+                                        if (error.message?.includes('Nhân viên')) {
+                                            toast.warning('Bạn chỉ được phép chuyển sang: Đang làm, Chờ duyệt, Hoàn thành');
+                                        } else {
+                                            toast.warning(error.message || 'Bạn không có quyền thực hiện thao tác này');
+                                        }
+                                    } else {
+                                        toast.error(error.message || 'Cập nhật thất bại');
+                                    }
                                     setTasks(originalTasks); // Rollback
                                 }
                             }}

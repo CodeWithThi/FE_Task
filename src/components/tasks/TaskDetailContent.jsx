@@ -84,7 +84,8 @@ export function TaskDetailContent({ task, accounts = [], onTaskUpdate, onClose, 
             setSelectedMembers(members);
             setDescriptionInput(task.description || '');
             setDescription(task.description || '');
-            setDeadline(task.deadline ? new Date(task.deadline) : null);
+            // task.deadline is already a proper Date object from taskService, don't re-wrap
+            setDeadline(task.deadline || null);
             setStatus(task.status || 'not-assigned');
         }
     }, [task]);
@@ -170,7 +171,7 @@ export function TaskDetailContent({ task, accounts = [], onTaskUpdate, onClose, 
             onTaskUpdate && onTaskUpdate();
             toast.success('Đã cập nhật ngày hết hạn');
         } else {
-            toast.error('Lỗi cập nhật ngày');
+            toast.error(res.message || 'Lỗi cập nhật ngày');
             setDeadline(task.deadline); // Revert on error
         }
     };
@@ -320,7 +321,21 @@ export function TaskDetailContent({ task, accounts = [], onTaskUpdate, onClose, 
             <Calendar
                 mode="single"
                 selected={deadline}
-                onSelect={setDeadline}
+                onSelect={(date) => {
+                    if (date) {
+                        // Create NEW date from local components to avoid UTC/timezone issues
+                        // Using the date's local year/month/day and setting time to noon
+                        const localDate = new Date(
+                            date.getFullYear(),
+                            date.getMonth(),
+                            date.getDate(),
+                            12, 0, 0, 0
+                        );
+                        setDeadline(localDate);
+                    } else {
+                        setDeadline(null);
+                    }
+                }}
                 disabled={!canEdit}
                 className="p-3"
                 initialFocus

@@ -26,16 +26,11 @@ import { toast } from 'sonner';
 
 const columns = [
   { status: 'not-assigned', color: 'bg-gray-500' },
-  { status: 'running', color: 'bg-blue-500' }, // Changed to 'running' to match common project status or keep 'in-progress' if backend uses that
+  { status: 'in-progress', color: 'bg-blue-500' },
   { status: 'waiting-approval', color: 'bg-amber-500' },
   { status: 'returned', color: 'bg-orange-500' },
   { status: 'completed', color: 'bg-green-500' },
 ];
-
-// Note: Backend might use 'in-progress' or 'running'. Ensure alignment with TaskBoardPage.
-// Based on previous files, 'running' was used in WorkspacePage labels but 'in-progress' might be the key.
-// Let's check statusLabels import if possible, or support both maps. 
-// Assuming 'not-assigned', 'running', 'waiting-approval', 'returned', 'completed' based on user request.
 
 function SortableItem({ task, onClick }) {
   const {
@@ -145,11 +140,11 @@ export function KanbanBoard({ tasks, onCardClick, onAddCard, onTaskUpdate }) {
     const map = {};
     columns.forEach(c => map[c.status] = []);
     tasks.forEach(task => {
-      // Normalize task status to match columns logic (e.g. handle casing or minor mismatch)
+      // Normalize task status to match columns logic
       const s = (task.status || 'not-assigned').toLowerCase().replace(' ', '-');
       // Map common variations if needed
       let target = s;
-      if (s === 'in-progress') target = 'running';
+      if (s === 'running') target = 'in-progress';
 
       if (map[target]) {
         map[target].push(task);
@@ -178,16 +173,14 @@ export function KanbanBoard({ tasks, onCardClick, onAddCard, onTaskUpdate }) {
     const overId = over.id;
 
     // Find containers (columns)
-    // If over a column directly
     let overContainer = columns.find(c => c.status === overId)?.status;
 
     // If over a task, find its column
     if (!overContainer) {
       const overTask = tasks.find(t => t.id === overId);
       if (overTask) {
-        // Handle mapping again
         let s = (overTask.status || 'not-assigned').toLowerCase().replace(' ', '-');
-        if (s === 'in-progress') s = 'running';
+        if (s === 'running') s = 'in-progress';
         overContainer = s;
       }
     }
@@ -196,16 +189,10 @@ export function KanbanBoard({ tasks, onCardClick, onAddCard, onTaskUpdate }) {
       const task = tasks.find(t => t.id === activeId);
       // Normalize current status
       let currentStatus = (task.status || 'not-assigned').toLowerCase().replace(' ', '-');
-      if (currentStatus === 'in-progress') currentStatus = 'running';
+      if (currentStatus === 'running') currentStatus = 'in-progress';
 
       if (currentStatus !== overContainer) {
-        // Status changed!
-        // Optimistic update handled by parent or just Trigger callback
-        // For smoother UI, we might want local state but props is cleaner for now
         if (onTaskUpdate) {
-          // Determine actual backend value for status
-          // e.g. 'running' -> 'in-progress' or 'Running' depending on backend
-          // Assuming backend accepts these keys
           onTaskUpdate(task, overContainer);
         }
       }
@@ -237,4 +224,3 @@ export function KanbanBoard({ tasks, onCardClick, onAddCard, onTaskUpdate }) {
     </DndContext>
   );
 }
-

@@ -174,7 +174,7 @@ export default function TaskDetailPage() {
 
   const handleUpdateStatus = async (newStatus) => {
     try {
-      const res = await taskService.updateTask(task.id, { ...task, status: newStatus });
+      const res = await taskService.updateTask(task.id, { status: newStatus });
       if (res.ok) {
         setTask(res.data);
         toast.success('Đã cập nhật trạng thái');
@@ -192,7 +192,7 @@ export default function TaskDetailPage() {
     if (isNaN(val) || val < 0 || val > 100) return toast.error('Vui lòng nhập số hợp lệ');
 
     try {
-      const res = await taskService.updateTask(task.id, { ...task, progress: val });
+      const res = await taskService.updateTask(task.id, { progress: val });
       if (res.ok) {
         setTask(res.data);
         toast.success('Đã cập nhật tiến độ');
@@ -208,7 +208,7 @@ export default function TaskDetailPage() {
   return (
     <div className="h-full flex flex-col p-4 md:p-6 pb-0 max-w-[1920px] mx-auto bg-background overflow-y-auto">
       <div className="mb-4 flex items-center gap-2">
-        <Button variant="ghost" className="gap-2" onClick={() => navigate(-1)}>
+        <Button variant="ghost" className="gap-2 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors" onClick={() => navigate(-1)}>
           <ArrowLeft className="w-4 h-4" />
           Quay lại danh sách
         </Button>

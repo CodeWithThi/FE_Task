@@ -233,7 +233,30 @@ export default function TaskListPage() {
     // Filter Logic
     const filteredTasks = tasks.filter(task => {
         const matchesSearch = (task.title || '').toLowerCase().includes(search.toLowerCase());
-        const matchesStatus = statusFilter === 'all' || task.status === statusFilter;
+
+        // Special handling for 'overdue' filter - it's computed, not stored
+        let matchesStatus = false;
+        if (statusFilter === 'all') {
+            matchesStatus = true;
+        } else if (statusFilter === 'overdue') {
+            // Overdue: has deadline in past AND not completed
+            if (!task.deadline) {
+                matchesStatus = false;
+            } else {
+                const now = new Date();
+                const deadline = new Date(task.deadline);
+                const completedStatuses = ['completed', 'done', 'finished', 'closed', 'cancelled'];
+                const normalizedStatus = (task.status || '').toLowerCase().replace(/_/g, '-');
+                const isCompleted = completedStatuses.includes(normalizedStatus);
+                matchesStatus = deadline < now && !isCompleted;
+            }
+        } else {
+            // Normal status filter - normalize for comparison
+            const normalizedTaskStatus = (task.status || '').toLowerCase().replace(/_/g, '-');
+            const normalizedFilter = statusFilter.toLowerCase().replace(/_/g, '-');
+            matchesStatus = normalizedTaskStatus === normalizedFilter;
+        }
+
         const matchesPriority = priorityFilter === 'all' || task.priority === priorityFilter;
         return matchesSearch && matchesStatus && matchesPriority;
     });
