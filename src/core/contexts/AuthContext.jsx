@@ -101,41 +101,20 @@ export function usePermissions() {
         canViewDashboard: true,
 
         // Project Permissions
-        // ========================================
-        // PMO: Full project management
-        // Director: View + approve/reject only
-        // Leader: View + accept for department
-        // Staff: View assigned only
-        // Admin: No project access (system only)
-        // ========================================
-        canViewProjects: !isAdmin, // Admin doesn't participate in workflow
+        canViewProjects: !isAdmin,
         canCreateProject: isPMO,
         canEditProject: isPMO,
-        canApproveProject: isDirector, // Director approves/rejects
-        canAcceptProject: isLeader, // Leader accepts for their department
+        canApproveProject: isDirector,
+        canAcceptProject: isLeader,
 
         // Task Permissions
-        // ========================================
-        // PMO: Create Main Tasks, full control
-        // Leader: Create Subtasks, manage team tasks
-        // Staff: Update progress on assigned tasks only
-        // Director: View-only
-        // Admin: No task access
-        // ========================================
         canViewTasks: !isAdmin,
-        canCreateMainTask: isPMO, // FIXED: Only PMO creates Main Tasks
-        canCreateSubtask: isPMO || isLeader, // Leader creates subtasks for team
+        canCreateMainTask: isPMO || isLeader, // Both PMO and Leader can create tasks
+        canCreateSubtask: isLeader, // Only Leader can create subtasks per new rule
         canEditTask: isPMO || isLeader,
         canDeleteTask: isPMO,
         canAssignTask: isPMO || isLeader,
         canApproveTask: isPMO || isLeader,
-
-        // Staff-specific actions
-        canAcceptTask: isStaff,
-        canRejectTask: isStaff,
-        canUpdateProgress: isStaff || isLeader,
-        canSubmitForApproval: isStaff,
-        canEscalate: isStaff || isLeader,
 
         // Reports (Director, PMO, Leader can view)
         canViewReports: isDirector || isPMO || isLeader,

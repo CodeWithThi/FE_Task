@@ -125,7 +125,7 @@ export function AppSidebar({ collapsed, setCollapsed, isMobile = false, mobileOp
   return (
     <aside
       className={cn(
-        'fixed left-0 top-0 h-screen bg-sidebar flex flex-col transition-all duration-300 z-40',
+        'fixed left-0 top-0 h-screen bg-[#0F172A] flex flex-col transition-all duration-300 z-40 shadow-xl border-r border-slate-800/50',
         sidebarWidth,
         // Mobile: slide in/out animation
         isMobile && !mobileOpen && '-translate-x-full',
@@ -133,17 +133,17 @@ export function AppSidebar({ collapsed, setCollapsed, isMobile = false, mobileOp
       )}
     >
       {/* Header: Logo + Center Name */}
-      <div className="h-16 flex items-center justify-between px-4 border-b border-sidebar-border flex-shrink-0">
+      <div className="h-16 flex items-center justify-between px-4 border-b border-slate-800/50 flex-shrink-0 bg-[#0F172A]">
         {(isMobile || !collapsed) ? (
           <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-lg bg-sidebar-primary flex items-center justify-center transition-transform duration-200 hover:scale-105">
-              <GraduationCap className="w-5 h-5 text-sidebar-primary-foreground" />
+            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-blue-600 to-indigo-700 flex items-center justify-center transition-transform duration-200 hover:scale-105 shadow-lg shadow-blue-900/40">
+              <GraduationCap className="w-5 h-5 text-white" />
             </div>
-            <span className="text-sidebar-foreground font-semibold">Trung Tâm Dạy Học</span>
+            <span className="text-white font-bold tracking-tight text-lg">Trung Tâm</span>
           </div>
         ) : (
-          <div className="w-8 h-8 rounded-lg bg-sidebar-primary flex items-center justify-center mx-auto transition-transform duration-200 hover:scale-105">
-            <GraduationCap className="w-5 h-5 text-sidebar-primary-foreground" />
+          <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-blue-600 to-indigo-700 flex items-center justify-center mx-auto transition-transform duration-200 hover:scale-105 shadow-lg shadow-blue-900/40">
+            <GraduationCap className="w-5 h-5 text-white" />
           </div>
         )}
 
@@ -151,7 +151,7 @@ export function AppSidebar({ collapsed, setCollapsed, isMobile = false, mobileOp
         {isMobile ? (
           <button
             onClick={() => setMobileOpen(false)}
-            className="p-1.5 rounded-lg hover:bg-sidebar-accent text-sidebar-muted hover:text-sidebar-foreground transition-all duration-200"
+            className="p-1.5 rounded-lg hover:bg-[#162235] text-slate-400 hover:text-white transition-all duration-200"
             title="Đóng menu"
           >
             <X size={18} />
@@ -160,7 +160,7 @@ export function AppSidebar({ collapsed, setCollapsed, isMobile = false, mobileOp
           <button
             onClick={() => setCollapsed(!collapsed)}
             className={cn(
-              'p-1.5 rounded-lg hover:bg-sidebar-accent text-sidebar-muted hover:text-sidebar-foreground transition-all duration-200 hover:scale-105',
+              'p-1.5 rounded-lg hover:bg-[#162235] text-slate-400 hover:text-white transition-all duration-200 hover:scale-105',
               collapsed && 'absolute right-1 top-1/2 -translate-y-1/2'
             )}
             title={collapsed ? 'Mở rộng' : 'Thu gọn'}
@@ -175,7 +175,7 @@ export function AppSidebar({ collapsed, setCollapsed, isMobile = false, mobileOp
         {Object.entries(groupedItems).map(([section, items]) => (
           <div key={section} className="mb-4">
             {(isMobile || !collapsed) && sectionLabels[section] && (
-              <p className="px-3 mb-2 text-xs font-medium text-sidebar-muted uppercase tracking-wider">
+              <p className="px-4 mb-2 text-[10px] font-bold text-slate-500 uppercase tracking-widest">
                 {sectionLabels[section]}
               </p>
             )}
@@ -184,12 +184,16 @@ export function AppSidebar({ collapsed, setCollapsed, isMobile = false, mobileOp
                 <li key={item.path}>
                   <NavLink
                     to={item.path}
-                    className={cn('sidebar-item', !isMobile && collapsed && 'justify-center px-2')}
-                    activeClassName="sidebar-item-active"
+                    className={cn(
+                      'relative flex items-center gap-3 px-3 py-2.5 mx-1 rounded-md text-[#CBD5E1] transition-all duration-200 cursor-pointer group',
+                      'hover:bg-[#162235] hover:text-white',
+                      !isMobile && collapsed && 'justify-center px-2 mx-0'
+                    )}
+                    activeClassName="bg-[#1E293B] text-white font-medium border-l-[3px] border-blue-500 rounded-l-none"
                     title={(!isMobile && collapsed) ? item.label : undefined}
                     onClick={handleNavClick}
                   >
-                    <item.icon className="w-5 h-5 flex-shrink-0" />
+                    <item.icon className="w-5 h-5 flex-shrink-0 transition-colors group-hover:text-white" />
                     {(isMobile || !collapsed) && <span>{item.label}</span>}
                   </NavLink>
                 </li>

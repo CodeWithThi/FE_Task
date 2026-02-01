@@ -114,78 +114,66 @@ export function PMODashboard() {
   const [loading, setLoading] = useState(true);
   const [chartData, setChartData] = useState([]);
 
-  const [stats, setStats] = useState({
-    activeProjects: 0,
-    runningTasks: 0,
-    overdueTasks: 0,
-    pendingTasks: 0,
-    completedTasks: 0
+  const [data, setData] = useState({
+    stats: {
+      activeProjects: 0,
+      runningTasks: 0,
+      overdueTasks: 0,
+      pendingTasks: 0,
+      completedTasks: 0
+    },
+    chartData: [],
+    watchedProjects: [],
+    overdueItems: []
   });
-
-  const [watchedProjects, setWatchedProjects] = useState([]);
-  const [overdueItems, setOverdueItems] = useState([]);
 
   useEffect(() => {
     const fetchData = async () => {
       try {
-        setLoading(true);
+        // Fetch specific data in parallel
+        const [statsRes, projectsRes, tasksRes] = await Promise.all([
+          dashboardService.getStats(),
+          projectService.getAllProjects({ status: 'active' }),
+          taskService.getAllTasks({ isDeleted: false })
+        ]);
 
-        // Fetch stats from backend - this already has calculated stats
-        const statsRes = await dashboardService.getStats();
         const dashboardData = statsRes.ok ? statsRes.data : null;
-        console.log('DEBUG PMO dashboardData:', dashboardData);
-
-        // Fetch projects
-        const projectsRes = await projectService.getAllProjects({ status: 'active' });
         const projects = projectsRes.ok ? projectsRes.data : [];
-        console.log('DEBUG PMO projects:', projects.length);
-
-        // Fetch all tasks
-        const tasksRes = await taskService.getAllTasks({ isDeleted: false });
         const allTasks = tasksRes.ok ? tasksRes.data : [];
-        console.log('DEBUG PMO allTasks:', allTasks.length);
 
+        // --- Data Processing (Heavy calculation done ONCE here) ---
         const now = new Date();
-
-        // Helper to normalize status for comparison
         const normalizeStatus = (status) => {
           if (!status) return 'not-assigned';
-          const s = status.toLowerCase().replace(/_/g, '-');
-          return s;
+          return status.toLowerCase().replace(/_/g, '-');
         };
 
-        // Calculate task stats from allTasks directly (more reliable)
         const pendingStatuses = ['pending', 'not-assigned', 'not_assigned', 'todo', 'waiting'];
         const runningStatuses = ['in-progress', 'in_progress', 'processing', 'doing', 'running'];
         const completedStatuses = ['completed', 'done', 'finished', 'closed'];
 
-        // Overdue: tasks with deadline in the past that are NOT completed
-        const overdueTasks = allTasks.filter(t => {
-          if (!t.deadline) return false;
+        // Single pass for task stats if possible, but filter is cleaner for reading
+        const overdueTasks = [];
+        let pendingCount = 0;
+        let runningCount = 0;
+        let completedCount = 0;
+
+        allTasks.forEach(t => {
           const normalized = normalizeStatus(t.status);
-          const isCompleted = completedStatuses.includes(normalized) || normalized === 'cancelled';
-          if (isCompleted) return false;
-          const deadline = new Date(t.deadline);
-          return deadline < now;
+
+          // Check overdue
+          if (t.deadline) {
+            const isCompleted = completedStatuses.includes(normalized) || normalized === 'cancelled';
+            if (!isCompleted && new Date(t.deadline) < now) {
+              overdueTasks.push(t);
+            }
+          }
+
+          // Counts
+          if (pendingStatuses.includes(normalized)) pendingCount++;
+          else if (runningStatuses.includes(normalized)) runningCount++;
+          else if (completedStatuses.includes(normalized)) completedCount++;
         });
-
-        // Pending: tasks that are not assigned or waiting
-        const pendingCount = allTasks.filter(t => {
-          const normalized = normalizeStatus(t.status);
-          return pendingStatuses.includes(normalized);
-        }).length;
-
-        // Running: tasks in progress
-        const runningCount = allTasks.filter(t => {
-          const normalized = normalizeStatus(t.status);
-          return runningStatuses.includes(normalized);
-        }).length;
-
-        // Completed: tasks that are done
-        const completedCount = allTasks.filter(t => {
-          const normalized = normalizeStatus(t.status);
-          return completedStatuses.includes(normalized);
-        }).length;
 
         // Active projects count
         let activeProjectCount = projects.length;
@@ -196,24 +184,7 @@ export function PMODashboard() {
           if (activeProj) activeProjectCount = activeProj.count;
         }
 
-        // Set stats
-        setStats({
-          activeProjects: activeProjectCount,
-          runningTasks: runningCount,
-          overdueTasks: overdueTasks.length,
-          pendingTasks: pendingCount,
-          completedTasks: completedCount
-        });
-
-        console.log('DEBUG PMO stats calculated:', {
-          activeProjects: activeProjectCount,
-          runningTasks: runningCount,
-          overdueTasks: overdueTasks.length,
-          pendingTasks: pendingCount,
-          completedTasks: completedCount
-        });
-
-        // Chart data with better colors - store fullName for tooltip
+        // Chart Data
         const newChartData = projects.slice(0, 5).map(p => {
           let planned = 0;
           if (p.startDate && p.endDate) {
@@ -228,37 +199,28 @@ export function PMODashboard() {
           let actual = 0;
           const pTasks = p.Task || p.tasks || [];
           if (pTasks.length > 0) {
-            const completed = pTasks.filter(t => {
-              const s = normalizeStatus(t.Status || t.status);
-              return completedStatuses.includes(s);
-            }).length;
+            const completed = pTasks.filter(t => completedStatuses.includes(normalizeStatus(t.Status || t.status))).length;
             actual = Math.round((completed / pTasks.length) * 100);
           }
 
-          // Store full name for tooltip, abbreviated for Y-axis
           const fullName = p.name || 'Dự án';
           const shortName = fullName.length > 12 ? fullName.slice(0, 12) + '...' : fullName;
-
           return { name: shortName, fullName, planned, actual };
         });
-        setChartData(newChartData);
 
-        // Watched projects
-        setWatchedProjects(projects.slice(0, 5).map(p => {
+        // Watched Projects
+        const newWatchedProjects = projects.slice(0, 5).map(p => {
           const pTasks = p.Task || p.tasks || [];
           let progress = 0;
           if (pTasks.length > 0) {
-            const completed = pTasks.filter(t => {
-              const s = normalizeStatus(t.Status || t.status);
-              return completedStatuses.includes(s);
-            }).length;
+            const completed = pTasks.filter(t => completedStatuses.includes(normalizeStatus(t.Status || t.status))).length;
             progress = Math.round((completed / pTasks.length) * 100);
           }
           return { ...p, progress, taskCount: pTasks.length };
-        }));
+        });
 
-        // Overdue items for warning section
-        setOverdueItems(overdueTasks.slice(0, 5).map(t => ({
+        // Overdue Items
+        const newOverdueItems = overdueTasks.slice(0, 5).map(t => ({
           id: t.id,
           title: t.title,
           project: t.projectName || 'Unknown',
@@ -266,12 +228,27 @@ export function PMODashboard() {
           dueDate: t.deadline,
           daysOverdue: Math.floor((now - new Date(t.deadline)) / (1000 * 60 * 60 * 24)),
           priority: t.priority
-        })));
+        }));
+
+        // Single State Update
+        setData({
+          stats: {
+            activeProjects: activeProjectCount,
+            runningTasks: runningCount,
+            overdueTasks: overdueTasks.length,
+            pendingTasks: pendingCount,
+            completedTasks: completedCount
+          },
+          chartData: newChartData,
+          watchedProjects: newWatchedProjects,
+          overdueItems: newOverdueItems
+        });
+
+        setLoading(false);
 
       } catch (error) {
         console.error('Failed to load dashboard data', error);
         toast.error('Không thể tải dữ liệu dashboard');
-      } finally {
         setLoading(false);
       }
     };
@@ -306,7 +283,7 @@ export function PMODashboard() {
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
         <PremiumStatCard
           title="Công việc trễ hạn"
-          value={stats.overdueTasks}
+          value={data.stats.overdueTasks}
           icon={AlertTriangle}
           variant="danger"
           subtitle="Cần xử lý ngay"
@@ -314,7 +291,7 @@ export function PMODashboard() {
         />
         <PremiumStatCard
           title="Dự án đang theo dõi"
-          value={stats.activeProjects}
+          value={data.stats.activeProjects}
           icon={Eye}
           variant="primary"
           subtitle="Đang hoạt động"
@@ -322,21 +299,21 @@ export function PMODashboard() {
         />
         <PremiumStatCard
           title="Công việc đang chạy"
-          value={stats.runningTasks}
+          value={data.stats.runningTasks}
           icon={Activity}
           variant="warning"
           onClick={() => navigate('/tasks?status=in_progress')}
         />
         <PremiumStatCard
           title="Chờ xử lý"
-          value={stats.pendingTasks}
+          value={data.stats.pendingTasks}
           icon={Clock}
           variant="default"
           onClick={() => navigate('/tasks?status=not_assigned')}
         />
         <PremiumStatCard
           title="Hoàn thành"
-          value={stats.completedTasks}
+          value={data.stats.completedTasks}
           icon={CheckCircle2}
           variant="success"
           onClick={() => navigate('/tasks?status=completed')}
@@ -355,13 +332,13 @@ export function PMODashboard() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            {chartData.length === 0 ? (
+            {data.chartData.length === 0 ? (
               <div className="flex items-center justify-center h-64 text-muted-foreground">
                 Chưa có dữ liệu dự án
               </div>
             ) : (
               <ResponsiveContainer width="100%" height={280}>
-                <BarChart data={chartData} layout="vertical" margin={{ left: 20, right: 30 }}>
+                <BarChart data={data.chartData} layout="vertical" margin={{ left: 20, right: 30 }}>
                   <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="hsl(var(--border))" />
                   <XAxis type="number" domain={[0, 100]} tickFormatter={(v) => `${v}%`} />
                   <YAxis
@@ -415,10 +392,10 @@ export function PMODashboard() {
           </CardHeader>
           <CardContent>
             <div className="space-y-3">
-              {watchedProjects.length === 0 ? (
+              {data.watchedProjects.length === 0 ? (
                 <p className="text-sm text-muted-foreground text-center py-8">Không có dự án nào</p>
               ) : (
-                watchedProjects.map((project) => (
+                data.watchedProjects.map((project) => (
                   <div
                     key={project.id}
                     className="p-4 rounded-xl bg-muted/30 hover:bg-muted/50 transition-all duration-200 cursor-pointer border border-transparent hover:border-primary/20 hover:shadow-sm"
@@ -439,19 +416,19 @@ export function PMODashboard() {
       </div>
 
       {/* Overdue Tasks Warning */}
-      {overdueItems.length > 0 && (
+      {data.overdueItems.length > 0 && (
         <Card className="border-red-200/50 dark:border-red-800/30 bg-gradient-to-r from-red-50/80 to-orange-50/50 dark:from-red-950/20 dark:to-orange-950/10 shadow-sm">
           <CardHeader className="pb-2">
             <CardTitle className="text-lg flex items-center gap-2 text-red-600 dark:text-red-400">
               <div className="p-2 rounded-lg bg-gradient-to-br from-red-500 to-orange-500 shadow-lg shadow-red-500/20">
                 <AlertTriangle className="w-4 h-4 text-white" />
               </div>
-              <span>Cảnh báo công việc trễ hạn ({overdueItems.length})</span>
+              <span>Cảnh báo công việc trễ hạn ({data.overdueItems.length})</span>
             </CardTitle>
           </CardHeader>
           <CardContent>
             <div className="space-y-3">
-              {overdueItems.map((item) => (
+              {data.overdueItems.map((item) => (
                 <div
                   key={item.id}
                   className="flex items-center justify-between p-4 rounded-xl bg-white/80 dark:bg-gray-900/50 border border-red-100 dark:border-red-900/30 hover:shadow-md transition-all duration-200 cursor-pointer"
@@ -482,7 +459,7 @@ export function PMODashboard() {
       )}
 
       {/* No overdue message */}
-      {overdueItems.length === 0 && (
+      {data.overdueItems.length === 0 && (
         <Card className="border-emerald-200/50 dark:border-emerald-800/30 bg-gradient-to-r from-emerald-50/80 to-green-50/50 dark:from-emerald-950/20 dark:to-green-950/10 shadow-sm">
           <CardContent className="py-8">
             <div className="flex items-center justify-center gap-3 text-emerald-600 dark:text-emerald-400">
