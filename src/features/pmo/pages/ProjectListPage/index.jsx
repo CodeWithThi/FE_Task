@@ -166,17 +166,17 @@ export default function ProjectListPage() {
                 const isHidden = hiddenProjects.has(project.id);
                 return (
                     <div className="flex items-start gap-3">
-                        <div className="flex items-center gap-1 mt-0.5 bg-secondary/30 p-1 rounded-md border border-border/50 shadow-sm mr-1">
+                        <div className="flex items-center gap-1 mt-0.5 mr-1">
                             {/* Visibility Toggle */}
                             <button
                                 onClick={(e) => {
                                     e.stopPropagation();
                                     toggleProjectVisibility(project.id);
                                 }}
-                                className="text-muted-foreground hover:text-green-600 p-1.5 rounded-sm hover:bg-green-50 transition-colors"
+                                className="text-green-600 hover:text-green-700 p-1.5 rounded-sm hover:bg-green-50 transition-colors"
                                 title={isHidden ? "Hiện dự án" : "Ẩn dự án"}
                             >
-                                {isHidden ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
+                                {isHidden ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                             </button>
 
                             {!isHidden && permissions?.canEditProject && (
@@ -186,20 +186,20 @@ export default function ProjectListPage() {
                                             e.stopPropagation();
                                             handleEditProject(project);
                                         }}
-                                        className="text-muted-foreground hover:text-orange-600 p-1.5 rounded-sm hover:bg-orange-50 transition-colors"
+                                        className="text-orange-500 hover:text-orange-600 p-1.5 rounded-sm hover:bg-orange-50 transition-colors"
                                         title="Chỉnh sửa"
                                     >
-                                        <Edit className="w-3.5 h-3.5" />
+                                        <Edit className="w-4 h-4" />
                                     </button>
                                     <button
                                         onClick={(e) => {
                                             e.stopPropagation();
                                             handleDeleteClick(project);
                                         }}
-                                        className="text-muted-foreground hover:text-red-600 p-1.5 rounded-sm hover:bg-red-50 transition-colors"
+                                        className="text-red-500 hover:text-red-600 p-1.5 rounded-sm hover:bg-red-50 transition-colors"
                                         title="Xóa"
                                     >
-                                        <Trash2 className="w-3.5 h-3.5" />
+                                        <Trash2 className="w-4 h-4" />
                                     </button>
                                 </>
                             )}

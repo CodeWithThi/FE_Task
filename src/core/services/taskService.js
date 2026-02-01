@@ -89,7 +89,7 @@ const mapTaskToFrontend = (backendTask) => {
         subtasks: backendTask.Subtasks ? backendTask.Subtasks.map(mapTaskToFrontend) : [],
         subtaskCount: backendTask.Subtasks?.length || 0,
         completedSubtasks: backendTask.Subtasks?.filter(st => st.Status?.toLowerCase() === 'completed').length || 0,
-        progress: 0,
+        progress: backendTask.Progress || 0,
         Task_Member: backendTask.Task_Member || [], // Pass through for multi-member
         checklist: backendTask.ChecklistItems?.map(i => ({ id: i.CL_ID, content: i.Content, completed: i.IsCompleted })) || [],
         labels: backendTask.Task_Labels?.map(tl => ({ id: tl.Label.L_ID, name: tl.Label.Name, color: tl.Label.Color })) || [],

@@ -17,6 +17,8 @@ import { toast } from 'sonner';
 import { ArrowLeft, ListTodo, CheckCircle2, Clock, Plus, Paperclip, Building2, Calendar, Link2, Upload, X, Send, Trash2, FileText, Play, RefreshCw, Check } from 'lucide-react';
 import { Input } from '@core/components/ui/input';
 import { Checkbox } from '@core/components/ui/checkbox';
+import { Popover, PopoverContent, PopoverTrigger } from '@core/components/ui/popover';
+import { Slider } from '@core/components/ui/slider';
 import { taskService } from '@core/services/taskService';
 import { userService } from '@core/services/userService';
 
@@ -52,6 +54,10 @@ export default function TaskDetailPage() {
   const [attachmentLink, setAttachmentLink] = useState('');
   const [attachmentDisplayName, setAttachmentDisplayName] = useState('');
 
+  // Progress UI State
+  const [progressValue, setProgressValue] = useState(0);
+  const [isProgressPopoverOpen, setIsProgressPopoverOpen] = useState(false);
+
   // Fetch Task
   const fetchTask = async () => {
     try {
@@ -59,6 +65,7 @@ export default function TaskDetailPage() {
       const response = await taskService.getTaskById(id);
       if (response.ok) {
         setTask(response.data);
+        setProgressValue(response.data.progress || 0); // Sync local state
         setComments(response.data.comments || []);
         setAttachments(response.data.attachments || []);
       }
@@ -184,22 +191,19 @@ export default function TaskDetailPage() {
     } catch (e) { console.error(e); }
   };
 
-  const handleUpdateProgress = async () => {
-    const current = task.progress || 0;
-    const input = window.prompt("Nhập % tiến độ (0-100):", current);
-    if (input === null) return;
-    const val = parseInt(input);
-    if (isNaN(val) || val < 0 || val > 100) return toast.error('Vui lòng nhập số hợp lệ');
-
+  const handleUpdateProgress = async (newProgress) => {
     try {
-      const res = await taskService.updateTask(task.id, { progress: val });
+      const res = await taskService.updateTask(task.id, { progress: newProgress });
       if (res.ok) {
         setTask(res.data);
         toast.success('Đã cập nhật tiến độ');
       } else {
         toast.error('Lỗi cập nhật: ' + res.message);
       }
-    } catch (e) { console.error(e); }
+    } catch (e) {
+      console.error(e);
+      toast.error('Lỗi kết nối');
+    }
   };
 
   if (loading) return <LoadingScreen />; // Ensure LoadingScreen is imported or use plain div
@@ -241,7 +245,60 @@ export default function TaskDetailPage() {
 
               {/* Progress */}
               <div>
-                <h3 className="text-sm font-semibold mb-2">Tiến độ</h3>
+                <div className="flex items-center justify-between mb-2">
+                  <h3 className="text-sm font-semibold">Tiến độ</h3>
+                  {(permissions?.canUpdateProgress || permissions?.canEditTask) && (
+                    <Popover open={isProgressPopoverOpen} onOpenChange={(open) => {
+                      setIsProgressPopoverOpen(open);
+                      if (open) setProgressValue(task.progress || 0);
+                    }}>
+                      <PopoverTrigger asChild>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="h-6 text-xs text-blue-600 hover:text-blue-700 hover:bg-blue-50"
+                        >
+                          Cập nhật
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-80" align="end">
+                        <div className="space-y-4">
+                          <div className="flex items-center justify-between">
+                            <h4 className="font-medium leading-none">Cập nhật tiến độ</h4>
+                          </div>
+                          <div className="space-y-4">
+                            <div className="flex items-center gap-4">
+                              <Slider
+                                defaultValue={[progressValue]}
+                                max={100}
+                                step={5}
+                                value={[progressValue]}
+                                onValueChange={(vals) => setProgressValue(vals[0])}
+                                className="flex-1"
+                              />
+                              <Input
+                                type="number"
+                                value={progressValue}
+                                onChange={(e) => {
+                                  const val = Math.min(100, Math.max(0, parseInt(e.target.value) || 0));
+                                  setProgressValue(val);
+                                }}
+                                className="w-16 h-8 text-center"
+                              />
+                            </div>
+                            <div className="flex justify-end gap-2">
+                              <Button size="sm" variant="ghost" onClick={() => setIsProgressPopoverOpen(false)}>Hủy</Button>
+                              <Button size="sm" onClick={() => {
+                                handleUpdateProgress(progressValue);
+                                setIsProgressPopoverOpen(false);
+                              }}>Lưu thay đổi</Button>
+                            </div>
+                          </div>
+                        </div>
+                      </PopoverContent>
+                    </Popover>
+                  )}
+                </div>
                 <ProgressBar value={task.progress} showLabel />
               </div>
             </CardContent>

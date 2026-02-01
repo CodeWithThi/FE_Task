@@ -31,7 +31,7 @@ const mapProjectToFrontend = (backendProject) => {
         status: status,
         managerId: backendProject.Created_By_A_ID, // Use Creator as Manager
         manager: backendProject.Account ? { name: backendProject.Account.UserName, id: backendProject.Account.M_ID } : null,
-        progress: 0,
+        progress: backendProject.Progress || 0,
         isDeleted: backendProject.IsDeleted
     };
 };
