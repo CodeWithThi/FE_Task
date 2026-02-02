@@ -8,7 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@core/components/ui/ca
 import { Button } from '@core/components/ui/button';
 import { toast } from 'sonner';
 import { FolderKanban, ListTodo, AlertTriangle, Eye, Clock, ArrowRight, Loader2, TrendingUp, TrendingDown, Activity, Target, CheckCircle2 } from 'lucide-react';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend, Cell } from 'recharts';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend, Cell, LabelList } from 'recharts';
 import { dashboardService } from '@core/services/dashboardService';
 import { projectService } from '@core/services/projectService';
 import { taskService } from '@core/services/taskService';
@@ -196,11 +196,15 @@ export function PMODashboard() {
             planned = Math.max(0, Math.min(100, planned));
           }
 
-          let actual = 0;
-          const pTasks = p.Task || p.tasks || [];
-          if (pTasks.length > 0) {
-            const completed = pTasks.filter(t => completedStatuses.includes(normalizeStatus(t.Status || t.status))).length;
-            actual = Math.round((completed / pTasks.length) * 100);
+          // Use project progress or calculate from task Progress values
+          let actual = p.progress || 0;
+          if (actual === 0) {
+            const pTasks = p.Task || p.tasks || [];
+            if (pTasks.length > 0) {
+              // Calculate average progress from tasks
+              const totalProgress = pTasks.reduce((sum, t) => sum + (t.Progress || t.progress || 0), 0);
+              actual = Math.round(totalProgress / pTasks.length);
+            }
           }
 
           const fullName = p.name || 'Dự án';
@@ -267,9 +271,16 @@ export function PMODashboard() {
     );
   }
 
+  // Get color based on progress percentage
+  const getProgressColor = (value) => {
+    if (value < 25) return '#ef4444'; // Red
+    if (value < 50) return '#eab308'; // Yellow
+    if (value < 75) return '#f97316'; // Orange
+    return '#22c55e'; // Green
+  };
+
   const chartColors = {
-    planned: '#93c5fd',
-    actual: '#3b82f6'
+    planned: '#60a5fa', // Light blue for planned
   };
 
   return (
@@ -337,42 +348,109 @@ export function PMODashboard() {
                 Chưa có dữ liệu dự án
               </div>
             ) : (
-              <ResponsiveContainer width="100%" height={280}>
-                <BarChart data={data.chartData} layout="vertical" margin={{ left: 20, right: 30 }}>
-                  <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="hsl(var(--border))" />
-                  <XAxis type="number" domain={[0, 100]} tickFormatter={(v) => `${v}%`} />
-                  <YAxis
-                    dataKey="name"
-                    type="category"
-                    width={110}
-                    tick={{ fontSize: 11 }}
-                    tickLine={false}
-                    axisLine={false}
-                  />
-                  <Tooltip
-                    contentStyle={{
-                      backgroundColor: 'hsl(var(--card))',
-                      border: '1px solid hsl(var(--border))',
-                      borderRadius: '12px',
-                      boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)',
-                      padding: '12px'
-                    }}
-                    labelStyle={{ fontWeight: 'bold', marginBottom: '8px' }}
-                    formatter={(value, name) => [`${value}%`, name]}
-                    labelFormatter={(label, payload) => {
-                      // Show full name in tooltip
-                      const item = payload?.[0]?.payload;
-                      return item?.fullName || label;
-                    }}
-                  />
-                  <Legend
-                    wrapperStyle={{ paddingTop: '20px' }}
-                    iconType="circle"
-                  />
-                  <Bar dataKey="planned" name="Kế hoạch" fill={chartColors.planned} radius={[0, 6, 6, 0]} />
-                  <Bar dataKey="actual" name="Thực tế" fill={chartColors.actual} radius={[0, 6, 6, 0]} />
-                </BarChart>
-              </ResponsiveContainer>
+              <div className="overflow-y-auto" style={{ maxHeight: '350px' }}>
+                <ResponsiveContainer width="100%" height={Math.max(220, data.chartData.length * 45)}>
+                  <BarChart data={data.chartData} layout="vertical" margin={{ left: 20, right: 30 }} barCategoryGap="20%">
+                    <defs>
+                      <linearGradient id="grad-red" x1="0" y1="0" x2="1" y2="0">
+                        <stop offset="0%" stopColor="#ef4444" />
+                        <stop offset="100%" stopColor="#f87171" />
+                      </linearGradient>
+                      <linearGradient id="grad-yellow" x1="0" y1="0" x2="1" y2="0">
+                        <stop offset="0%" stopColor="#eab308" />
+                        <stop offset="100%" stopColor="#facc15" />
+                      </linearGradient>
+                      <linearGradient id="grad-orange" x1="0" y1="0" x2="1" y2="0">
+                        <stop offset="0%" stopColor="#f97316" />
+                        <stop offset="100%" stopColor="#fb923c" />
+                      </linearGradient>
+                      <linearGradient id="grad-green" x1="0" y1="0" x2="1" y2="0">
+                        <stop offset="0%" stopColor="#16a34a" />
+                        <stop offset="100%" stopColor="#22c55e" />
+                      </linearGradient>
+                    </defs>
+                    <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="hsl(var(--border))" />
+                    <XAxis type="number" domain={[0, 100]} tickFormatter={(v) => `${v}%`} />
+                    <YAxis
+                      dataKey="name"
+                      type="category"
+                      width={130}
+                      tick={({ x, y, payload }) => (
+                        <g transform={`translate(${x},${y})`}>
+                          <title>{payload.value}</title>
+                          <text x={0} y={0} dy={4} textAnchor="end" fill="#1e293b" fontSize={14} fontWeight={600}>
+                            {payload.value.length > 15 ? `${payload.value.slice(0, 15)}...` : payload.value}
+                          </text>
+                        </g>
+                      )}
+                      tickLine={false}
+                      axisLine={false}
+                    />
+                    <Tooltip
+                      cursor={{ fill: 'transparent' }}
+                      contentStyle={{
+                        backgroundColor: '#ffffff',
+                        border: 'none',
+                        borderRadius: '12px',
+                        boxShadow: '0 4px 20px rgba(0, 0, 0, 0.15)',
+                        padding: '12px 16px'
+                      }}
+                      labelStyle={{ fontWeight: 'bold', marginBottom: '8px', color: '#1e293b' }}
+                      content={({ active, payload, label }) => {
+                        if (active && payload && payload.length) {
+                          const item = payload[0]?.payload;
+                          const actualValue = item?.actual || 0;
+                          const plannedValue = item?.planned || 0;
+                          return (
+                            <div style={{
+                              backgroundColor: '#ffffff',
+                              border: 'none',
+                              borderRadius: '12px',
+                              boxShadow: '0 4px 20px rgba(0, 0, 0, 0.15)',
+                              padding: '12px 16px'
+                            }}>
+                              <p style={{ fontWeight: 'bold', marginBottom: '8px', color: '#1e293b' }}>
+                                {item?.fullName || label}
+                              </p>
+                              <p style={{ color: getProgressColor(actualValue), fontWeight: 600, margin: '4px 0' }}>
+                                Thực tế: {actualValue}%
+                              </p>
+                              <p style={{ color: '#60a5fa', fontWeight: 500, margin: '4px 0' }}>
+                                Kế hoạch: {plannedValue}%
+                              </p>
+                            </div>
+                          );
+                        }
+                        return null;
+                      }}
+                    />
+                    <Legend
+                      wrapperStyle={{ paddingTop: '20px' }}
+                      iconType="circle"
+                      payload={[
+                        { value: 'Tiến độ thực tế (màu theo %)', type: 'circle', color: '#22c55e' }
+                      ]}
+                    />
+                    <Bar dataKey="actual" name="Thực tế" radius={[0, 12, 12, 0]} barSize={24} style={{ filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.05))' }}>
+                      {data.chartData.map((entry, index) => {
+                        let fill = 'url(#grad-green)';
+                        if (entry.actual < 25) fill = 'url(#grad-red)';
+                        else if (entry.actual < 50) fill = 'url(#grad-yellow)';
+                        else if (entry.actual < 75) fill = 'url(#grad-orange)';
+
+                        return <Cell key={`cell-${index}`} fill={fill} />;
+                      })}
+                      <LabelList
+                        dataKey="actual"
+                        position="insideRight"
+                        fill="white"
+                        formatter={(val) => val > 15 ? `${val}%` : ''}
+                        style={{ fontWeight: 'bold', fontSize: '11px', textShadow: '0px 1px 2px rgba(0,0,0,0.3)' }}
+                      />
+                    </Bar>
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
             )}
           </CardContent>
         </Card>
@@ -390,7 +468,7 @@ export function PMODashboard() {
               Xem tất cả <ArrowRight className="w-4 h-4 ml-1" />
             </Button>
           </CardHeader>
-          <CardContent>
+          <CardContent className="max-h-[400px] overflow-y-auto">
             <div className="space-y-3">
               {data.watchedProjects.length === 0 ? (
                 <p className="text-sm text-muted-foreground text-center py-8">Không có dự án nào</p>
@@ -402,8 +480,12 @@ export function PMODashboard() {
                     onClick={() => navigate(`/projects/${project.id}`)}
                   >
                     <div className="flex items-center justify-between mb-3">
-                      <span className="text-sm font-medium truncate max-w-[150px]">{project.name}</span>
-                      <span className="text-xs font-semibold text-primary">{project.progress}%</span>
+                      <span className="text-base font-semibold text-slate-800 dark:text-slate-100 truncate max-w-[180px]" title={project.name}>
+                        {project.name}
+                      </span>
+                      <span className="text-xs font-bold text-primary bg-primary/10 px-2 py-1 rounded-full group-hover:bg-primary group-hover:text-white transition-colors">
+                        {project.progress}%
+                      </span>
                     </div>
                     <ProgressBar value={project.progress} size="sm" />
                     <p className="text-xs text-muted-foreground mt-2">{project.taskCount} công việc</p>
