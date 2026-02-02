@@ -293,7 +293,7 @@ export function PMODashboard() {
           title="Dự án đang theo dõi"
           value={data.stats.activeProjects}
           icon={Eye}
-          variant="primary"
+          variant="default"
           subtitle="Đang hoạt động"
           onClick={() => navigate('/projects')}
         />
@@ -301,14 +301,14 @@ export function PMODashboard() {
           title="Công việc đang chạy"
           value={data.stats.runningTasks}
           icon={Activity}
-          variant="warning"
+          variant="primary"
           onClick={() => navigate('/tasks?status=in_progress')}
         />
         <PremiumStatCard
           title="Chờ xử lý"
           value={data.stats.pendingTasks}
           icon={Clock}
-          variant="default"
+          variant="warning"
           onClick={() => navigate('/tasks?status=not_assigned')}
         />
         <PremiumStatCard

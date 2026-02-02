@@ -175,7 +175,7 @@ export function AppSidebar({ collapsed, setCollapsed, isMobile = false, mobileOp
         {Object.entries(groupedItems).map(([section, items]) => (
           <div key={section} className="mb-4">
             {(isMobile || !collapsed) && sectionLabels[section] && (
-              <p className="px-4 mb-2 text-[10px] font-bold text-slate-500 uppercase tracking-widest">
+              <p className="px-4 mb-2 text-xs font-bold text-blue-400 uppercase tracking-wider border-l-2 border-blue-500/50 ml-2">
                 {sectionLabels[section]}
               </p>
             )}
@@ -186,10 +186,10 @@ export function AppSidebar({ collapsed, setCollapsed, isMobile = false, mobileOp
                     to={item.path}
                     className={cn(
                       'relative flex items-center gap-3 px-3 py-2.5 mx-1 rounded-md text-[#CBD5E1] transition-all duration-200 cursor-pointer group',
-                      'hover:bg-[#162235] hover:text-white',
+                      'hover:bg-blue-600/20 hover:text-blue-300',
                       !isMobile && collapsed && 'justify-center px-2 mx-0'
                     )}
-                    activeClassName="bg-[#1E293B] text-white font-medium border-l-[3px] border-blue-500 rounded-l-none"
+                    activeClassName="bg-blue-600/30 text-white font-medium border-l-[3px] border-blue-500 rounded-l-none"
                     title={(!isMobile && collapsed) ? item.label : undefined}
                     onClick={handleNavClick}
                   >
