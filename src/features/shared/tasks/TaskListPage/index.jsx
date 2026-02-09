@@ -267,7 +267,7 @@ export default function TaskListPage() {
             <div className="flex items-start justify-between">
                 <div>
 
-                    <h1 className="text-2xl font-bold text-gray-900">Danh sách Công việc</h1>
+                    <h1 className="text-2xl font-bold text-gray-900">Quản lý Công việc</h1>
                     <p className="text-gray-500 mt-1">Quản lý Công việc chính và các việc nhỏ của tất cả dự án</p>
                 </div>
                 {permissions?.canCreateMainTask && (

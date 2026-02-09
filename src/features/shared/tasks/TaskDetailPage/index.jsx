@@ -299,7 +299,7 @@ export default function TaskDetailPage() {
                     </Popover>
                   )}
                 </div>
-                <ProgressBar value={task.progress} showLabel />
+                <ProgressBar value={task.progress} showLabel labelInside />
               </div>
             </CardContent>
           </Card>

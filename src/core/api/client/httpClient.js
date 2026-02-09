@@ -47,7 +47,8 @@ httpClient.interceptors.response.use(
         const originalRequest = error.config;
 
         // Handle 401 Unauthorized - Token expired
-        if (error.response?.status === 401 && !originalRequest._retry) {
+        // Skip if the request is for login (let the component handle the error)
+        if (error.response?.status === 401 && !originalRequest._retry && !originalRequest.url.includes('/auth/login')) {
             originalRequest._retry = true;
 
             try {
@@ -81,8 +82,10 @@ httpClient.interceptors.response.use(
                 localStorage.removeItem('refreshToken');
                 localStorage.removeItem('user');
 
-                // Redirect to login
-                window.location.href = '/login';
+                // Redirect to login only if not already there
+                if (window.location.pathname !== '/login') {
+                    window.location.href = '/login';
+                }
 
                 return Promise.reject(refreshError);
             }

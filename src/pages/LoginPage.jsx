@@ -37,14 +37,26 @@ export default function LoginPage() {
 
     if (!validateForm()) return;
 
+    const startTime = Date.now();
     setIsLoading(true);
+
     try {
-      const success = await login(username, password);
-      if (success) {
+      const result = await login(username, password);
+
+      // Calculate remaining time to satisfy minimum 600ms loading
+      const elapsedTime = Date.now() - startTime;
+      const minDelay = 600;
+      const remainingTime = minDelay - elapsedTime;
+
+      if (remainingTime > 0) {
+        await new Promise(resolve => setTimeout(resolve, remainingTime));
+      }
+
+      if (result.success) {
         toast.success('Đăng nhập thành công!');
         navigate('/dashboard');
       } else {
-        setLoginError('Tên đăng nhập hoặc mật khẩu không đúng.');
+        setLoginError(result.message || 'Tên đăng nhập hoặc mật khẩu không đúng.');
       }
     } catch (error) {
       console.error('Login error:', error);

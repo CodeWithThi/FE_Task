@@ -54,12 +54,18 @@ export function AuthProvider({ children }) {
                 localStorage.setItem('user', JSON.stringify(response.data.user));
                 // Set user data in state
                 setUser(response.data.user);
-                return true;
+                return { success: true };
             }
-            return false;
+            return {
+                success: false,
+                message: response.message || 'Đăng nhập thất bại'
+            };
         } catch (error) {
             console.error('Login failed:', error);
-            return false;
+            return {
+                success: false,
+                message: 'Lỗi kết nối hệ thống'
+            };
         }
     };
 

@@ -20,6 +20,9 @@ const mapProjectToFrontend = (backendProject) => {
         else status = s; // Fallback
     }
 
+    // Include Task array for progress calculations
+    const tasks = backendProject.Task || [];
+
     return {
         id: backendProject.P_ID,
         name: backendProject.P_Name,
@@ -32,6 +35,8 @@ const mapProjectToFrontend = (backendProject) => {
         managerId: backendProject.Created_By_A_ID, // Use Creator as Manager
         manager: backendProject.Account ? { name: backendProject.Account.UserName, id: backendProject.Account.M_ID } : null,
         progress: backendProject.Progress || 0,
+        taskCount: tasks.length,
+        tasks: tasks, // Include the task array for frontend recalculation if needed
         isDeleted: backendProject.IsDeleted
     };
 };

@@ -260,10 +260,12 @@ export default function ProjectListPage() {
             render: (project) => {
                 if (hiddenProjects.has(project.id)) return null;
                 const value = project.progress || 0;
-                let colorClass = 'bg-blue-600';
-                if (value >= 100) colorClass = 'bg-green-500';
-                else if (value < 25) colorClass = 'bg-red-500';
+                // Color scheme matching ProgressBar component:
+                // < 25%: Red, 25-50%: Yellow, 50-75%: Orange, >= 75%: Green
+                let colorClass = 'bg-green-500'; // Default for >= 75%
+                if (value < 25) colorClass = 'bg-red-500';
                 else if (value < 50) colorClass = 'bg-yellow-500';
+                else if (value < 75) colorClass = 'bg-orange-500';
 
                 return (
                     <div className="flex items-center gap-3">
@@ -318,7 +320,7 @@ export default function ProjectListPage() {
 
     return (<div>
         <PageHeader
-            title="Danh sách Dự án"
+            title="Quản lý Dự án"
             description="Quản lý và theo dõi tất cả dự án của trung tâm"
             actions={permissions?.canCreateProject && (<Button onClick={() => setIsProjectModalOpen(true)}>
                 <Plus className="w-4 h-4 mr-2" />

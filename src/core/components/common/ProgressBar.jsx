@@ -38,7 +38,7 @@ export function ProgressBar({ value, showLabel = true, size = 'md', className, l
     return (
       <div className={cn('relative w-full bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden', sizeStyles[size], className)}>
         <div
-          className={cn('h-full rounded-full transition-all duration-500 flex items-center justify-center', getGradientClass())}
+          className={cn('h-full rounded-full transition-all duration-500 flex items-center justify-end pr-2', getGradientClass())}
           style={{ width: `${Math.max(clampedValue, 15)}%` }}
         >
           {showLabel && clampedValue > 0 && (

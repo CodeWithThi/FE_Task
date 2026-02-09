@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@core/contexts/AuthContext';
 import { roleLabels } from '@/models';
 import { useTheme } from '@core/hooks/use-theme';
-import { Search, Bell, ChevronDown, User, Lock, LogOut, Sun, Moon, Menu, Check } from 'lucide-react';
+import { Search, Bell, ChevronDown, User, Lock, LogOut, Sun, Moon, Menu, Check, Phone, Mail } from 'lucide-react';
 import { Input } from '@core/components/ui/input';
 import { Button } from '@core/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@core/components/ui/avatar';
@@ -71,7 +71,7 @@ export function AppHeader({ isMobile = false, onMenuClick }) {
   };
 
   return (
-    <header className="h-16 bg-gradient-to-r from-slate-900 to-[#0B1220] flex items-center justify-between px-4 md:px-6 sticky top-0 z-30 transition-colors duration-300 shadow-[0_2px_8px_rgba(0,0,0,0.25)] border-b border-white/5">
+    <header className="h-16 bg-[#0F172A] flex items-center justify-between px-4 md:px-6 sticky top-0 z-30 transition-colors duration-300 shadow-sm border-b border-slate-800/50">
       {/* Left side: Menu button (mobile) */}
       <div className="flex items-center gap-3">
         {/* Hamburger Menu Button - Mobile Only */}
@@ -100,6 +100,27 @@ export function AppHeader({ isMobile = false, onMenuClick }) {
             <Search className="w-5 h-5" />
           </Button>
         )}
+
+        {/* Contact Icons (Desktop) */}
+        <div className="hidden md:flex items-center gap-1 mr-2">
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <a href="tel:0123456789" className="p-2 rounded-lg hover:bg-slate-700/50 text-slate-400 hover:text-green-400 transition-colors">
+                <Phone className="w-5 h-5" />
+              </a>
+            </TooltipTrigger>
+            <TooltipContent><p>Hotline: 0123 456 789</p></TooltipContent>
+          </Tooltip>
+
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <a href="mailto:support@trungtamdayhoc.vn" className="p-2 rounded-lg hover:bg-slate-700/50 text-slate-400 hover:text-blue-400 transition-colors">
+                <Mail className="w-5 h-5" />
+              </a>
+            </TooltipTrigger>
+            <TooltipContent><p>Email: support@trungtamdayhoc.vn</p></TooltipContent>
+          </Tooltip>
+        </div>
 
         {/* Theme Toggle */}
         <Tooltip>

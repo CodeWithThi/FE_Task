@@ -212,16 +212,12 @@ export function PMODashboard() {
           return { name: shortName, fullName, planned, actual };
         });
 
-        // Watched Projects
-        const newWatchedProjects = projects.slice(0, 5).map(p => {
-          const pTasks = p.Task || p.tasks || [];
-          let progress = 0;
-          if (pTasks.length > 0) {
-            const completed = pTasks.filter(t => completedStatuses.includes(normalizeStatus(t.Status || t.status))).length;
-            progress = Math.round((completed / pTasks.length) * 100);
-          }
-          return { ...p, progress, taskCount: pTasks.length };
-        });
+        // Watched Projects - Use progress and taskCount from projectService (already calculated by backend)
+        const newWatchedProjects = projects.slice(0, 5).map(p => ({
+          ...p,
+          progress: p.progress || 0,
+          taskCount: p.taskCount || 0
+        }));
 
         // Overdue Items
         const newOverdueItems = overdueTasks.slice(0, 5).map(t => ({

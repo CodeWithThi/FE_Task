@@ -576,10 +576,12 @@ export function SubtaskDetailModal({ open, onOpenChange, task, accounts = [], on
                   <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Việc cần làm</h3>
                 </div>
                 {/* Progress Bar */}
-                <div className="flex items-center gap-3">
-                  <span className="text-xs font-medium text-muted-foreground w-8">{progress}%</span>
-                  <div className="h-1.5 flex-1 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
-                    <div className="h-full bg-green-500 transition-all" style={{ width: `${progress}%` }}></div>
+                <div className="relative h-6 flex-1 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
+                  <div
+                    className="h-full bg-gradient-to-r from-green-400 to-green-500 transition-all flex items-center justify-end rounded-full"
+                    style={{ width: `${Math.max(progress, 12)}%` }}
+                  >
+                    <span className="text-xs font-semibold text-white pr-2 drop-shadow-sm">{progress}%</span>
                   </div>
                 </div>
                 {/* Items */}
@@ -657,35 +659,45 @@ export function SubtaskDetailModal({ open, onOpenChange, task, accounts = [], on
                         type="file"
                         id="attachment-file-input"
                         className="hidden"
+                        multiple
                         accept=".jpg,.jpeg,.png,.gif,.pdf,.doc,.docx,.xls,.xlsx,.txt,.zip,.rar"
                         onChange={async (e) => {
-                          const file = e.target.files?.[0];
-                          if (!file) return;
+                          const files = Array.from(e.target.files || []);
+                          if (files.length === 0) return;
 
-                          toast.info('Đang tải lên...');
-                          const uploadRes = await taskService.uploadFile(file);
-                          if (!uploadRes.ok) {
-                            toast.error('Lỗi tải file: ' + uploadRes.message);
-                            return;
+                          toast.info(`Đang tải lên ${files.length} tệp...`);
+                          let successCount = 0;
+                          const newAttachments = [];
+
+                          for (const file of files) {
+                            const uploadRes = await taskService.uploadFile(file);
+                            if (!uploadRes.ok) {
+                              toast.error(`Lỗi tải file "${file.name}": ${uploadRes.message}`);
+                              continue;
+                            }
+
+                            const baseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3069';
+                            const fullUrl = baseUrl + uploadRes.data.fileUrl;
+                            const res = await taskService.addAttachment(task.id, {
+                              fileName: uploadRes.data.fileName,
+                              fileUrl: fullUrl
+                            });
+
+                            if (res.ok) {
+                              newAttachments.push(res.data);
+                              successCount++;
+                            } else {
+                              toast.error(`Lỗi lưu đính kèm "${file.name}": ${res.message}`);
+                            }
                           }
 
-                          // Now add as attachment to task
-                          const baseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3069';
-                          const fullUrl = baseUrl + uploadRes.data.fileUrl;
-                          const res = await taskService.addAttachment(task.id, {
-                            fileName: uploadRes.data.fileName,
-                            fileUrl: fullUrl
-                          });
-
-                          if (res.ok) {
-                            setAttachments([...attachments, res.data]);
+                          if (newAttachments.length > 0) {
+                            setAttachments([...attachments, ...newAttachments]);
                             setIsAddingAttachment(false);
                             onTaskUpdate && onTaskUpdate();
-                            toast.success('Đã đính kèm tệp: ' + uploadRes.data.fileName);
-                          } else {
-                            toast.error('Lỗi lưu đính kèm: ' + res.message);
+                            toast.success(`Đã đính kèm ${successCount} tệp thành công!`);
                           }
-                          e.target.value = ''; // Reset input
+                          e.target.value = '';
                         }}
                       />
                       <Button
