@@ -88,67 +88,43 @@ export function AppHeader({ isMobile = false, onMenuClick }) {
         )}
       </div>
 
-      {/* Right side: Actions */}
-      <div className="flex items-center gap-2">
-        {/* Search icon for mobile */}
-        {isMobile && (
-          <Button
-            variant="ghost"
-            size="icon"
-            className="hover:bg-slate-700/50 text-[#E2E8F0] sm:hidden"
-          >
-            <Search className="w-5 h-5" />
-          </Button>
-        )}
+      {/* Right side: Toolbar Icons */}
+      <div className="flex items-center gap-4 md:gap-5">
 
-        {/* Contact Icons (Desktop) */}
-        <div className="hidden md:flex items-center gap-1 mr-2">
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <a href="tel:0123456789" className="p-2 rounded-lg hover:bg-slate-700/50 text-slate-400 hover:text-green-400 transition-colors">
-                <Phone className="w-5 h-5" />
-              </a>
-            </TooltipTrigger>
-            <TooltipContent><p>Hotline: 0123 456 789</p></TooltipContent>
-          </Tooltip>
-
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <a href="mailto:support@trungtamdayhoc.vn" className="p-2 rounded-lg hover:bg-slate-700/50 text-slate-400 hover:text-blue-400 transition-colors">
-                <Mail className="w-5 h-5" />
-              </a>
-            </TooltipTrigger>
-            <TooltipContent><p>Email: support@trungtamdayhoc.vn</p></TooltipContent>
-          </Tooltip>
-        </div>
-
-        {/* Theme Toggle */}
+        {/* 1. Phone - Green Icon */}
         <Tooltip>
           <TooltipTrigger asChild>
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={toggleTheme}
-              className="relative hover:bg-slate-700/50 text-[#E2E8F0] transition-all duration-200 hover:scale-105"
+            <a
+              href="tel:0123456789"
+              className="hidden md:flex items-center justify-center w-10 h-10 rounded-lg text-[#22C55E] hover:text-[#4ADE80] hover:bg-[#22C55E]/10 transition-all duration-200"
             >
-              <Sun className="h-5 w-5 rotate-0 scale-100 transition-all duration-300 dark:-rotate-90 dark:scale-0 text-amber-400" />
-              <Moon className="absolute h-5 w-5 rotate-90 scale-0 transition-all duration-300 dark:rotate-0 dark:scale-100 text-blue-300" />
-              <span className="sr-only">Chuyển đổi giao diện</span>
-            </Button>
+              <Phone className="w-5 h-5" strokeWidth={2} />
+            </a>
           </TooltipTrigger>
-          <TooltipContent>
-            <p>{theme === 'dark' ? 'Chế độ Sáng' : 'Chế độ Tối'}</p>
-          </TooltipContent>
+          <TooltipContent><p>Hotline: 0123 456 789</p></TooltipContent>
         </Tooltip>
 
-        {/* Notifications */}
+        {/* 2. Mail - Blue Icon */}
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <a
+              href="mailto:support@trungtamdayhoc.vn"
+              className="hidden md:flex items-center justify-center w-10 h-10 rounded-lg text-[#3B82F6] hover:text-[#60A5FA] hover:bg-[#3B82F6]/10 transition-all duration-200"
+            >
+              <Mail className="w-5 h-5" strokeWidth={2} />
+            </a>
+          </TooltipTrigger>
+          <TooltipContent><p>Email hỗ trợ</p></TooltipContent>
+        </Tooltip>
+
+        {/* 3. Notification - Orange Icon */}
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <button className="relative p-2 rounded-lg hover:bg-slate-700/50 text-[#E2E8F0] transition-all duration-200 hover:scale-105">
-              <Bell className="w-5 h-5" />
+            <button className="relative flex items-center justify-center w-10 h-10 rounded-lg text-[#F97316] hover:text-[#FB923C] hover:bg-[#F97316]/10 transition-all duration-200">
+              <Bell className="w-5 h-5" strokeWidth={2} />
               {notificationCount > 0 && (
-                <span className="absolute top-1 right-1 w-4 h-4 bg-destructive text-destructive-foreground text-xs rounded-full flex items-center justify-center animate-pulse">
-                  {notificationCount}
+                <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 bg-rose-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center">
+                  {notificationCount > 9 ? '9+' : notificationCount}
                 </span>
               )}
             </button>
@@ -193,26 +169,41 @@ export function AppHeader({ isMobile = false, onMenuClick }) {
           </DropdownMenuContent>
         </DropdownMenu>
 
-        {/* User Profile Dropdown */}
+        {/* 4. Theme Toggle - Soft Yellow/Blue */}
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <button
+              onClick={toggleTheme}
+              className="flex items-center justify-center w-10 h-10 rounded-xl text-amber-400/80 hover:text-amber-300 hover:bg-amber-500/10 transition-all duration-200"
+            >
+              <Sun className="h-5 w-5 rotate-0 scale-100 transition-transform duration-300 dark:-rotate-90 dark:scale-0" strokeWidth={1.75} />
+              <Moon className="absolute h-5 w-5 rotate-90 scale-0 transition-transform duration-300 dark:rotate-0 dark:scale-100 text-blue-400/80" strokeWidth={1.75} />
+            </button>
+          </TooltipTrigger>
+          <TooltipContent>
+            <p>{theme === 'dark' ? 'Chế độ Sáng' : 'Chế độ Tối'}</p>
+          </TooltipContent>
+        </Tooltip>
+
+        {/* 5. Profile - Deep Blue Avatar */}
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <button className="flex items-center gap-2 md:gap-3 px-2 md:px-3 py-2 rounded-lg hover:bg-slate-700/50 transition-colors">
-              <Avatar className="h-8 w-8">
+            <button className="flex items-center gap-2.5 px-1.5 py-1 rounded-xl hover:bg-slate-700/40 transition-all duration-200">
+              <Avatar className="h-9 w-9 ring-2 ring-blue-500/30">
                 <AvatarImage src={user?.avatar} alt={user?.name} />
-                <AvatarFallback className="bg-primary text-primary-foreground text-sm font-semibold">
+                <AvatarFallback className="bg-gradient-to-br from-blue-600 to-indigo-700 text-white text-sm font-bold">
                   {(user?.name || user?.username || 'U').charAt(0).toUpperCase()}
                 </AvatarFallback>
               </Avatar>
-              {/* Hide user info on mobile, show on tablet+ */}
               <div className="hidden md:flex flex-col items-start">
-                <span className="text-sm font-medium text-[#E2E8F0]">
+                <span className="text-sm font-medium text-slate-100">
                   {user?.name || user?.username}
                 </span>
-                <span className="text-xs text-slate-400">
+                <span className="text-[11px] text-slate-400">
                   {roleLabels[user?.role] || user?.role}
                 </span>
               </div>
-              <ChevronDown className="h-4 w-4 text-slate-400 hidden md:block" />
+              <ChevronDown className="h-4 w-4 text-slate-500 hidden md:block" />
             </button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-56 bg-popover">

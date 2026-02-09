@@ -58,19 +58,26 @@ export function MainLayout({ children }) {
           isMobile={isMobile}
           onMenuClick={() => setMobileOpen(!mobileOpen)}
         />
+
+        {/* Breadcrumb Navigation - Outside main content box */}
+        <div className="px-4 md:px-6 pt-4 pb-2">
+          <Breadcrumb />
+        </div>
+
         <main
           id="main-content"
-          className="flex-1 p-4 md:p-6 animate-fade-in"
+          className="flex-1 px-4 md:px-6 pb-4 md:pb-6 animate-fade-in"
           role="main"
           tabIndex={-1}
         >
-          {/* Breadcrumb Navigation */}
-          <Breadcrumb />
-
           {/* Page Content */}
           {children}
         </main>
-        <AppFooter />
+
+        {/* Footer - Full width at bottom, outside content area */}
+        <div className="mt-auto">
+          <AppFooter />
+        </div>
       </div>
     </div>
   );
