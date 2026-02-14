@@ -13,6 +13,13 @@ import { CalendarIcon, ListTodo, Plus, X, User } from 'lucide-react';
 import { format } from 'date-fns';
 import { vi } from 'date-fns/locale';
 import { cn } from '@core/lib/utils';
+import { toast } from 'sonner';
+
+// Error message component
+function FieldError({ message }) {
+  if (!message) return null;
+  return <p className="text-sm text-red-500 mt-1">{message}</p>;
+}
 export function TaskFormModal({ open, onOpenChange, type, onSubmit, accounts = [], departments = [], projects = [], initialData, mode = 'create' }) {
   const [formData, setFormData] = useState({
     title: initialData?.title || '',
@@ -27,10 +34,12 @@ export function TaskFormModal({ open, onOpenChange, type, onSubmit, accounts = [
   });
 
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [errors, setErrors] = useState({});
 
-  // Sync state with props
+  // Sync state with props and clear errors when modal opens
   useEffect(() => {
     if (open) {
+      setErrors({});
       setFormData(prev => ({
         ...prev,
         title: initialData?.title || '',
@@ -107,9 +116,24 @@ export function TaskFormModal({ open, onOpenChange, type, onSubmit, accounts = [
     return filtered;
   })();
 
+  // Validate required fields
+  const validate = () => {
+    const newErrors = {};
+    if (!formData.title.trim()) {
+      newErrors.title = 'Vui lòng nhập tiêu đề công việc';
+    }
+    if (!formData.projectId) {
+      newErrors.projectId = 'Vui lòng chọn dự án';
+    }
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
   const handleSubmit = async () => {
-    if (!formData.title.trim() || !formData.projectId)
+    if (!validate()) {
+      toast.error('Vui lòng nhập đầy đủ các trường bắt buộc');
       return;
+    }
 
     setIsSubmitting(true);
     try {
@@ -150,10 +174,12 @@ export function TaskFormModal({ open, onOpenChange, type, onSubmit, accounts = [
       </DialogHeader>
 
       <div className="space-y-4 py-4">
+        <p className="text-sm text-muted-foreground">Các trường có dấu <span className="text-red-500 font-bold">*</span> là bắt buộc</p>
         {/* Title */}
         <div className="space-y-2">
-          <Label htmlFor="title">Tiêu đề công việc *</Label>
-          <Input id="title" value={formData.title} onChange={(e) => setFormData({ ...formData, title: e.target.value })} placeholder="Nhập tiêu đề công việc..." />
+          <Label htmlFor="title">Tiêu đề công việc <span className="text-red-500">*</span></Label>
+          <Input id="title" value={formData.title} onChange={(e) => { setFormData({ ...formData, title: e.target.value }); if (errors.title) setErrors({ ...errors, title: '' }); }} placeholder="Nhập tiêu đề công việc..." className={errors.title ? 'border-red-500' : ''} />
+          <FieldError message={errors.title} />
         </div>
 
         {/* Description */}
@@ -232,10 +258,10 @@ export function TaskFormModal({ open, onOpenChange, type, onSubmit, accounts = [
 
         {/* Project Selection (Required) */}
         <div className="space-y-2">
-          <Label>Dự án *</Label>
+          <Label>Dự án <span className="text-red-500">*</span></Label>
           <Select
             value={formData.projectId}
-            onValueChange={(value) => setFormData({ ...formData, projectId: value })}
+            onValueChange={(value) => { setFormData({ ...formData, projectId: value }); if (errors.projectId) setErrors({ ...errors, projectId: '' }); }}
             disabled={!!initialData?.projectId || mode === 'edit'} // Lock if passed initially or editing
           >
             <SelectTrigger>
@@ -249,6 +275,7 @@ export function TaskFormModal({ open, onOpenChange, type, onSubmit, accounts = [
               ))}
             </SelectContent>
           </Select>
+          <FieldError message={errors.projectId} />
         </div>
 
         {/* Department Selection Removed per user request (Auto-inherited from Project) */}
@@ -337,7 +364,7 @@ export function TaskFormModal({ open, onOpenChange, type, onSubmit, accounts = [
         <Button variant="outline" onClick={() => onOpenChange(false)}>
           Hủy
         </Button>
-        <Button onClick={handleSubmit} disabled={!formData.title.trim() || isSubmitting}>
+        <Button onClick={handleSubmit} disabled={isSubmitting}>
           {isSubmitting ? 'Đang xử lý...' : (mode === 'edit' ? 'Lưu thay đổi' : (isMainTask ? 'Tạo việc chính' : 'Tạo việc nhỏ'))}
         </Button>
       </DialogFooter>

@@ -3,7 +3,7 @@ import { Dialog, DialogContent, DialogTitle, DialogDescription } from '@core/com
 import { Button } from '@core/components/ui/button';
 import { Input } from '@core/components/ui/input';
 import { Textarea } from '@core/components/ui/textarea';
-import { Avatar, AvatarFallback } from '@core/components/ui/avatar';
+import { Avatar, AvatarImage, AvatarFallback } from '@core/components/ui/avatar';
 import { StatusBadge } from '@core/components/common/StatusBadge';
 import { PriorityBadge } from '@core/components/common/PriorityBadge';
 import { Checkbox } from '@core/components/ui/checkbox';
@@ -13,6 +13,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '@core/components/ui/pop
 import { Calendar } from '@core/components/ui/calendar';
 import { Calendar as CalendarIcon, Clock, Paperclip, Link2, Upload, Send, CheckCircle2, XCircle, FileText, Trash2, Plus, ArrowRight, User, X } from 'lucide-react';
 import { taskService } from '@core/services/taskService';
+import { logService } from '@core/services/logService';
 
 export function SubtaskDetailModal({ open, onOpenChange, task, accounts = [], onTaskUpdate }) {
   const { user } = useAuth();
@@ -23,6 +24,7 @@ export function SubtaskDetailModal({ open, onOpenChange, task, accounts = [], on
   const [labels, setLabels] = useState([]);
   const [attachments, setAttachments] = useState([]);
   const [comments, setComments] = useState([]);
+  const [logs, setLogs] = useState([]); // State for System Logs
   const [selectedMembers, setSelectedMembers] = useState([]);
   const [description, setDescription] = useState('');
   const [status, setStatus] = useState('not-assigned');
@@ -54,6 +56,9 @@ export function SubtaskDetailModal({ open, onOpenChange, task, accounts = [], on
   // Dialog confirmation for comment delete
   const [deletingCommentId, setDeletingCommentId] = useState(null);
 
+  // Activity Stream Visibility
+  const [showAllActivities, setShowAllActivities] = useState(false);
+
   const LABEL_COLORS = [
     { name: 'Xanh lá', color: '#4ade80' },
     { name: 'Vàng', color: '#facc15' },
@@ -70,7 +75,12 @@ export function SubtaskDetailModal({ open, onOpenChange, task, accounts = [], on
       setChecklist(task.checklist || []);
       setLabels(task.labels || []);
       setAttachments(task.attachments || []);
-      setComments(task.comments || []);
+
+      // Only overwrite comments if the prop has them (e.g. from getTaskById)
+      // If prop comes from list API (no comments), keep existing state or fetch via separate effect
+      if (task.comments && task.comments.length > 0) {
+        setComments(task.comments);
+      }
 
       const members = task.Task_Member?.map(tm => ({
         id: tm.Member?.M_ID,
@@ -86,17 +96,57 @@ export function SubtaskDetailModal({ open, onOpenChange, task, accounts = [], on
     }
   }, [task]);
 
+  // Fetch full task details (including comments) from API when modal opens
+  // This is required because the list API usually doesn't return TaskComments
+  useEffect(() => {
+    if (task?.id && open) {
+      const fetchFullTask = async () => {
+        try {
+          // Parallel fetch: Task Details + System Logs
+          const [resTask, resLogs] = await Promise.all([
+            taskService.getTaskById(task.id),
+            logService.getLogs(1, 50, { targetId: task.id })
+          ]);
+
+          if (resTask.ok && resTask.data) {
+            setComments(resTask.data.comments || []);
+            // Also sync other detailed fields if needed
+            if (resTask.data.checklist) setChecklist(resTask.data.checklist);
+            if (resTask.data.labels) setLabels(resTask.data.labels);
+            if (resTask.data.attachments) setAttachments(resTask.data.attachments);
+          }
+
+          if (resLogs.ok) {
+            setLogs(resLogs.data || []);
+          }
+        } catch (err) {
+          console.error('Error fetching full task details/logs:', err);
+        }
+      };
+      fetchFullTask();
+    }
+  }, [task?.id, open]);
+
+  // Combine Comments and Logs for Activity Stream
+  const combinedActivities = [
+    ...comments.map(c => ({ type: 'comment', data: c, date: new Date(c.createdAt) })),
+    ...logs.map(l => ({ type: 'log', data: l, date: new Date(l.CreatedAt) }))
+  ].sort((a, b) => b.date - a.date);
+
   // Early return AFTER all hooks
   if (!task) return null;
 
   // Derived Access Control (must be after hooks, can be before/after early return as long as hooks are first)
-  const isCreator = task?.Created_By_A_ID === user?.aid;
-  const isAssigned = task?.Task_Member?.some(tm => tm.Member?.M_ID === user?.memberId);
-  const isManager = ['admin', 'director', 'pmo', 'leader'].includes(user?.role?.name?.toLowerCase());
+  const userRole = (user?.role || '').toLowerCase();
+  const isCreator = task?.Created_By_A_ID === user?.id; // user.id is A_ID
+  const isAssigned = task?.Task_Member?.some(tm => tm.Member?.M_ID === user?.m_id); // user.m_id is M_ID
+
+  const isAdmin = ['admin', 'system admin', 'admin hệ thống'].includes(userRole);
+  const isManager = ['admin', 'director', 'pmo', 'leader'].includes(userRole);
   const canEdit = isCreator || isManager || (isAssigned && task?.status === 'in-progress');
   const canAssign = isCreator || isManager;
   const canApprove = (isManager || isCreator) && task?.status === 'waiting-approval';
-  const isStaff = user?.role?.name?.toLowerCase() === 'staff';
+  const isStaff = userRole === 'staff';
 
   // Handlers - Checklist
   const handleAddChecklist = async () => {
@@ -575,15 +625,8 @@ export function SubtaskDetailModal({ open, onOpenChange, task, accounts = [], on
                 <div className="flex justify-between items-center">
                   <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Việc cần làm</h3>
                 </div>
-                {/* Progress Bar */}
-                <div className="relative h-6 flex-1 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
-                  <div
-                    className="h-full bg-gradient-to-r from-green-400 to-green-500 transition-all flex items-center justify-end rounded-full"
-                    style={{ width: `${Math.max(progress, 12)}%` }}
-                  >
-                    <span className="text-xs font-semibold text-white pr-2 drop-shadow-sm">{progress}%</span>
-                  </div>
-                </div>
+
+
                 {/* Items */}
                 <div className="space-y-2">
                   {checklist.map(item => (
@@ -749,110 +792,180 @@ export function SubtaskDetailModal({ open, onOpenChange, task, accounts = [], on
               </div>
             </div >
 
-            {/* Activity Section */}
-            {/* Activity Section */}
-            <div className="flex gap-4">
-              <div className="mt-1">
-                <Clock className="w-6 h-6 text-gray-500 dark:text-gray-400" />
+            {/* Activity Section — Trello-style */}
+            <div className="flex gap-3">
+              <div className="mt-0.5">
+                <Clock className="w-5 h-5 text-gray-500 dark:text-gray-400" />
               </div>
-              <div className="flex-1 space-y-6">
+              <div className="flex-1 space-y-3">
 
                 {/* Header */}
                 <div className="flex justify-between items-center">
-                  <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Hoạt động</h3>
-                  <Button variant="ghost" size="sm" className="h-8 text-muted-foreground hover:text-foreground">
-                    Hiện chi tiết
+                  <h3 className="text-base font-semibold text-gray-900 dark:text-gray-100">Nhận xét và hoạt động</h3>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-7 px-3 text-xs bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 rounded"
+                    onClick={() => setShowAllActivities(!showAllActivities)}
+                  >
+                    {showAllActivities ? 'Ẩn chi tiết' : 'Hiện chi tiết'}
                   </Button>
                 </div>
 
                 {/* Comment Input */}
-                <div className="flex gap-3 items-start">
-                  <Avatar className="w-8 h-8 mt-1">
-                    <AvatarFallback className="bg-gradient-to-br from-indigo-500 to-purple-500 text-white text-xs">
-                      {user?.firstName?.charAt(0) || 'U'}
+                <div className="flex gap-3 items-center">
+                  <Avatar className="w-8 h-8 flex-shrink-0">
+                    <AvatarFallback className="bg-gradient-to-br from-indigo-500 to-purple-500 text-white text-xs font-semibold">
+                      {user?.name?.charAt(0)?.toUpperCase() || 'U'}
                     </AvatarFallback>
                   </Avatar>
                   <div className="flex-1 relative">
-                    <div className="relative shadow-sm rounded-md transition-all focus-within:ring-2 focus-within:ring-blue-500 focus-within:ring-opacity-50">
-                      <Input
-                        placeholder="Viết bình luận..."
-                        className="pr-12 text-sm border-gray-300 dark:border-gray-700 focus-visible:ring-0 bg-white dark:bg-gray-800"
-                        value={commentInput}
-                        onChange={(e) => setCommentInput(e.target.value)}
-                        onKeyDown={(e) => e.key === 'Enter' && handleAddComment()}
-                      />
-                      <button
-                        className={`absolute right-1 top-1/2 -translate-y-1/2 p-1.5 rounded-md transition-colors ${commentInput.trim()
-                          ? 'text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/30 cursor-pointer'
-                          : 'text-gray-400 cursor-not-allowed'
-                          }`}
-                        onClick={handleAddComment}
-                        disabled={!commentInput.trim()}
-                      >
-                        <Send className="w-4 h-4" />
-                      </button>
-                    </div>
+                    <Input
+                      placeholder="Viết bình luận..."
+                      className="text-sm h-9 bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600 rounded-lg focus-visible:ring-1 focus-visible:ring-blue-500 pr-10"
+                      value={commentInput}
+                      onChange={(e) => setCommentInput(e.target.value)}
+                      onKeyDown={(e) => e.key === 'Enter' && handleAddComment()}
+                    />
+                    <button
+                      className={`absolute right-2 top-1/2 -translate-y-1/2 transition-colors ${commentInput.trim()
+                        ? 'text-blue-600 hover:text-blue-700 cursor-pointer'
+                        : 'text-gray-400 cursor-not-allowed'
+                        }`}
+                      onClick={handleAddComment}
+                      disabled={!commentInput.trim()}
+                    >
+                      <Send className="w-4 h-4" />
+                    </button>
                   </div>
                 </div>
 
-                {/* Comments List */}
-                <div className="space-y-6">
-                  {comments.map((comment) => (
-                    <div key={comment.id} className="flex gap-3 group">
-                      <Avatar className="w-8 h-8 mt-1 border border-gray-200 dark:border-gray-700" title={comment.user?.name}>
-                        <AvatarFallback className="bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-100 text-xs font-semibold">
-                          {comment.user?.name?.charAt(0).toUpperCase() || '?'}
-                        </AvatarFallback>
-                      </Avatar>
-                      <div className="flex-1 space-y-1.5">
-                        <div className="flex items-center gap-2">
-                          <span className="font-semibold text-sm text-gray-900 dark:text-gray-100">
-                            {comment.user?.name}
-                          </span>
-                          <span className="text-xs text-muted-foreground">
-                            {new Date(comment.createdAt).toLocaleString('vi-VN', {
-                              day: '2-digit',
-                              month: '2-digit',
-                              hour: '2-digit',
-                              minute: '2-digit'
-                            })}
-                          </span>
-                        </div>
-                        <div className="text-sm text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 px-3.5 py-2.5 rounded-lg border border-gray-200 dark:border-gray-700 shadow-sm leading-relaxed">
-                          {editingCommentId === comment.id ? (
-                            <div className="flex flex-col gap-2">
-                              <Input
-                                value={editContent}
-                                onChange={(e) => setEditContent(e.target.value)}
-                                className="text-sm"
-                                autoFocus
-                                onKeyDown={(e) => {
-                                  if (e.key === 'Enter' && !e.shiftKey) {
-                                    e.preventDefault();
-                                    handleSaveEdit(comment.id);
-                                  }
-                                  if (e.key === 'Escape') handleCancelEdit();
-                                }}
-                              />
-                              <div className="flex gap-2 justify-end text-xs">
-                                <span className="text-muted-foreground mr-auto self-center">Nhấn Esc để hủy, Enter để lưu</span>
-                                <button onClick={handleCancelEdit} className="text-gray-500 hover:text-gray-700 font-medium">Hủy</button>
-                                <button onClick={() => handleSaveEdit(comment.id)} className="text-blue-600 hover:text-blue-700 font-medium">Lưu</button>
+                {/* Activity Stream — Trello style: interleaved comments + logs */}
+                <div className="space-y-1">
+                  {(() => {
+                    // Group duplicate logs
+                    const logsOnly = combinedActivities.filter(a => a.type === 'log');
+                    const groupedLogs = [];
+                    logsOnly.forEach(logActivity => {
+                      const prev = groupedLogs[groupedLogs.length - 1];
+                      if (prev && prev.data.Message === logActivity.data.Message
+                        && (prev.data.Actor?.UserName || '') === (logActivity.data.Actor?.UserName || '')) {
+                        prev.count = (prev.count || 1) + 1;
+                      } else {
+                        groupedLogs.push({ ...logActivity, count: 1 });
+                      }
+                    });
+
+                    // Build unified timeline
+                    const commentsOnly = combinedActivities.filter(a => a.type === 'comment');
+                    const allItems = [
+                      ...commentsOnly.map(c => ({ kind: 'comment', data: c.data, date: c.date })),
+                      ...groupedLogs.map(g => ({ kind: 'log', data: g.data, date: g.date, count: g.count }))
+                    ].sort((a, b) => b.date - a.date);
+
+                    // When collapsed: show only the latest item
+                    const visibleItems = showAllActivities ? allItems : allItems.slice(0, 1);
+                    const hiddenCount = allItems.length - 1;
+
+                    return (
+                      <>
+                        {visibleItems.map((item, idx) => {
+                          if (item.kind === 'comment') {
+                            const c = item.data;
+                            return (
+                              <div key={`comment-${c.id}`} className="flex gap-3 group py-2">
+                                <Avatar className="w-8 h-8 flex-shrink-0 mt-0.5">
+                                  {c.user?.avatar && <AvatarImage src={c.user.avatar} alt={c.user.name} />}
+                                  <AvatarFallback className="bg-orange-200 text-orange-800 dark:bg-orange-900 dark:text-orange-200 text-xs font-bold">
+                                    {c.user?.name?.charAt(0).toUpperCase() || '?'}
+                                  </AvatarFallback>
+                                </Avatar>
+                                <div className="flex-1 min-w-0">
+                                  <div className="flex items-center gap-2 mb-1">
+                                    <span className="font-bold text-sm text-gray-900 dark:text-gray-100">
+                                      {c.user?.name}
+                                    </span>
+                                  </div>
+                                  <div className="text-sm text-gray-800 dark:text-gray-200 bg-white dark:bg-gray-800 px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-700 shadow-sm relative">
+                                    {editingCommentId === c.id ? (
+                                      <div className="flex flex-col gap-2">
+                                        <Input
+                                          value={editContent}
+                                          onChange={(e) => setEditContent(e.target.value)}
+                                          className="text-sm"
+                                          autoFocus
+                                          onKeyDown={(e) => {
+                                            if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSaveEdit(c.id); }
+                                            if (e.key === 'Escape') handleCancelEdit();
+                                          }}
+                                        />
+                                        <div className="flex gap-2 justify-end text-xs">
+                                          <span className="text-muted-foreground mr-auto self-center">Esc để hủy · Enter để lưu</span>
+                                          <button onClick={handleCancelEdit} className="text-gray-500 hover:text-gray-700 font-medium">Hủy</button>
+                                          <button onClick={() => handleSaveEdit(c.id)} className="text-blue-600 hover:text-blue-700 font-medium">Lưu</button>
+                                        </div>
+                                      </div>
+                                    ) : (
+                                      <>
+                                        {c.content}
+                                        {canEdit && (user?.id === c.user?.id || isAdmin) && (
+                                          <div className="absolute top-1.5 right-1.5 opacity-0 group-hover:opacity-100 flex gap-0.5 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-md shadow-sm p-0.5 transition-opacity">
+                                            <button onClick={() => handleEditComment(c)} className="p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded text-gray-400 hover:text-blue-600" title="Sửa"><FileText className="w-3.5 h-3.5" /></button>
+                                            <button onClick={() => handleDeleteComment(c.id)} className="p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded text-gray-400 hover:text-red-500" title="Xóa"><X className="w-3.5 h-3.5" /></button>
+                                          </div>
+                                        )}
+                                      </>
+                                    )}
+                                  </div>
+                                  <p className="text-xs text-gray-400 dark:text-gray-500 mt-1 hover:underline cursor-default">
+                                    {new Date(c.createdAt).toLocaleString('vi-VN', { hour: '2-digit', minute: '2-digit', day: '2-digit', month: '2-digit', year: 'numeric' })}
+                                  </p>
+                                </div>
                               </div>
-                            </div>
-                          ) : (
-                            comment.content
-                          )}
-                        </div>
-                        {user && user.id === comment.user?.id && editingCommentId !== comment.id && (
-                          <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                            <button onClick={() => handleEditComment(comment)} className="text-xs text-muted-foreground hover:underline hover:text-blue-600">Chỉnh sửa</button>
-                            <button onClick={() => handleDeleteComment(comment.id)} className="text-xs text-muted-foreground hover:underline hover:text-red-600">Xóa</button>
-                          </div>
+                            );
+                          } else {
+                            // System log — Trello style: avatar + inline text + timestamp below
+                            const l = item.data;
+                            const actorName = l.Actor?.Member?.FullName || l.Actor?.UserName || 'Hệ thống';
+                            const actorAvatar = l.Actor?.Avatar ? `http://localhost:3069${l.Actor.Avatar}` : null;
+                            return (
+                              <div key={`log-${l.LogID}-${idx}`} className="flex gap-3 py-1.5">
+                                <Avatar className="w-8 h-8 flex-shrink-0 mt-0.5">
+                                  {actorAvatar && <AvatarImage src={actorAvatar} alt={actorName} />}
+                                  <AvatarFallback className="bg-gray-200 text-gray-600 dark:bg-gray-700 dark:text-gray-300 text-xs font-bold">
+                                    {actorName.charAt(0).toUpperCase()}
+                                  </AvatarFallback>
+                                </Avatar>
+                                <div className="flex-1 min-w-0 pt-1">
+                                  <p className="text-sm text-gray-700 dark:text-gray-300 leading-snug">
+                                    <span className="font-bold text-gray-900 dark:text-gray-100">{actorName}</span>
+                                    {' '}
+                                    <span>{l.Message}</span>
+                                    {item.count > 1 && (
+                                      <span className="ml-1 text-[10px] text-white bg-gray-400 dark:bg-gray-600 px-1.5 py-0.5 rounded-full font-semibold align-middle">×{item.count}</span>
+                                    )}
+                                  </p>
+                                  <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5 hover:underline cursor-default">
+                                    {new Date(l.CreatedAt).toLocaleString('vi-VN', { hour: '2-digit', minute: '2-digit', day: '2-digit', month: '2-digit', year: 'numeric' })}
+                                  </p>
+                                </div>
+                              </div>
+                            );
+                          }
+                        })}
+
+                        {/* Show more toggle */}
+                        {!showAllActivities && hiddenCount > 0 && (
+                          <button
+                            onClick={() => setShowAllActivities(true)}
+                            className="text-xs text-blue-600 dark:text-blue-400 hover:underline ml-11 py-1"
+                          >
+                            Xem thêm {hiddenCount} hoạt động...
+                          </button>
                         )}
-                      </div>
-                    </div>
-                  ))}
+                      </>
+                    );
+                  })()}
                 </div>
 
               </div>

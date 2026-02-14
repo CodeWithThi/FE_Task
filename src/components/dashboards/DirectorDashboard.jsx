@@ -187,15 +187,35 @@ export function DirectorDashboard() {
         }
 
         if (projectsRes.ok) {
-          // Calculate progress for each project
+          // Use backend-calculated progress like PMO dashboard
           const projectsWithProgress = projectsRes.data.slice(0, 5).map(p => {
-            const pTasks = p.Task || p.tasks || [];
-            let progress = 0;
-            if (pTasks.length > 0) {
-              const completed = pTasks.filter(t => completedStatuses.includes(t.Status || t.status)).length;
-              progress = Math.round((completed / pTasks.length) * 100);
+            // Use backend-provided progress first
+            let progress = p.progress || 0;
+
+            // Fallback: calculate from tasks if backend progress is 0
+            if (progress === 0) {
+              const pTasks = p.tasks || p.Task || [];
+              if (pTasks.length > 0) {
+                // Try average Progress value first (numeric 0-100)
+                const totalProgress = pTasks.reduce((sum, t) => sum + (t.Progress || t.progress || 0), 0);
+                progress = Math.round(totalProgress / pTasks.length);
+
+                // If still 0, count completed tasks
+                if (progress === 0) {
+                  const completed = pTasks.filter(t => {
+                    const status = (t.Status || t.status || '').toLowerCase();
+                    return completedStatuses.includes(status);
+                  }).length;
+                  progress = Math.round((completed / pTasks.length) * 100);
+                }
+              }
             }
-            return { ...p, progress, taskCount: pTasks.length };
+
+            return {
+              ...p,
+              progress,
+              taskCount: p.taskCount || (p.tasks || p.Task || []).length
+            };
           });
           setProjects(projectsWithProgress);
         }

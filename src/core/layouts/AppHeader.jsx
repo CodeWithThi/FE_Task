@@ -2,8 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@core/contexts/AuthContext';
 import { roleLabels } from '@/models';
-import { useTheme } from '@core/hooks/use-theme';
-import { Search, Bell, ChevronDown, User, Lock, LogOut, Sun, Moon, Menu, Check, Phone, Mail } from 'lucide-react';
+import { Bell, ChevronDown, User, Lock, LogOut, Menu, Phone, Mail } from 'lucide-react';
 import { Input } from '@core/components/ui/input';
 import { Button } from '@core/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@core/components/ui/avatar';
@@ -16,7 +15,7 @@ import { vi } from 'date-fns/locale';
 export function AppHeader({ isMobile = false, onMenuClick }) {
   const navigate = useNavigate();
   const { user, logout } = useAuth();
-  const { theme, toggleTheme } = useTheme();
+
   const [notifications, setNotifications] = useState([]);
   const [notificationCount, setNotificationCount] = useState(0);
 
@@ -91,36 +90,36 @@ export function AppHeader({ isMobile = false, onMenuClick }) {
       {/* Right side: Toolbar Icons */}
       <div className="flex items-center gap-4 md:gap-5">
 
-        {/* 1. Phone - Green Icon */}
+        {/* 1. Phone - Green */}
         <Tooltip>
           <TooltipTrigger asChild>
             <a
-              href="tel:0123456789"
-              className="hidden md:flex items-center justify-center w-10 h-10 rounded-lg text-[#22C55E] hover:text-[#4ADE80] hover:bg-[#22C55E]/10 transition-all duration-200"
+              href="tel:079204481"
+              className="hidden md:flex items-center justify-center w-10 h-10 rounded-lg text-[#86EFAC] hover:text-[#4ADE80] hover:bg-emerald-500/10 transition-all duration-200"
             >
               <Phone className="w-5 h-5" strokeWidth={2} />
             </a>
           </TooltipTrigger>
-          <TooltipContent><p>Hotline: 0123 456 789</p></TooltipContent>
+          <TooltipContent><p>Hotline: 0792 220 4481</p></TooltipContent>
         </Tooltip>
 
-        {/* 2. Mail - Blue Icon */}
+        {/* 2. Mail - Blue */}
         <Tooltip>
           <TooltipTrigger asChild>
             <a
-              href="mailto:support@trungtamdayhoc.vn"
-              className="hidden md:flex items-center justify-center w-10 h-10 rounded-lg text-[#3B82F6] hover:text-[#60A5FA] hover:bg-[#3B82F6]/10 transition-all duration-200"
+              href="mailto:thi2842005@gmail.com"
+              className="hidden md:flex items-center justify-center w-10 h-10 rounded-lg text-[#93C5FD] hover:text-[#60A5FA] hover:bg-blue-500/10 transition-all duration-200"
             >
               <Mail className="w-5 h-5" strokeWidth={2} />
             </a>
           </TooltipTrigger>
-          <TooltipContent><p>Email hỗ trợ</p></TooltipContent>
+          <TooltipContent><p>Email: Thi2842005@gmail.com</p></TooltipContent>
         </Tooltip>
 
-        {/* 3. Notification - Orange Icon */}
+        {/* 3. Notification - Orange */}
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <button className="relative flex items-center justify-center w-10 h-10 rounded-lg text-[#F97316] hover:text-[#FB923C] hover:bg-[#F97316]/10 transition-all duration-200">
+            <button className="relative flex items-center justify-center w-10 h-10 rounded-lg text-[#FDBA74] hover:text-[#FB923C] hover:bg-orange-500/10 transition-all duration-200">
               <Bell className="w-5 h-5" strokeWidth={2} />
               {notificationCount > 0 && (
                 <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 bg-rose-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center">
@@ -169,23 +168,7 @@ export function AppHeader({ isMobile = false, onMenuClick }) {
           </DropdownMenuContent>
         </DropdownMenu>
 
-        {/* 4. Theme Toggle - Soft Yellow/Blue */}
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <button
-              onClick={toggleTheme}
-              className="flex items-center justify-center w-10 h-10 rounded-xl text-amber-400/80 hover:text-amber-300 hover:bg-amber-500/10 transition-all duration-200"
-            >
-              <Sun className="h-5 w-5 rotate-0 scale-100 transition-transform duration-300 dark:-rotate-90 dark:scale-0" strokeWidth={1.75} />
-              <Moon className="absolute h-5 w-5 rotate-90 scale-0 transition-transform duration-300 dark:rotate-0 dark:scale-100 text-blue-400/80" strokeWidth={1.75} />
-            </button>
-          </TooltipTrigger>
-          <TooltipContent>
-            <p>{theme === 'dark' ? 'Chế độ Sáng' : 'Chế độ Tối'}</p>
-          </TooltipContent>
-        </Tooltip>
-
-        {/* 5. Profile - Deep Blue Avatar */}
+        {/* Profile */}
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <button className="flex items-center gap-2.5 px-1.5 py-1 rounded-xl hover:bg-slate-700/40 transition-all duration-200">

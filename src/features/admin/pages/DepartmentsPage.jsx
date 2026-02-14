@@ -170,7 +170,7 @@ export default function DepartmentsPage() {
         }}>
           <div className="space-y-4 py-4">
             <div className="space-y-2">
-              <Label htmlFor="name">Tên phòng ban *</Label>
+              <Label htmlFor="name">Tên phòng ban <span className="text-red-500">*</span></Label>
               <Input id="name" name="name" placeholder="VD: Bộ môn Tin học" required />
             </div>
             <div className="space-y-2">
@@ -225,7 +225,7 @@ export default function DepartmentsPage() {
           }}>
             <div className="space-y-4 py-4">
               <div className="space-y-2">
-                <Label htmlFor="edit-name">Tên phòng ban *</Label>
+                <Label htmlFor="edit-name">Tên phòng ban <span className="text-red-500">*</span></Label>
                 <Input id="edit-name" name="name" defaultValue={selectedDept.name} required />
               </div>
               <div className="space-y-2">

@@ -101,7 +101,7 @@ const mapTaskToFrontend = (backendTask) => {
             user: {
                 id: c.Account?.M_ID,
                 name: c.Account?.UserName,
-                avatar: c.Account?.Avatar
+                avatar: c.Account?.Avatar ? `http://localhost:3069${c.Account.Avatar}` : null
             }
         })) || []
     };
@@ -426,7 +426,7 @@ export const taskService = {
                     user: {
                         id: item.Account?.M_ID,
                         name: item.Account?.UserName,
-                        avatar: item.Account?.Avatar
+                        avatar: item.Account?.Avatar ? `http://localhost:3069${item.Account.Avatar}` : null
                     }
                 }
             };
@@ -434,7 +434,7 @@ export const taskService = {
     },
     async deleteComment(taskId, commentId) {
         try {
-            await taskApi.delete(`/${taskId}/comments/${commentId}`);
+            await taskApi.remove(`/${taskId}/comments/${commentId}`);
             return { ok: true };
         } catch (err) { return { ok: false, message: err.message }; }
     },
@@ -452,7 +452,7 @@ export const taskService = {
                     user: {
                         id: item.Account?.M_ID,
                         name: item.Account?.UserName,
-                        avatar: item.Account?.Avatar
+                        avatar: item.Account?.Avatar ? `http://localhost:3069${item.Account.Avatar}` : null
                     }
                 }
             };

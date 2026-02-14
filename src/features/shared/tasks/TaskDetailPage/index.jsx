@@ -183,7 +183,9 @@ export default function TaskDetailPage() {
     try {
       const res = await taskService.updateTask(task.id, { status: newStatus });
       if (res.ok) {
-        setTask(res.data);
+        // Re-fetch full task data (including comments) instead of using updateTask response
+        // because updateTask response doesn't include TaskComments
+        await fetchTask();
         toast.success('Đã cập nhật trạng thái');
       } else {
         toast.error('Lỗi cập nhật: ' + res.message);
@@ -195,7 +197,8 @@ export default function TaskDetailPage() {
     try {
       const res = await taskService.updateTask(task.id, { progress: newProgress });
       if (res.ok) {
-        setTask(res.data);
+        // Re-fetch full task data (including comments) instead of using updateTask response
+        await fetchTask();
         toast.success('Đã cập nhật tiến độ');
       } else {
         toast.error('Lỗi cập nhật: ' + res.message);

@@ -374,24 +374,26 @@ export default function UsersPage() {
             <DialogTitle>Thêm người dùng mới</DialogTitle>
             <DialogDescription>
               Nhập thông tin để tạo tài khoản mới. Mật khẩu tạm thời sẽ được gửi qua email.
+              <br />
+              <span className="text-sm text-muted-foreground">Các trường có dấu <span className="text-red-500 font-bold">*</span> là bắt buộc</span>
             </DialogDescription>
           </DialogHeader>
           <form onSubmit={handleCreateUser}>
             <div className="space-y-4 py-4">
               <div className="space-y-2">
-                <Label htmlFor="username">Tên đăng nhập *</Label>
+                <Label htmlFor="username">Tên đăng nhập <span className="text-red-500">*</span></Label>
                 <Input id="username" name="username" placeholder="nguyenvana" required />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="fullName">Họ và tên *</Label>
+                <Label htmlFor="fullName">Họ và tên <span className="text-red-500">*</span></Label>
                 <Input id="fullName" name="fullName" placeholder="Nguyễn Văn A" required />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="email">Email *</Label>
+                <Label htmlFor="email">Email <span className="text-red-500">*</span></Label>
                 <Input id="email" name="email" type="email" placeholder="email@company.com" required />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="password">Mật khẩu *</Label>
+                <Label htmlFor="password">Mật khẩu <span className="text-red-500">*</span></Label>
                 <Input id="password" name="password" type="password" required />
               </div>
               <div className="space-y-2">
@@ -399,7 +401,7 @@ export default function UsersPage() {
                 <Input id="phoneNumber" name="phoneNumber" placeholder="0123456789" />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="roleId">Vai trò *</Label>
+                <Label htmlFor="roleId">Vai trò <span className="text-red-500">*</span></Label>
                 <Select name="roleId" required>
                   <SelectTrigger className="bg-background">
                     <SelectValue placeholder="Chọn vai trò" />
@@ -414,7 +416,7 @@ export default function UsersPage() {
                 </Select>
               </div>
               <div className="space-y-2">
-                <Label htmlFor="departmentId">Phòng ban *</Label>
+                <Label htmlFor="departmentId">Phòng ban <span className="text-red-500">*</span></Label>
                 <Select name="departmentId" required>
                   <SelectTrigger className="bg-background">
                     <SelectValue placeholder="Chọn phòng ban" />
@@ -458,7 +460,7 @@ export default function UsersPage() {
                   <Input value={selectedUser.userName} disabled className="bg-muted" />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="edit-fullName">Họ và tên</Label>
+                  <Label>Họ và tên <span className="text-red-500">*</span></Label>
                   <Input
                     id="edit-fullName"
                     name="fullName"
@@ -466,7 +468,7 @@ export default function UsersPage() {
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="edit-email">Email</Label>
+                  <Label htmlFor="edit-email">Email <span className="text-red-500">*</span></Label>
                   <Input
                     id="edit-email"
                     name="email"
@@ -483,7 +485,7 @@ export default function UsersPage() {
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="edit-roleId">Vai trò</Label>
+                  <Label htmlFor="edit-roleId">Vai trò <span className="text-red-500">*</span></Label>
                   <Select name="roleId" defaultValue={selectedUser.role?.id}>
                     <SelectTrigger className="bg-background">
                       <SelectValue />
@@ -498,7 +500,7 @@ export default function UsersPage() {
                   </Select>
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="edit-departmentId">Phòng ban</Label>
+                  <Label htmlFor="edit-departmentId">Phòng ban <span className="text-red-500">*</span></Label>
                   <Select name="departmentId" defaultValue={selectedUser.member?.departmentId}>
                     <SelectTrigger className="bg-background">
                       <SelectValue placeholder="Chọn phòng ban" />

@@ -66,14 +66,17 @@ export function TaskDetailContent({ task, accounts = [], onTaskUpdate, onClose, 
         { name: 'Lam', color: '#60a5fa' },
     ];
 
-    // Sync with Task Prop
+    // Sync with Task Prop (initial data from list)
     useEffect(() => {
         if (task) {
             setProgress(task.progress || 0);
             setChecklist(task.checklist || []);
             setLabels(task.labels || []);
             setAttachments(task.attachments || []);
-            setComments(task.comments || []);
+            // Only set comments from prop if they exist (getTaskById includes them, list API doesn't)
+            if (task.comments && task.comments.length > 0) {
+                setComments(task.comments);
+            }
 
             const members = task.Task_Member?.map(tm => ({
                 id: tm.Member?.M_ID,
@@ -89,6 +92,29 @@ export function TaskDetailContent({ task, accounts = [], onTaskUpdate, onClose, 
             setStatus(task.status || 'not-assigned');
         }
     }, [task]);
+
+    // Fetch full task details (including comments) from API
+    // The list API doesn't include TaskComments, so we need to fetch them separately
+    useEffect(() => {
+        if (task?.id) {
+            const fetchFullTask = async () => {
+                try {
+                    const res = await taskService.getTaskById(task.id);
+                    if (res.ok && res.data) {
+                        // Update comments from full task data
+                        setComments(res.data.comments || []);
+                        // Also sync attachments and checklist from fresh data
+                        if (res.data.checklist) setChecklist(res.data.checklist);
+                        if (res.data.labels) setLabels(res.data.labels);
+                        if (res.data.attachments) setAttachments(res.data.attachments);
+                    }
+                } catch (err) {
+                    console.error('Error fetching full task details:', err);
+                }
+            };
+            fetchFullTask();
+        }
+    }, [task?.id]);
 
 
     // Derived Access Control
