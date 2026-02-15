@@ -87,7 +87,7 @@ const mapTaskToFrontend = (backendTask) => {
         createdBy: backendTask.Account?.UserName,
         parentTaskId: backendTask.Parent_T_ID,
         subtasks: backendTask.Subtasks ? backendTask.Subtasks.map(mapTaskToFrontend) : [],
-        subtaskCount: backendTask.Subtasks?.length || 0,
+        subtaskCount: backendTask.Subtasks?.length || backendTask._count?.Subtasks || 0,
         completedSubtasks: backendTask.Subtasks?.filter(st => st.Status?.toLowerCase() === 'completed').length || 0,
         progress: backendTask.Progress || 0,
         Task_Member: backendTask.Task_Member || [], // Pass through for multi-member
@@ -118,6 +118,8 @@ export const taskService = {
             if (filters.projectId) params.projectId = filters.projectId;
             if (filters.assignedTo) params.assignedTo = filters.assignedTo;
             if (filters.status) params.status = filters.status;
+            if (filters.page) params.page = filters.page;
+            if (filters.limit) params.limit = filters.limit;
 
             // If we just have projectId as simple arg logic from before, support that too
             if (typeof filters === 'string') {
@@ -126,20 +128,16 @@ export const taskService = {
 
             const res = await taskApi.getAll(params);
 
-            console.log('DEBUG taskService.getAllTasks response:', res);
-            console.log('DEBUG res.data:', res.data);
-
-            // Backend wraps in { status: 200, data: actualData }
+            // Backend returns { status: 200, data: [...], pagination: {...} }
             const backendPayload = res.data?.data || res.data;
             const tasks = Array.isArray(backendPayload)
                 ? backendPayload.map(mapTaskToFrontend)
                 : [];
 
-            console.log('DEBUG tasks mapped:', tasks.length, 'tasks');
-
             return {
                 ok: true,
-                data: tasks
+                data: tasks,
+                pagination: res.data?.pagination || null
             };
         } catch (err) {
             console.error('taskService.getAllTasks error:', err);
