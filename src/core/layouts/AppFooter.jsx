@@ -1,5 +1,6 @@
 import { cn } from '@core/lib/utils'
 import { MapPin } from 'lucide-react'
+import { Link } from 'react-router-dom'
 
 export function AppFooter({ className }) {
   const version = '1.0.0'
@@ -37,8 +38,8 @@ export function AppFooter({ className }) {
 
           {/* CENTER */}
           <nav className="flex items-center gap-2">
-            <FooterLink href="/privacy">Privacy</FooterLink>
-            <FooterLink href="/terms">Terms</FooterLink>
+            <FooterLink href="/privacy">Bảo mật</FooterLink>
+            <FooterLink href="/terms">Điều khoản</FooterLink>
             <FooterLink href="/contact">Liên hệ</FooterLink>
           </nav>
 
@@ -106,12 +107,12 @@ export function AppFooter({ className }) {
 
 function FooterLink({ href, children }) {
   return (
-    <a
-      href={href}
+    <Link
+      to={href}
       className="px-4 py-2 rounded-full text-sm font-medium text-slate-300 bg-slate-800/50 border border-slate-700/50 hover:bg-blue-600 hover:text-white hover:border-blue-500 transition-all duration-200"
     >
       {children}
-    </a>
+    </Link>
   )
 }
 

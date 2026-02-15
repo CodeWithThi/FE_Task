@@ -11,6 +11,9 @@ import LoginPage from "@/pages/LoginPage";
 import ForgotPasswordPage from "@/pages/ForgotPasswordPage";
 import ResetPasswordPage from "@/pages/ResetPasswordPage";
 import NotFound from "@/pages/NotFound";
+import PrivacyPage from "@/pages/PrivacyPage";
+import TermsPage from "@/pages/TermsPage";
+import ContactPage from "@/pages/ContactPage";
 
 // Shared pages - lazy loaded
 const DashboardPage = lazy(() => import("@/pages/DashboardPage"));
@@ -55,6 +58,9 @@ export function AppRoutes() {
                 <Route path="/login" element={isAuthenticated ? <Navigate to={defaultRoute} /> : <LoginPage />} />
                 <Route path="/forgot-password" element={isAuthenticated ? <Navigate to={defaultRoute} /> : <ForgotPasswordPage />} />
                 <Route path="/reset-password" element={isAuthenticated ? <Navigate to={defaultRoute} /> : <ResetPasswordPage />} />
+                <Route path="/privacy" element={<PrivacyPage />} />
+                <Route path="/terms" element={<TermsPage />} />
+                <Route path="/contact" element={<ContactPage />} />
 
                 {/* Dashboard - Director, PMO, Admin */}
                 <Route path="/dashboard" element={
