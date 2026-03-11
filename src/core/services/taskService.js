@@ -101,7 +101,7 @@ const mapTaskToFrontend = (backendTask) => {
             user: {
                 id: c.Account?.M_ID,
                 name: c.Account?.UserName,
-                avatar: c.Account?.Avatar ? `http://localhost:3069${c.Account.Avatar}` : null
+                avatar: c.Account?.Avatar ? `${import.meta.env.VITE_API_BASE_URL || ''}${c.Account.Avatar}` : null
             }
         })) || []
     };
@@ -382,7 +382,7 @@ export const taskService = {
             formData.append('file', file);
 
             const response = await fetch(
-                (import.meta.env.VITE_API_URL || 'http://localhost:3069/api/v1') + '/upload/attachment',
+                (import.meta.env.VITE_API_URL || '/api/v1') + '/upload/attachment',
                 {
                     method: 'POST',
                     headers: {
@@ -424,7 +424,7 @@ export const taskService = {
                     user: {
                         id: item.Account?.M_ID,
                         name: item.Account?.UserName,
-                        avatar: item.Account?.Avatar ? `http://localhost:3069${item.Account.Avatar}` : null
+                        avatar: item.Account?.Avatar ? `${import.meta.env.VITE_API_BASE_URL || ''}${item.Account.Avatar}` : null
                     }
                 }
             };
@@ -450,7 +450,7 @@ export const taskService = {
                     user: {
                         id: item.Account?.M_ID,
                         name: item.Account?.UserName,
-                        avatar: item.Account?.Avatar ? `http://localhost:3069${item.Account.Avatar}` : null
+                        avatar: item.Account?.Avatar ? `${import.meta.env.VITE_API_BASE_URL || ''}${item.Account.Avatar}` : null
                     }
                 }
             };

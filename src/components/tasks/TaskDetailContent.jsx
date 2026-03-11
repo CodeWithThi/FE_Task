@@ -749,7 +749,7 @@ export function TaskDetailContent({ task, accounts = [], onTaskUpdate, onClose, 
                                                     toast.error(`Lỗi tải file "${file.name}": ${uploadRes.message}`);
                                                     continue;
                                                 }
-                                                const baseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3069';
+                                                const baseUrl = import.meta.env.VITE_API_BASE_URL || '';
                                                 const fullUrl = baseUrl + uploadRes.data.fileUrl;
                                                 const res = await taskService.addAttachment(task.id, {
                                                     fileName: uploadRes.data.fileName,

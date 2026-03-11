@@ -58,7 +58,7 @@ export const authService = {
                 status: rawUser.Status || rawUser.status || 'active',
                 lockReason: rawUser.LockReason || rawUser.lockReason || null,
                 m_id: rawUser.Member?.M_ID || rawUser.M_ID,
-                avatar: rawUser.Avatar ? `http://localhost:3069${rawUser.Avatar}` : null
+                avatar: rawUser.Avatar ? `${import.meta.env.VITE_API_BASE_URL || ''}${rawUser.Avatar}` : null
             };
 
             // Return formatted data for AuthContext
@@ -164,7 +164,7 @@ export const authService = {
                 status: rawUser.Status || rawUser.status || 'active',
                 lockReason: rawUser.LockReason || rawUser.lockReason || null,
                 m_id: rawUser.Member?.M_ID || rawUser.M_ID,
-                avatar: rawUser.Avatar ? `http://localhost:3069${rawUser.Avatar}` : null
+                avatar: rawUser.Avatar ? `${import.meta.env.VITE_API_BASE_URL || ''}${rawUser.Avatar}` : null
             };
 
             console.log('Final user object:', user);

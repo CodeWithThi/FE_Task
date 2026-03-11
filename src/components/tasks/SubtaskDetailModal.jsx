@@ -719,7 +719,7 @@ export function SubtaskDetailModal({ open, onOpenChange, task, accounts = [], on
                               continue;
                             }
 
-                            const baseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3069';
+                            const baseUrl = import.meta.env.VITE_API_BASE_URL || '';
                             const fullUrl = baseUrl + uploadRes.data.fileUrl;
                             const res = await taskService.addAttachment(task.id, {
                               fileName: uploadRes.data.fileName,
@@ -927,7 +927,7 @@ export function SubtaskDetailModal({ open, onOpenChange, task, accounts = [], on
                             // System log — Trello style: avatar + inline text + timestamp below
                             const l = item.data;
                             const actorName = l.Actor?.Member?.FullName || l.Actor?.UserName || 'Hệ thống';
-                            const actorAvatar = l.Actor?.Avatar ? `http://localhost:3069${l.Actor.Avatar}` : null;
+                            const actorAvatar = l.Actor?.Avatar ? `${import.meta.env.VITE_API_BASE_URL || ''}${l.Actor.Avatar}` : null;
                             return (
                               <div key={`log-${l.LogID}-${idx}`} className="flex gap-3 py-1.5">
                                 <Avatar className="w-8 h-8 flex-shrink-0 mt-0.5">
