@@ -33,7 +33,7 @@ export const authService = {
             let normalizedRole = (rawUser.Role?.R_Name || rawUser.roleName || '').toLowerCase();
 
             // Map backend roles to frontend roles (STRICT - 5 roles only)
-            if (normalizedRole === 'admin' || normalizedRole === 'administrator' || normalizedRole === 'system') {
+            if (normalizedRole === 'admin' || normalizedRole === 'administrator' || normalizedRole === 'system' || normalizedRole === 'system admin') {
                 normalizedRole = 'admin';
             } else if (normalizedRole === 'user' || normalizedRole === 'nhanvien' || normalizedRole === 'employee') {
                 normalizedRole = 'staff';
@@ -137,7 +137,7 @@ export const authService = {
             console.log('Normalized role (before mapping):', normalizedRole);
 
             // Map backend roles to frontend roles (STRICT - 5 roles only)
-            if (normalizedRole === 'admin' || normalizedRole === 'administrator' || normalizedRole === 'system') {
+            if (normalizedRole === 'admin' || normalizedRole === 'administrator' || normalizedRole === 'system' || normalizedRole === 'system admin') {
                 normalizedRole = 'admin';
             } else if (normalizedRole === 'user' || normalizedRole === 'nhanvien' || normalizedRole === 'employee') {
                 normalizedRole = 'staff';
