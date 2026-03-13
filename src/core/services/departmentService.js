@@ -13,7 +13,7 @@ export const departmentService = {
                     id: d.D_ID,
                     name: d.D_Name,
                     parentId: d.Parent_D_ID,
-                    status: d.Status === 'active' ? 'active' : 'inactive',
+                    status: (d.Status?.toLowerCase() === 'active' || !d.IsDeleted) ? 'active' : 'inactive',
                     memberCount: d._count?.Member || 0,
                     projectCount: d._count?.Project || 0
                 }));
