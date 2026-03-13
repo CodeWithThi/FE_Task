@@ -10,7 +10,7 @@ export default function MyOverviewPage() {
   const isLeader =
     (user?.roleName && user.roleName.toLowerCase().includes('leader')) ||
     (user?.role && (user.role.toLowerCase() === 'manager' || user.role.toLowerCase() === 'leader')) ||
-    user?.roleId === 'R_005'; // Hardcoded ID based on logs
+    user?.roleId === 'R_LEADER'; // Hardcoded ID based on logs
 
   if (isLeader) {
     return <LeaderDashboard />;

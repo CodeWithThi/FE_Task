@@ -21,20 +21,19 @@ import { ROLES } from '@core/config/permissions';
 
 // Role options for standard roles
 const roleOptions = [
-  { value: 'R_001', label: 'Quản trị hệ thống' },
-  { value: 'R_004', label: 'Ban giám đốc' },
-  { value: 'R_003', label: 'Ban quản lý (PMO)' },
-  { value: 'R_005', label: 'Trưởng nhóm' },
-  { value: 'R_006', label: 'Nhân viên' },
+  { value: 'R_ADMIN', label: 'Quản trị hệ thống' },
+  { value: 'R_DIRECTOR', label: 'Ban giám đốc' },
+  { value: 'R_PMO', label: 'Ban quản lý (PMO)' },
+  { value: 'R_LEADER', label: 'Trưởng nhóm' },
+  { value: 'R_STAFF', label: 'Nhân viên' },
 ];
 
 const roleLabels = {
-  R_001: 'Quản trị hệ thống',
-  R_002: 'Hệ thống', // Internal
-  R_004: 'Ban giám đốc',
-  R_003: 'Ban quản lý (PMO)',
-  R_005: 'Trưởng nhóm',
-  R_006: 'Nhân viên',
+  R_ADMIN: 'Quản trị hệ thống',
+  R_DIRECTOR: 'Ban giám đốc',
+  R_PMO: 'Ban quản lý (PMO)',
+  R_LEADER: 'Trưởng nhóm',
+  R_STAFF: 'Nhân viên',
   // Backward compatibility just in case
   admin: 'Quản trị hệ thống',
   director: 'Ban giám đốc',
