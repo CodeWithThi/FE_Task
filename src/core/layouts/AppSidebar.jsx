@@ -33,7 +33,7 @@ const menuItems = [
     label: 'Dự án',
     path: '/projects',
     roles: ['director', 'pmo', 'leader', 'staff'],
-    section: 'project',
+    section: 'management',
   },
   // Danh sách công việc
   {
@@ -41,7 +41,7 @@ const menuItems = [
     label: 'Công việc',
     path: '/tasks',
     roles: ['leader', 'staff', 'pmo', 'director'],
-    section: 'project',
+    section: 'management',
   },
   // Nhắc việc - PMO, Leader, Staff
   {
@@ -49,7 +49,7 @@ const menuItems = [
     label: 'Nhắc việc',
     path: '/reminders',
     roles: ['pmo', 'leader', 'staff'],
-    section: 'project',
+    section: 'management',
   },
   // Báo cáo - Director, PMO, Leader (không phải Staff)
   {
@@ -93,9 +93,8 @@ const menuItems = [
 
 const sectionLabels = {
   main: '',
-  project: 'Quản lý',
-  report: 'Báo cáo',
   management: 'Quản lý',
+  report: 'Báo cáo',
   system: 'Hệ thống',
 };
 
