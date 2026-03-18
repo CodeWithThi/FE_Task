@@ -9,22 +9,25 @@ import { cn } from '@core/lib/utils';
  * Quy tắc 3 lần nhấp chuột: Giúp user navigate về trang chính nhanh chóng.
  */
 
-// Mapping path segments to Vietnamese labels
+import { useEffect } from 'react';
+
+// Mapping path segments to English labels
 const pathLabels = {
-    dashboard: 'Tổng quan',
-    'my-overview': 'Tổng quan công việc',
-    projects: 'Dự án',
-    tasks: 'Công việc',
-    reminders: 'Nhắc việc',
-    reports: 'Báo cáo',
-    users: 'Nhân sự',
-    departments: 'Phòng ban',
-    logs: 'Nhật ký hệ thống',
-    settings: 'Cấu hình',
-    profile: 'Hồ sơ cá nhân',
-    'change-password': 'Đổi mật khẩu',
-    create: 'Tạo mới',
-    edit: 'Chỉnh sửa',
+    dashboard: 'Dashboard',
+    'my-overview': 'My Overview',
+    projects: 'Projects',
+    tasks: 'Tasks',
+    'tasks-board': 'Task Board',
+    reminders: 'Reminders',
+    reports: 'Reports',
+    users: 'Users',
+    departments: 'Departments',
+    logs: 'System Logs',
+    settings: 'Settings',
+    profile: 'User Profile',
+    'change-password': 'Change Password',
+    create: 'Create',
+    edit: 'Edit',
 };
 
 export function Breadcrumb({ className, customItems }) {
@@ -36,11 +39,31 @@ export function Breadcrumb({ className, customItems }) {
     // Build breadcrumb items from path
     const items = pathSegments.map((segment, index) => {
         const path = '/' + pathSegments.slice(0, index + 1).join('/');
-        const label = pathLabels[segment] || segment;
+        let label = pathLabels[segment];
+        
+        if (!label) {
+            // Check for raw IDs and format them natively in English
+            if (segment.startsWith('P_')) label = `Project ${segment}`;
+            else if (segment.startsWith('T_') || segment.startsWith('SUB_')) label = `Task ${segment}`;
+            else if (segment.startsWith('D_')) label = `Department ${segment}`;
+            else if (segment.startsWith('U_')) label = `User ${segment}`;
+            else label = segment.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+        }
+
         const isLast = index === pathSegments.length - 1;
 
         return { path, label, isLast };
     });
+
+    // Update Browser Tab Title to match the current page's breadcrumb
+    useEffect(() => {
+        if (items.length > 0) {
+            const currentItem = items[items.length - 1];
+            document.title = `${currentItem.label} | TaskEdu`;
+        } else {
+            document.title = 'TaskEdu Management';
+        }
+    }, [items, location.pathname]);
 
     // Don't render if we're at root or only one level deep
     if (items.length === 0) return null;
@@ -66,7 +89,7 @@ export function Breadcrumb({ className, customItems }) {
                         itemProp="item"
                     >
                         <Home className="w-4 h-4" />
-                        <span className="hidden sm:inline" itemProp="name">Trang chủ</span>
+                        <span className="hidden sm:inline" itemProp="name">Home</span>
                     </Link>
                     <meta itemProp="position" content="1" />
                 </li>
