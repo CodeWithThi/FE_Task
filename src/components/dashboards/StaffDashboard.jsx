@@ -18,9 +18,10 @@ export function StaffDashboard() {
   const [myTasks, setMyTasks] = useState([]);
   const [upcomingTasks, setUpcomingTasks] = useState([]);
   const [overdueTasks, setOverdueTasks] = useState([]);
+  const [completedTasks, setCompletedTasks] = useState([]);
 
   // Merge all tasks to find the selected one
-  const allTasks = [...myTasks, ...upcomingTasks, ...overdueTasks];
+  const allTasks = [...myTasks, ...upcomingTasks, ...overdueTasks, ...completedTasks];
   // Deduplicate by ID just in case they overlap (unlikely with current filter logic but safe)
   const taskMap = new Map();
   allTasks.forEach(t => taskMap.set(t.id, t));
@@ -46,25 +47,19 @@ export function StaffDashboard() {
         const inProgress = [];
         const upcoming = [];
         const overdue = [];
+        const completed = [];
 
         allTasks.forEach(t => {
           const deadline = t.deadline ? new Date(t.deadline) : null;
-          const isCompleted = t.status === 'completed';
+          const isCompleted = t.status === 'completed' || t.status === 'done';
 
-          // Overdue: Not completed AND deadline passed
-          if (deadline && deadline < now && !isCompleted) {
+          if (isCompleted) {
+            completed.push(t);
+          } else if (deadline && deadline < now) {
             overdue.push(t);
-          }
-
-          // Upcoming: Not completed AND deadline within 3 days AND not overdue
-          else if (deadline && deadline <= threeDaysFromNow && deadline >= now && !isCompleted) {
+          } else if (deadline && deadline <= threeDaysFromNow && deadline >= now) {
             upcoming.push(t);
-          }
-
-          // In Progress: status is in-progress (and maybe others?)
-          // Or just show everything assigned that is active? 
-          // Let's stick to status 'in-progress' as "Doing" list.
-          if (t.status === 'in-progress') {
+          } else if (t.status === 'in-progress' || t.status === 'todo') {
             inProgress.push(t);
           }
         });
@@ -72,6 +67,7 @@ export function StaffDashboard() {
         setMyTasks(inProgress);
         setUpcomingTasks(upcoming);
         setOverdueTasks(overdue);
+        setCompletedTasks(completed);
       }
     } catch (error) {
       console.error("Failed to fetch my tasks", error);
@@ -88,7 +84,7 @@ export function StaffDashboard() {
   };
 
   // Calculate total personal tasks (all tasks assigned to me)
-  const totalPersonalTasks = myTasks.length + upcomingTasks.length + overdueTasks.length;
+  const totalPersonalTasks = myTasks.length + upcomingTasks.length + overdueTasks.length + completedTasks.length;
 
   const TaskItem = ({ task }) => {
     const isOverdue = new Date(task.deadline) < new Date() && task.status !== 'completed';
@@ -139,41 +135,26 @@ export function StaffDashboard() {
       </div>
     </div>
 
-    {/* 4 KPI Cards */}
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-      {/* Card 1: Việc cá nhân */}
-      <div className="bg-gradient-to-br from-violet-50 to-purple-100/50 p-5 rounded-2xl border border-violet-200/60 shadow-sm flex items-center justify-between hover:shadow-md hover:scale-[1.02] transition-all cursor-pointer">
+    {/* KPI Cards Reordered */}
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+      {/* Priority 1: Trễ hạn (Đỏ) */}
+      <div className="bg-gradient-to-br from-red-50 to-rose-100/50 p-5 rounded-2xl border border-red-200/60 shadow-sm flex items-center justify-between hover:shadow-md hover:scale-[1.02] transition-all cursor-pointer">
         <div>
-          <p className="text-sm font-medium text-violet-600 uppercase tracking-wider">Việc cá nhân</p>
+          <p className="text-sm font-medium text-red-600 uppercase tracking-wider">Trễ hạn</p>
           <div className="flex items-baseline gap-2 mt-1">
-            <h3 className="text-3xl font-bold text-violet-700">{totalPersonalTasks}</h3>
-            <span className="text-xs text-violet-600 font-semibold bg-violet-100 px-2 py-0.5 rounded-full border border-violet-200">
-              Tổng cộng
-            </span>
+            <h3 className="text-3xl font-bold text-red-700">{overdueTasks.length}</h3>
+            {overdueTasks.length > 0 ?
+              <span className="text-xs text-red-600 font-semibold bg-red-100 px-2 py-0.5 rounded-full border border-red-200 animate-pulse">Cần xử lý</span> :
+              <span className="text-xs text-emerald-600 font-semibold bg-emerald-100 px-2 py-0.5 rounded-full border border-emerald-200">Tốt</span>
+            }
           </div>
         </div>
-        <div className="p-3 bg-gradient-to-br from-violet-500 to-purple-600 text-white rounded-xl shadow-lg shadow-violet-500/30">
-          <Kanban className="w-5 h-5" />
+        <div className="p-3 bg-gradient-to-br from-red-500 to-rose-600 text-white rounded-xl shadow-lg shadow-red-500/30">
+          <AlertTriangle className="w-5 h-5" />
         </div>
       </div>
 
-      {/* Card 2: Đang thực hiện */}
-      <div className="bg-gradient-to-br from-blue-50 to-indigo-100/50 p-5 rounded-2xl border border-blue-200/60 shadow-sm flex items-center justify-between hover:shadow-md hover:scale-[1.02] transition-all cursor-pointer">
-        <div>
-          <p className="text-sm font-medium text-blue-600 uppercase tracking-wider">Đang thực hiện</p>
-          <div className="flex items-baseline gap-2 mt-1">
-            <h3 className="text-3xl font-bold text-blue-700">{myTasks.length}</h3>
-            <span className="text-xs text-blue-600 font-semibold bg-blue-100 px-2 py-0.5 rounded-full border border-blue-200">
-              Hoạt động
-            </span>
-          </div>
-        </div>
-        <div className="p-3 bg-gradient-to-br from-blue-500 to-indigo-600 text-white rounded-xl shadow-lg shadow-blue-500/30">
-          <Clock className="w-5 h-5" />
-        </div>
-      </div>
-
-      {/* Card 3: Sắp đến hạn */}
+      {/* Priority 2: Sắp đến hạn (Cam) */}
       <div className="bg-gradient-to-br from-amber-50 to-orange-100/50 p-5 rounded-2xl border border-amber-200/60 shadow-sm flex items-center justify-between hover:shadow-md hover:scale-[1.02] transition-all cursor-pointer">
         <div>
           <p className="text-sm font-medium text-amber-600 uppercase tracking-wider">Sắp đến hạn</p>
@@ -190,20 +171,51 @@ export function StaffDashboard() {
         </div>
       </div>
 
-      {/* Card 4: Trễ hạn */}
-      <div className="bg-gradient-to-br from-red-50 to-rose-100/50 p-5 rounded-2xl border border-red-200/60 shadow-sm flex items-center justify-between hover:shadow-md hover:scale-[1.02] transition-all cursor-pointer">
+      {/* Priority 3: Đang thực hiện (Xanh dương) */}
+      <div className="bg-gradient-to-br from-blue-50 to-indigo-100/50 p-5 rounded-2xl border border-blue-200/60 shadow-sm flex items-center justify-between hover:shadow-md hover:scale-[1.02] transition-all cursor-pointer">
         <div>
-          <p className="text-sm font-medium text-red-600 uppercase tracking-wider">Trễ hạn</p>
+          <p className="text-sm font-medium text-blue-600 uppercase tracking-wider">Đang làm</p>
           <div className="flex items-baseline gap-2 mt-1">
-            <h3 className="text-3xl font-bold text-red-700">{overdueTasks.length}</h3>
-            {overdueTasks.length > 0 ?
-              <span className="text-xs text-red-600 font-semibold bg-red-100 px-2 py-0.5 rounded-full border border-red-200 animate-pulse">Cần xử lý</span> :
-              <span className="text-xs text-emerald-600 font-semibold bg-emerald-100 px-2 py-0.5 rounded-full border border-emerald-200">Tốt</span>
-            }
+            <h3 className="text-3xl font-bold text-blue-700">{myTasks.length}</h3>
+            <span className="text-xs text-blue-600 font-semibold bg-blue-100 px-2 py-0.5 rounded-full border border-blue-200">
+              Hoạt động
+            </span>
           </div>
         </div>
-        <div className="p-3 bg-gradient-to-br from-red-500 to-rose-600 text-white rounded-xl shadow-lg shadow-red-500/30">
-          <AlertTriangle className="w-5 h-5" />
+        <div className="p-3 bg-gradient-to-br from-blue-500 to-indigo-600 text-white rounded-xl shadow-lg shadow-blue-500/30">
+          <Clock className="w-5 h-5" />
+        </div>
+      </div>
+
+      {/* Priority 4: Hoàn thành (Xanh lá) */}
+      <div className="bg-gradient-to-br from-emerald-50 to-green-100/50 p-5 rounded-2xl border border-emerald-200/60 shadow-sm flex items-center justify-between hover:shadow-md hover:scale-[1.02] transition-all cursor-pointer">
+        <div>
+          <p className="text-sm font-medium text-emerald-600 uppercase tracking-wider">Hoàn thành</p>
+          <div className="flex items-baseline gap-2 mt-1">
+            <h3 className="text-3xl font-bold text-emerald-700">{completedTasks.length}</h3>
+            <span className="text-xs text-emerald-600 font-semibold bg-emerald-100 px-2 py-0.5 rounded-full border border-emerald-200">
+              Tuyệt vời
+            </span>
+          </div>
+        </div>
+        <div className="p-3 bg-gradient-to-br from-emerald-500 to-green-600 text-white rounded-xl shadow-lg shadow-emerald-500/30">
+          <CheckCircle2 className="w-5 h-5" />
+        </div>
+      </div>
+
+      {/* Priority 5: Việc cá nhân (Tổng) */}
+      <div className="bg-gradient-to-br from-violet-50 to-purple-100/50 p-5 rounded-2xl border border-violet-200/60 shadow-sm flex items-center justify-between hover:shadow-md hover:scale-[1.02] transition-all cursor-pointer">
+        <div>
+          <p className="text-sm font-medium text-violet-600 uppercase tracking-wider">Tổng cộng</p>
+          <div className="flex items-baseline gap-2 mt-1">
+            <h3 className="text-3xl font-bold text-violet-700">{totalPersonalTasks}</h3>
+            <span className="text-xs text-violet-600 font-semibold bg-violet-100 px-2 py-0.5 rounded-full border border-violet-200">
+              Việc cá nhân
+            </span>
+          </div>
+        </div>
+        <div className="p-3 bg-gradient-to-br from-violet-500 to-purple-600 text-white rounded-xl shadow-lg shadow-violet-500/30">
+          <Kanban className="w-5 h-5" />
         </div>
       </div>
     </div>
