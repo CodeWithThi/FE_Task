@@ -29,6 +29,7 @@ export const routePermissions = {
     '/projects/:id': [ROLES.PMO, ROLES.ADMIN, ROLES.DIRECTOR, ROLES.LEADER, ROLES.STAFF],
     '/projects/:id/workspace': [ROLES.PMO, ROLES.LEADER, ROLES.ADMIN, ROLES.DIRECTOR, ROLES.STAFF],
     '/projects/:id/board': [ROLES.LEADER, ROLES.STAFF, ROLES.PMO, ROLES.DIRECTOR],
+    '/board': [ROLES.LEADER, ROLES.STAFF, ROLES.PMO, ROLES.DIRECTOR],
 
     // Task management
     '/tasks': [ROLES.ADMIN, ROLES.PMO, ROLES.DIRECTOR, ROLES.LEADER, ROLES.STAFF],

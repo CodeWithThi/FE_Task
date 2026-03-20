@@ -128,7 +128,7 @@ export function StaffDashboard() {
         <div className="text-sm font-medium text-gray-500 bg-white px-4 py-2 rounded-lg border shadow-sm">
           {new Date().toLocaleDateString('vi-VN', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
         </div>
-        <Button onClick={() => navigate('/tasks')} className="bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 shadow-lg shadow-indigo-500/25">
+        <Button onClick={() => navigate('/board')} className="bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 shadow-lg shadow-indigo-500/25">
           <Kanban className="w-4 h-4 mr-2" />
           Vào bảng công việc
         </Button>

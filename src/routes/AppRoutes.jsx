@@ -104,6 +104,13 @@ export function AppRoutes() {
                     </ProtectedRoute>
                 } />
 
+                {/* Standalone Task Board (Kanban) */}
+                <Route path="/board" element={
+                    <ProtectedRoute allowedRoles={routePermissions['/board']}>
+                        <TaskBoardPage />
+                    </ProtectedRoute>
+                } />
+
                 {/* Tasks */}
                 <Route path="/tasks" element={
                     <ProtectedRoute allowedRoles={routePermissions['/tasks']}>
