@@ -4,88 +4,84 @@ import { useAuth } from '@core/contexts/AuthContext';
 import { cn } from '@core/lib/utils';
 import { LayoutDashboard, FolderKanban, Kanban, Bell, BarChart3, Users, Building2, Settings, ChevronLeft, ChevronRight, FileText, GraduationCap, X, } from 'lucide-react';
 
-// Menu theo role:
-// - Director: Tổng quan (chỉ xem)
-// - PMO: Dự án (Workspace)
-// - Leader/Staff: Tổng quan công việc → Bảng công việc
-// - Admin: Quản lý hệ thống
+// Menu items organized by role and section
 const menuItems = [
-  // Tổng quan - Director, PMO, Admin
+  // Dashboard - Director, PMO, Admin
   {
     icon: LayoutDashboard,
-    label: 'Tổng quan',
+    label: 'Dashboard',
     path: '/dashboard',
     roles: ['admin', 'director', 'pmo'],
     section: 'main',
   },
-  // Tổng quan công việc của tôi - Leader/Staff
+  // Workload - Leader/Staff personal overview
   {
     icon: LayoutDashboard,
-    label: 'Tổng quan',
-    path: '/my-overview',
+    label: 'Workload',
+    path: '/workload',
     roles: ['leader', 'staff'],
     section: 'main',
   },
 
-  // Dự án - Director, PMO (không phải Leader/Staff)
+  // Projects
   {
     icon: FolderKanban,
-    label: 'Dự án',
+    label: 'Projects',
     path: '/projects',
     roles: ['director', 'pmo', 'leader', 'staff'],
     section: 'management',
   },
-  // Danh sách công việc
+  // Tasks
   {
     icon: Kanban,
-    label: 'Công việc',
+    label: 'Tasks',
     path: '/tasks',
     roles: ['leader', 'staff', 'pmo', 'director'],
     section: 'management',
   },
-  // Nhắc việc - PMO, Leader, Staff
+  // Reminders
   {
     icon: Bell,
-    label: 'Nhắc việc',
+    label: 'Reminders',
     path: '/reminders',
     roles: ['pmo', 'leader', 'staff'],
     section: 'management',
   },
-  // Báo cáo - Director, PMO, Leader (không phải Staff)
+  // Reports
   {
     icon: BarChart3,
-    label: 'Báo cáo',
+    label: 'Reports',
     path: '/reports',
     roles: ['director', 'pmo', 'leader'],
     section: 'report',
   },
-  // Quản lý nhân sự - Admin và PMO
+  // Members
   {
     icon: Users,
-    label: 'Nhân sự',
-    path: '/users',
+    label: 'Members',
+    path: '/members',
     roles: ['admin', 'pmo'],
     section: 'management',
   },
   {
     icon: Building2,
-    label: 'Phòng ban',
+    label: 'Departments',
     path: '/departments',
     roles: ['admin', 'pmo'],
     section: 'management',
   },
-  // Hệ thống - Chỉ Admin
+  // System - Admin only
   {
     icon: FileText,
-    label: 'Nhật ký hệ thống',
-    path: '/logs',
+    label: 'System Logs',
+    path: '/system/logs',
     roles: ['admin'],
     section: 'system',
   },
   {
     icon: Settings,
-    label: 'Cấu hình',
-    path: '/settings',
+    label: 'Settings',
+    path: '/system/settings',
     roles: ['admin'],
     section: 'system',
   },
@@ -93,9 +89,9 @@ const menuItems = [
 
 const sectionLabels = {
   main: '',
-  management: 'Quản lý',
-  report: 'Báo cáo',
-  system: 'Hệ thống',
+  management: 'Management',
+  report: 'Reports',
+  system: 'System',
 };
 
 export function AppSidebar({ collapsed, setCollapsed, isMobile = false, mobileOpen = false, setMobileOpen }) {
@@ -138,7 +134,7 @@ export function AppSidebar({ collapsed, setCollapsed, isMobile = false, mobileOp
             <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-blue-600 to-indigo-700 flex items-center justify-center transition-transform duration-200 hover:scale-105 shadow-lg shadow-blue-900/40">
               <GraduationCap className="w-5 h-5 text-white" />
             </div>
-            <span className="text-white font-bold tracking-tight text-lg">Trung Tâm</span>
+            <span className="text-white font-bold tracking-tight text-lg">TaskEdu</span>
           </div>
         ) : (
           <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-blue-600 to-indigo-700 flex items-center justify-center mx-auto transition-transform duration-200 hover:scale-105 shadow-lg shadow-blue-900/40">
@@ -151,7 +147,7 @@ export function AppSidebar({ collapsed, setCollapsed, isMobile = false, mobileOp
           <button
             onClick={() => setMobileOpen(false)}
             className="p-1.5 rounded-lg hover:bg-[#162235] text-slate-400 hover:text-white transition-all duration-200"
-            title="Đóng menu"
+            title="Close menu"
           >
             <X size={18} />
           </button>
@@ -162,7 +158,7 @@ export function AppSidebar({ collapsed, setCollapsed, isMobile = false, mobileOp
               'p-1.5 rounded-lg hover:bg-[#162235] text-slate-400 hover:text-white transition-all duration-200 hover:scale-105',
               collapsed && 'absolute right-1 top-1/2 -translate-y-1/2'
             )}
-            title={collapsed ? 'Mở rộng' : 'Thu gọn'}
+            title={collapsed ? 'Expand' : 'Collapse'}
           >
             {collapsed ? <ChevronRight size={18} /> : <ChevronLeft size={18} />}
           </button>
@@ -204,4 +200,3 @@ export function AppSidebar({ collapsed, setCollapsed, isMobile = false, mobileOp
     </aside>
   );
 }
-

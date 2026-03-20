@@ -128,7 +128,7 @@ export function StaffDashboard() {
         <div className="text-sm font-medium text-gray-500 bg-white px-4 py-2 rounded-lg border shadow-sm">
           {new Date().toLocaleDateString('vi-VN', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
         </div>
-        <Button onClick={() => navigate('/tasks-board')} className="bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 shadow-lg shadow-indigo-500/25">
+        <Button onClick={() => navigate('/tasks')} className="bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 shadow-lg shadow-indigo-500/25">
           <Kanban className="w-4 h-4 mr-2" />
           Vào bảng công việc
         </Button>
@@ -255,7 +255,7 @@ export function StaffDashboard() {
             <Clock className="w-5 h-5" />
             Đang thực hiện
           </h3>
-          <Button variant="ghost" size="sm" onClick={() => navigate('/tasks-board')} className="text-blue-600 hover:text-blue-700 hover:bg-blue-50 h-8 text-sm">
+          <Button variant="ghost" size="sm" onClick={() => navigate('/tasks')} className="text-blue-600 hover:text-blue-700 hover:bg-blue-50 h-8 text-sm">
             Xem tất cả
             <ArrowRight className="w-4 h-4 ml-1" />
           </Button>

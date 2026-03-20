@@ -132,7 +132,7 @@ export default function WorkspacePage() {
             </Button>
           )}
           {permissions?.canCreateMainTask && (
-            <Button className="gap-2" onClick={() => navigate('/tasks-board')}>
+            <Button className="gap-2" onClick={() => navigate(`/projects/${id}/board`)}>
               <Plus className="w-4 h-4" />
               Thêm Main Task
             </Button>

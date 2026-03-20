@@ -312,7 +312,7 @@ export default function TaskDetailPage() {
             <CardHeader className="flex flex-row items-center justify-between">
               <CardTitle className="text-base">Việc nhỏ ({task.subtasks?.length || 0})</CardTitle>
               <div className="flex gap-2">
-                <Button variant="outline" size="sm" onClick={() => navigate(`/tasks-board?projectId=${task.projectId}`)}>
+                <Button variant="outline" size="sm" onClick={() => navigate(`/projects/${task.projectId}/board`)}>
                   <ListTodo className="w-4 h-4 mr-2" /> Bảng công việc
                 </Button>
                 {permissions?.canCreateSubtask && (

@@ -194,14 +194,14 @@ export function AppHeader({ isMobile = false, onMenuClick }) {
             <DropdownMenuSeparator />
             <DropdownMenuItem
               className="cursor-pointer hover:bg-muted/50 transition-colors"
-              onClick={() => navigate('/profile')}
+              onClick={() => navigate(`/members/${user?.username || 'me'}`)}
             >
               <User className="w-4 h-4 mr-2" />
               Hồ sơ cá nhân
             </DropdownMenuItem>
             <DropdownMenuItem
               className="cursor-pointer hover:bg-muted/50 transition-colors"
-              onClick={() => navigate('/change-password')}
+              onClick={() => navigate('/account/changePassword')}
             >
               <Lock className="w-4 h-4 mr-2" />
               Đổi mật khẩu

@@ -56,8 +56,8 @@ export function AppRoutes() {
                 {/* Public Routes */}
                 <Route path="/" element={isAuthenticated ? <Navigate to={defaultRoute} /> : <HomePage />} />
                 <Route path="/login" element={isAuthenticated ? <Navigate to={defaultRoute} /> : <LoginPage />} />
-                <Route path="/forgot-password" element={isAuthenticated ? <Navigate to={defaultRoute} /> : <ForgotPasswordPage />} />
-                <Route path="/reset-password" element={isAuthenticated ? <Navigate to={defaultRoute} /> : <ResetPasswordPage />} />
+                <Route path="/forgotPassword" element={isAuthenticated ? <Navigate to={defaultRoute} /> : <ForgotPasswordPage />} />
+                <Route path="/resetPassword" element={isAuthenticated ? <Navigate to={defaultRoute} /> : <ResetPasswordPage />} />
                 <Route path="/privacy" element={<PrivacyPage />} />
                 <Route path="/terms" element={<TermsPage />} />
                 <Route path="/contact" element={<ContactPage />} />
@@ -69,33 +69,42 @@ export function AppRoutes() {
                     </ProtectedRoute>
                 } />
 
-                {/* Tổng quan công việc của tôi - Leader/Staff */}
-                <Route path="/my-overview" element={
-                    <ProtectedRoute allowedRoles={['leader', 'staff']}>
+                {/* Workload - Personal task overview for Leader/Staff */}
+                <Route path="/workload" element={
+                    <ProtectedRoute allowedRoles={routePermissions['/workload']}>
                         <MyOverviewPage />
                     </ProtectedRoute>
                 } />
 
-                {/* Dự án - Director, PMO */}
+                {/* Projects */}
                 <Route path="/projects" element={
                     <ProtectedRoute allowedRoles={routePermissions['/projects']}>
                         <ProjectListPage />
                     </ProtectedRoute>
                 } />
 
-                {/* Project Detail / Workspace */}
+                {/* Project Detail */}
                 <Route path="/projects/:id" element={
                     <ProtectedRoute allowedRoles={routePermissions['/projects/:id']}>
                         <ProjectDetailPage />
                     </ProtectedRoute>
                 } />
-                <Route path="/workspace/:id" element={
-                    <ProtectedRoute allowedRoles={routePermissions['/workspace/:id']}>
+
+                {/* Project Workspace */}
+                <Route path="/projects/:id/workspace" element={
+                    <ProtectedRoute allowedRoles={routePermissions['/projects/:id/workspace']}>
                         <WorkspacePage />
                     </ProtectedRoute>
                 } />
 
-                {/* Công việc - All Authenticated Users */}
+                {/* Project Task Board (Kanban) */}
+                <Route path="/projects/:id/board" element={
+                    <ProtectedRoute allowedRoles={routePermissions['/projects/:id/board']}>
+                        <TaskBoardPage />
+                    </ProtectedRoute>
+                } />
+
+                {/* Tasks */}
                 <Route path="/tasks" element={
                     <ProtectedRoute allowedRoles={routePermissions['/tasks']}>
                         <TaskListPage />
@@ -107,59 +116,54 @@ export function AppRoutes() {
                     </ProtectedRoute>
                 } />
 
-                {/* Leader/Staff: Bảng công việc (Board View) */}
-                <Route path="/tasks-board" element={
-                    <ProtectedRoute allowedRoles={routePermissions['/tasks-board']}>
-                        <TaskBoardPage />
-                    </ProtectedRoute>
-                } />
-
+                {/* Reminders */}
                 <Route path="/reminders" element={
                     <ProtectedRoute allowedRoles={routePermissions['/reminders']}>
                         <RemindersPage />
                     </ProtectedRoute>
                 } />
 
+                {/* Reports */}
                 <Route path="/reports" element={
                     <ProtectedRoute allowedRoles={routePermissions['/reports']}>
                         <ReportsPage />
                     </ProtectedRoute>
                 } />
 
-                {/* ADMIN ONLY - These will only be loaded if user is admin */}
-                <Route path="/users" element={
-                    <ProtectedRoute allowedRoles={routePermissions['/users']}>
+                {/* Members */}
+                <Route path="/members" element={
+                    <ProtectedRoute allowedRoles={routePermissions['/members']}>
                         <UsersPage />
                     </ProtectedRoute>
                 } />
 
+                {/* Departments */}
                 <Route path="/departments" element={
                     <ProtectedRoute allowedRoles={routePermissions['/departments']}>
                         <DepartmentsPage />
                     </ProtectedRoute>
                 } />
 
-                <Route path="/settings" element={
-                    <ProtectedRoute allowedRoles={routePermissions['/settings']}>
+                {/* System - Admin only */}
+                <Route path="/system/settings" element={
+                    <ProtectedRoute allowedRoles={routePermissions['/system/settings']}>
                         <SettingsPage />
                     </ProtectedRoute>
                 } />
 
-                <Route path="/logs" element={
-                    <ProtectedRoute allowedRoles={routePermissions['/logs']}>
+                <Route path="/system/logs" element={
+                    <ProtectedRoute allowedRoles={routePermissions['/system/logs']}>
                         <LogsPage />
                     </ProtectedRoute>
                 } />
 
-
-
-                {/* Profile routes - accessible by all authenticated users */}
-                <Route path="/profile" element={
+                {/* Account - accessible by all authenticated users */}
+                <Route path="/members/:username" element={
                     <ProtectedRoute>
                         <ProfilePage />
                     </ProtectedRoute>
                 } />
-                <Route path="/change-password" element={
+                <Route path="/account/changePassword" element={
                     <ProtectedRoute>
                         <ChangePasswordPage />
                     </ProtectedRoute>
@@ -170,4 +174,3 @@ export function AppRoutes() {
         </Suspense>
     );
 }
-

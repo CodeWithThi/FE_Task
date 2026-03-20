@@ -1,31 +1,32 @@
 import { Link, useLocation } from 'react-router-dom';
 import { ChevronRight, Home } from 'lucide-react';
 import { cn } from '@core/lib/utils';
+import { useEffect } from 'react';
 
 /**
- * Breadcrumb - Navigation component giúp người dùng hiểu vị trí hiện tại
- * trong cấu trúc website. Hỗ trợ SEO với Schema.org markup.
- * 
- * Quy tắc 3 lần nhấp chuột: Giúp user navigate về trang chính nhanh chóng.
+ * Breadcrumb - Navigation component with Schema.org markup.
+ * Maps URL segments to professional English labels.
  */
-
-import { useEffect } from 'react';
 
 // Mapping path segments to English labels
 const pathLabels = {
     dashboard: 'Dashboard',
-    'my-overview': 'My Overview',
+    workload: 'Workload',
     projects: 'Projects',
+    workspace: 'Workspace',
+    board: 'Task Board',
     tasks: 'Tasks',
-    'tasks-board': 'Task Board',
     reminders: 'Reminders',
     reports: 'Reports',
-    users: 'Users',
+    members: 'Members',
     departments: 'Departments',
+    system: 'System',
     logs: 'System Logs',
     settings: 'Settings',
-    profile: 'User Profile',
-    'change-password': 'Change Password',
+    account: 'Account',
+    changePassword: 'Change Password',
+    forgotPassword: 'Forgot Password',
+    resetPassword: 'Reset Password',
     create: 'Create',
     edit: 'Edit',
 };
@@ -40,14 +41,20 @@ export function Breadcrumb({ className, customItems }) {
     const items = pathSegments.map((segment, index) => {
         const path = '/' + pathSegments.slice(0, index + 1).join('/');
         let label = pathLabels[segment];
-        
+
         if (!label) {
-            // Check for raw IDs and format them natively in English
+            // Format dynamic segments (IDs or slugs) into readable labels
             if (segment.startsWith('P_')) label = `Project ${segment}`;
             else if (segment.startsWith('T_') || segment.startsWith('SUB_')) label = `Task ${segment}`;
             else if (segment.startsWith('D_')) label = `Department ${segment}`;
             else if (segment.startsWith('U_')) label = `User ${segment}`;
-            else label = segment.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+            else {
+                // Convert camelCase or plain text to Title Case
+                label = segment
+                    .replace(/([A-Z])/g, ' $1') // split camelCase
+                    .replace(/^./, s => s.toUpperCase()) // capitalize first letter
+                    .trim();
+            }
         }
 
         const isLast = index === pathSegments.length - 1;
@@ -55,7 +62,7 @@ export function Breadcrumb({ className, customItems }) {
         return { path, label, isLast };
     });
 
-    // Update Browser Tab Title to match the current page's breadcrumb
+    // Update Browser Tab Title
     useEffect(() => {
         if (items.length > 0) {
             const currentItem = items[items.length - 1];
@@ -65,7 +72,7 @@ export function Breadcrumb({ className, customItems }) {
         }
     }, [items, location.pathname]);
 
-    // Don't render if we're at root or only one level deep
+    // Don't render if we're at root
     if (items.length === 0) return null;
 
     return (

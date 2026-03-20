@@ -20,34 +20,35 @@ export const ROLES = {
  * - STAFF: Work on assigned tasks, update progress, view personal tasks
  */
 export const routePermissions = {
-    // Admin routes (System Admin only)
-    '/users': [ROLES.ADMIN, ROLES.PMO],
-    '/departments': [ROLES.ADMIN, ROLES.PMO],
-    '/settings': [ROLES.ADMIN],
-    '/logs': [ROLES.ADMIN],
-
     // Dashboard routes
     '/dashboard': [ROLES.DIRECTOR, ROLES.PMO, ROLES.ADMIN],
+    '/workload': [ROLES.LEADER, ROLES.STAFF, ROLES.PMO],
 
-    // Project management (PMO only can create/manage, Director can view, Leader/Staff view assigned)
+    // Project management
     '/projects': [ROLES.PMO, ROLES.ADMIN, ROLES.DIRECTOR, ROLES.LEADER, ROLES.STAFF],
     '/projects/:id': [ROLES.PMO, ROLES.ADMIN, ROLES.DIRECTOR, ROLES.LEADER, ROLES.STAFF],
-    '/workspace/:id': [ROLES.PMO, ROLES.LEADER, ROLES.ADMIN, ROLES.DIRECTOR, ROLES.STAFF],
+    '/projects/:id/workspace': [ROLES.PMO, ROLES.LEADER, ROLES.ADMIN, ROLES.DIRECTOR, ROLES.STAFF],
+    '/projects/:id/board': [ROLES.LEADER, ROLES.STAFF, ROLES.PMO, ROLES.DIRECTOR],
 
     // Task management
     '/tasks': [ROLES.ADMIN, ROLES.PMO, ROLES.DIRECTOR, ROLES.LEADER, ROLES.STAFF],
     '/tasks/:id': [ROLES.ADMIN, ROLES.PMO, ROLES.DIRECTOR, ROLES.LEADER, ROLES.STAFF],
-    '/my-overview': [ROLES.LEADER, ROLES.STAFF, ROLES.PMO],
-    '/tasks-board': [ROLES.LEADER, ROLES.STAFF, ROLES.PMO, ROLES.DIRECTOR],
-    '/task/:id': [ROLES.PMO, ROLES.LEADER, ROLES.STAFF, ROLES.DIRECTOR],
+
+    // Members & Organization
+    '/members': [ROLES.ADMIN, ROLES.PMO],
+    '/members/:username': [ROLES.ADMIN, ROLES.DIRECTOR, ROLES.PMO, ROLES.LEADER, ROLES.STAFF],
+    '/departments': [ROLES.ADMIN, ROLES.PMO],
 
     // Features
     '/reminders': [ROLES.ADMIN, ROLES.PMO, ROLES.LEADER, ROLES.STAFF],
     '/reports': [ROLES.DIRECTOR, ROLES.PMO, ROLES.ADMIN, ROLES.LEADER],
 
-    // System
-    '/profile': [ROLES.ADMIN, ROLES.DIRECTOR, ROLES.PMO, ROLES.LEADER, ROLES.STAFF],
-    '/change-password': [ROLES.ADMIN, ROLES.DIRECTOR, ROLES.PMO, ROLES.LEADER, ROLES.STAFF],
+    // System (Admin only)
+    '/system/settings': [ROLES.ADMIN],
+    '/system/logs': [ROLES.ADMIN],
+
+    // Account
+    '/account/changePassword': [ROLES.ADMIN, ROLES.DIRECTOR, ROLES.PMO, ROLES.LEADER, ROLES.STAFF],
 };
 
 /**
@@ -58,13 +59,13 @@ export function getDefaultRouteForRole(role) {
 
     switch (normalizedRole) {
         case ROLES.ADMIN:
-            return '/users'; // Admin goes to user management
+            return '/members'; // Admin goes to member management
         case ROLES.DIRECTOR:
         case ROLES.PMO:
             return '/dashboard'; // Director and PMO go to dashboard
         case ROLES.LEADER:
         case ROLES.STAFF:
-            return '/my-overview'; // Leader and Staff go to their tasks
+            return '/workload'; // Leader and Staff go to their workload
         default:
             return '/dashboard';
     }
@@ -89,7 +90,7 @@ export function hasPermission(route, userRole) {
         return routePermissions[route].includes(normalizedRole);
     }
 
-    // Check dynamic routes (e.g., /workspace/:id)
+    // Check dynamic routes (e.g., /projects/:id/workspace)
     for (const [permRoute, allowedRoles] of Object.entries(routePermissions)) {
         if (permRoute.includes(':')) {
             const pattern = new RegExp('^' + permRoute.replace(/:[^/]+/g, '[^/]+') + '$');
@@ -188,4 +189,3 @@ export default {
     canPerformAction,
     getDashboardComponentForRole,
 };
-

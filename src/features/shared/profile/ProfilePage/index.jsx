@@ -519,7 +519,7 @@ export default function ProfilePage() {
                 </div>
                 {!isLocked ? (
                   <Button asChild>
-                    <Link to="/change-password">
+                    <Link to="/account/changePassword">
                       <Lock className="w-4 h-4 mr-2" />
                       Đổi mật khẩu
                     </Link>

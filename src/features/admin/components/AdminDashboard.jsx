@@ -8,9 +8,9 @@ import { Users, Building2, Settings, Shield, Activity, Database, ArrowRight, } f
 import { dashboardService } from '@core/services/dashboardService';
 
 const quickActions = [
-  { icon: Users, label: 'Quản lý người dùng', path: '/users', color: 'text-primary' },
-  { icon: Building2, label: 'Quản lý phòng ban', path: '/departments', color: 'text-status-completed' },
-  { icon: Settings, label: 'Cấu hình hệ thống', path: '/settings', color: 'text-status-pending' },
+  { icon: Users, label: 'Manage Members', path: '/members', color: 'text-primary' },
+  { icon: Building2, label: 'Manage Departments', path: '/departments', color: 'text-status-completed' },
+  { icon: Settings, label: 'System Settings', path: '/system/settings', color: 'text-status-pending' },
 ];
 
 // Mock logs for now (or TODO: Fetch from API)
@@ -60,7 +60,7 @@ export function AdminDashboard() {
         value={stats.totalUsers}
         icon={Users}
         variant="primary"
-        onClick={() => navigate('/users')}
+        onClick={() => navigate('/members')}
       />
       <StatCard
         title="Phòng ban"
@@ -74,14 +74,14 @@ export function AdminDashboard() {
         value={stats.activeUsers}
         icon={Activity}
         variant="success"
-        onClick={() => navigate('/logs')}
+        onClick={() => navigate('/system/logs')}
       />
       <StatCard
         title="Cấu hình hệ thống"
         value="Cấu hình"
         icon={Settings}
         variant="warning"
-        onClick={() => navigate('/settings')}
+        onClick={() => navigate('/system/settings')}
       />
     </div>
 
@@ -108,7 +108,7 @@ export function AdminDashboard() {
             <Activity className="w-5 h-5 text-primary" />
             Nhật ký hoạt động gần đây
           </CardTitle>
-          <Button variant="ghost" size="sm" className="text-primary" onClick={() => navigate('/logs')}>
+          <Button variant="ghost" size="sm" className="text-primary" onClick={() => navigate('/system/logs')}>
             Xem tất cả <ArrowRight className="w-4 h-4 ml-1" />
           </Button>
         </CardHeader>
