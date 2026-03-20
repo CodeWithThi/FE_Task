@@ -8,9 +8,9 @@ import { Users, Building2, Settings, Shield, Activity, Database, ArrowRight, } f
 import { dashboardService } from '@core/services/dashboardService';
 
 const quickActions = [
-  { icon: Users, label: 'Manage Members', path: '/members', color: 'text-primary' },
-  { icon: Building2, label: 'Manage Departments', path: '/departments', color: 'text-status-completed' },
-  { icon: Settings, label: 'System Settings', path: '/system/settings', color: 'text-status-pending' },
+  { icon: Users, label: 'Quản lý người dùng', path: '/members', color: 'text-primary' },
+  { icon: Building2, label: 'Quản lý phòng ban', path: '/departments', color: 'text-status-completed' },
+  { icon: Settings, label: 'Cấu hình hệ thống', path: '/system/settings', color: 'text-status-pending' },
 ];
 
 // Mock logs for now (or TODO: Fetch from API)

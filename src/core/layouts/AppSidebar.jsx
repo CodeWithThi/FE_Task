@@ -9,7 +9,7 @@ const menuItems = [
   // Dashboard - Director, PMO, Admin
   {
     icon: LayoutDashboard,
-    label: 'Dashboard',
+    label: 'Tổng quan',
     path: '/dashboard',
     roles: ['admin', 'director', 'pmo'],
     section: 'main',
@@ -17,7 +17,7 @@ const menuItems = [
   // Workload - Leader/Staff personal overview
   {
     icon: LayoutDashboard,
-    label: 'Workload',
+    label: 'Tổng quan công việc',
     path: '/workload',
     roles: ['leader', 'staff'],
     section: 'main',
@@ -26,7 +26,7 @@ const menuItems = [
   // Projects
   {
     icon: FolderKanban,
-    label: 'Projects',
+    label: 'Dự án',
     path: '/projects',
     roles: ['director', 'pmo', 'leader', 'staff'],
     section: 'management',
@@ -34,7 +34,7 @@ const menuItems = [
   // Tasks
   {
     icon: Kanban,
-    label: 'Tasks',
+    label: 'Công việc',
     path: '/tasks',
     roles: ['leader', 'staff', 'pmo', 'director'],
     section: 'management',
@@ -42,7 +42,7 @@ const menuItems = [
   // Reminders
   {
     icon: Bell,
-    label: 'Reminders',
+    label: 'Nhắc việc',
     path: '/reminders',
     roles: ['pmo', 'leader', 'staff'],
     section: 'management',
@@ -50,7 +50,7 @@ const menuItems = [
   // Reports
   {
     icon: BarChart3,
-    label: 'Reports',
+    label: 'Báo cáo',
     path: '/reports',
     roles: ['director', 'pmo', 'leader'],
     section: 'report',
@@ -58,14 +58,14 @@ const menuItems = [
   // Members
   {
     icon: Users,
-    label: 'Members',
+    label: 'Người dùng',
     path: '/members',
     roles: ['admin', 'pmo'],
     section: 'management',
   },
   {
     icon: Building2,
-    label: 'Departments',
+    label: 'Phòng ban',
     path: '/departments',
     roles: ['admin', 'pmo'],
     section: 'management',
@@ -73,14 +73,14 @@ const menuItems = [
   // System - Admin only
   {
     icon: FileText,
-    label: 'System Logs',
+    label: 'Nhật ký hệ thống',
     path: '/system/logs',
     roles: ['admin'],
     section: 'system',
   },
   {
     icon: Settings,
-    label: 'Settings',
+    label: 'Cài đặt',
     path: '/system/settings',
     roles: ['admin'],
     section: 'system',
@@ -89,9 +89,9 @@ const menuItems = [
 
 const sectionLabels = {
   main: '',
-  management: 'Management',
-  report: 'Reports',
-  system: 'System',
+  management: 'Quản lý',
+  report: 'Báo cáo',
+  system: 'Hệ thống',
 };
 
 export function AppSidebar({ collapsed, setCollapsed, isMobile = false, mobileOpen = false, setMobileOpen }) {

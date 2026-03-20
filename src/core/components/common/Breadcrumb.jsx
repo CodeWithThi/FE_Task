@@ -10,25 +10,25 @@ import { useEffect } from 'react';
 
 // Mapping path segments to English labels
 const pathLabels = {
-    dashboard: 'Dashboard',
-    workload: 'Workload',
-    projects: 'Projects',
-    workspace: 'Workspace',
-    board: 'Task Board',
-    tasks: 'Tasks',
-    reminders: 'Reminders',
-    reports: 'Reports',
-    members: 'Members',
-    departments: 'Departments',
-    system: 'System',
-    logs: 'System Logs',
-    settings: 'Settings',
-    account: 'Account',
-    changePassword: 'Change Password',
-    forgotPassword: 'Forgot Password',
-    resetPassword: 'Reset Password',
-    create: 'Create',
-    edit: 'Edit',
+    dashboard: 'Tổng quan',
+    workload: 'Tổng quan công việc',
+    projects: 'Dự án',
+    workspace: 'Không gian làm việc',
+    board: 'Bảng công việc',
+    tasks: 'Công việc',
+    reminders: 'Nhắc việc',
+    reports: 'Báo cáo',
+    members: 'Người dùng',
+    departments: 'Phòng ban',
+    system: 'Hệ thống',
+    logs: 'Nhật ký hệ thống',
+    settings: 'Cài đặt',
+    account: 'Tài khoản',
+    changePassword: 'Đổi mật khẩu',
+    forgotPassword: 'Quên mật khẩu',
+    resetPassword: 'Đặt lại mật khẩu',
+    create: 'Tạo mới',
+    edit: 'Chỉnh sửa',
 };
 
 export function Breadcrumb({ className, customItems }) {
@@ -96,7 +96,7 @@ export function Breadcrumb({ className, customItems }) {
                         itemProp="item"
                     >
                         <Home className="w-4 h-4" />
-                        <span className="hidden sm:inline" itemProp="name">Home</span>
+                        <span className="hidden sm:inline" itemProp="name">Trang chủ</span>
                     </Link>
                     <meta itemProp="position" content="1" />
                 </li>

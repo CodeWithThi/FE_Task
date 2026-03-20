@@ -61,7 +61,7 @@ const sitemapData = [
         title: 'Nhân sự & Tổ chức',
         icon: Users,
         pages: [
-            { name: 'Manage Members', path: '/members', description: 'Member list', roles: ['admin', 'pmo'] },
+            { name: 'Quản lý người dùng', path: '/members', description: 'Danh sách người dùng', roles: ['admin', 'pmo'] },
             { name: 'Quản lý Phòng ban', path: '/departments', description: 'Cơ cấu tổ chức', roles: ['admin', 'pmo'] },
         ]
     },
@@ -69,8 +69,8 @@ const sitemapData = [
         title: 'Hệ thống',
         icon: Settings,
         pages: [
-            { name: 'Settings', path: '/system/settings', description: 'System Configuration', roles: ['admin'] },
-            { name: 'System Logs', path: '/system/logs', description: 'Activity logs', roles: ['admin'] },
+            { name: 'Cài đặt', path: '/system/settings', description: 'Cấu hình hệ thống', roles: ['admin'] },
+            { name: 'Nhật ký', path: '/system/logs', description: 'Log hoạt động', roles: ['admin'] },
         ]
     },
 ];
