@@ -11,7 +11,7 @@ import { useEffect } from 'react';
 // Mapping path segments to English labels
 const pathLabels = {
     dashboard: 'Tổng quan',
-    workload: 'Tổng quan công việc',
+    workload: 'Tổng quan',
     projects: 'Dự án',
     workspace: 'Không gian làm việc',
     board: 'Bảng công việc',

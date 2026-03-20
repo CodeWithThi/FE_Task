@@ -17,7 +17,7 @@ const menuItems = [
   // Workload - Leader/Staff personal overview
   {
     icon: LayoutDashboard,
-    label: 'Tổng quan công việc',
+    label: 'Tổng quan',
     path: '/workload',
     roles: ['leader', 'staff'],
     section: 'main',
