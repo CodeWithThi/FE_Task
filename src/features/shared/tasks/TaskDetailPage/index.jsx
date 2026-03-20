@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useNavigate, useParams, useLocation } from 'react-router-dom';
 import { StatusBadge } from '@core/components/common/StatusBadge';
 import { PriorityBadge } from '@core/components/common/PriorityBadge';
 import { ProgressBar } from '@core/components/common/ProgressBar';
@@ -34,9 +34,13 @@ const mockActivityLog = [];
 
 export default function TaskDetailPage() {
   const navigate = useNavigate();
-  const { id } = useParams();
+  const { id: paramId } = useParams();
+  const location = useLocation();
   const { user } = useAuth();
   const permissions = usePermissions();
+
+  // Resolve slug to actual ID
+  const id = location.state?._resourceId || paramId;
   const [task, setTask] = useState(null);
   const [loading, setLoading] = useState(true);
   const [staff, setStaff] = useState([]);

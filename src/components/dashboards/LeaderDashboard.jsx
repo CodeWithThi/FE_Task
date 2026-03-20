@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { navigateWithSlug } from '@core/utils/slug';
 import { useAuth } from '@core/contexts/AuthContext';
 import { PageHeader } from '@core/components/common/PageHeader';
 import { StatCard } from '@core/components/common/StatCard';
@@ -369,7 +370,7 @@ export function LeaderDashboard() {
                   <div
                     key={task.id}
                     className="flex items-center gap-4 p-4 hover:bg-indigo-50/50 transition-colors group cursor-pointer border-l-2 border-transparent hover:border-indigo-500"
-                    onClick={() => navigate(`/tasks/${task.id}`)}
+                    onClick={() => navigateWithSlug(navigate, '/tasks', { id: task.id, name: task.title })}
                   >
                     <div className="flex-1 min-w-0 space-y-1">
                       <div className="flex items-center justify-between mb-1.5">

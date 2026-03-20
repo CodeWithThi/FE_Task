@@ -6,6 +6,7 @@ import { accountService } from '@core/services/accountService';
 
 import { departmentService } from '@core/services/departmentService';
 import { projectService } from '@core/services/projectService';
+import { navigateWithSlug } from '@core/utils/slug';
 import {
     statusLabels,
     priorityLabels,
@@ -324,7 +325,7 @@ export default function TaskListPage() {
                     data={filteredTasks}
                     columns={columns}
                     keyExtractor={(task) => task.id}
-                    onRowClick={(task) => navigate(`/tasks/${task.id}`)}
+                    onRowClick={(task) => navigateWithSlug(navigate, '/tasks', { id: task.id, name: task.title })}
                     emptyMessage="Chưa có công việc nào"
                     className="border-0"
                     headerClassName="bg-gray-50 text-gray-500 font-medium text-xs uppercase tracking-wider h-12"

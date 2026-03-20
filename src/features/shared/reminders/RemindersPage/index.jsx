@@ -9,6 +9,7 @@ import { taskService } from '@core/services/taskService';
 import { notificationService } from '@core/services/notificationService';
 import { useAuth } from '@core/contexts/AuthContext';
 import { useNavigate, useSearchParams } from 'react-router-dom';
+import { navigateWithSlug } from '@core/utils/slug';
 import { formatDistanceToNow } from 'date-fns';
 import { vi } from 'date-fns/locale';
 
@@ -106,8 +107,8 @@ export default function RemindersPage() {
     }
   };
 
-  const handleTaskClick = (taskId) => {
-    navigate(`/tasks/${taskId}`);
+  const handleTaskClick = (task) => {
+    navigateWithSlug(navigate, '/tasks', { id: task.id, name: task.title });
   };
 
   const handleNotificationClick = async (notification) => {
@@ -115,8 +116,8 @@ export default function RemindersPage() {
       await notificationService.markAsRead(notification.N_ID);
       setNotifications(prev => prev.map(n => n.N_ID === notification.N_ID ? { ...n, IsRead: true } : n));
     }
-    if (notification.TaskId) navigate(`/tasks/${notification.TaskId}`);
-    else if (notification.ProjectId) navigate(`/projects/${notification.ProjectId}`);
+    if (notification.TaskId) navigate(`/tasks/${notification.TaskId}`, { state: { _resourceId: notification.TaskId } });
+    else if (notification.ProjectId) navigate(`/projects/${notification.ProjectId}`, { state: { _resourceId: notification.ProjectId } });
   };
 
   const handleMarkAllRead = async () => {
@@ -186,7 +187,7 @@ export default function RemindersPage() {
                     overdueTasks.map((task) => (
                       <div
                         key={task.id}
-                        onClick={() => handleTaskClick(task.id)}
+                        onClick={() => handleTaskClick(task)}
                         className="p-3 rounded-lg border border-red-200 bg-red-50 dark:bg-red-900/10 hover:bg-red-100 dark:hover:bg-red-900/20 cursor-pointer transition-colors"
                       >
                         <div className="flex items-start justify-between mb-1">
@@ -228,7 +229,7 @@ export default function RemindersPage() {
                     todayTasks.map((task) => (
                       <div
                         key={task.id}
-                        onClick={() => handleTaskClick(task.id)}
+                        onClick={() => handleTaskClick(task)}
                         className="p-3 rounded-lg border border-orange-200 bg-orange-50 dark:bg-orange-900/10 hover:bg-orange-100 dark:hover:bg-orange-900/20 cursor-pointer transition-colors"
                       >
                         <div className="flex items-start justify-between mb-1">
@@ -262,7 +263,7 @@ export default function RemindersPage() {
                     upcomingTasks.map((task) => (
                       <div
                         key={task.id}
-                        onClick={() => handleTaskClick(task.id)}
+                        onClick={() => handleTaskClick(task)}
                         className="p-3 rounded-lg border hover:bg-muted/50 cursor-pointer transition-colors"
                       >
                         <div className="flex items-start justify-between mb-1">

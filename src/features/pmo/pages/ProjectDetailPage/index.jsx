@@ -1,4 +1,4 @@
-import { useNavigate, useParams } from 'react-router-dom';
+import { useNavigate, useParams, useLocation } from 'react-router-dom';
 import { PageHeader } from '@core/components/common/PageHeader';
 import { ProgressBar } from '@core/components/common/ProgressBar';
 import { PriorityBadge } from '@core/components/common/PriorityBadge';
@@ -20,11 +20,16 @@ import { ProjectFormModal } from '@/components/modals/ProjectFormModal';
 import { TaskFormModal } from '@/components/modals/TaskFormModal';
 import { ConfirmActionModal } from '@/components/modals/ConfirmActionModal';
 import { toast } from 'sonner';
+import { navigateWithSlug } from '@core/utils/slug';
 // Mock data removed
 export default function ProjectDetailPage() {
-  const { id } = useParams();
+  const { id: paramId } = useParams();
+  const location = useLocation();
   const navigate = useNavigate();
   const permissions = usePermissions();
+
+  // Resolve slug to actual ID
+  const id = location.state?._resourceId || paramId;
   const [project, setProject] = useState(null);
   const [tasks, setTasks] = useState([]);
   const [members, setMembers] = useState([]);
@@ -311,7 +316,7 @@ export default function ProjectDetailPage() {
               {tasks.length === 0 ? (
                 <div className="p-8 text-center text-muted-foreground">Chưa có công việc nào</div>
               ) : (
-                tasks.map((task) => (<div key={task.id} className="p-4 hover:bg-muted/50 cursor-pointer transition-colors group" onClick={() => navigate(`/tasks/${task.id}`)}>
+                tasks.map((task) => (<div key={task.id} className="p-4 hover:bg-muted/50 cursor-pointer transition-colors group" onClick={() => navigateWithSlug(navigate, '/tasks', { id: task.id, name: task.title })}>
                   <div className="flex items-start justify-between mb-2">
                     <div className="flex-1">
                       <div className="flex items-center gap-2 mb-1">

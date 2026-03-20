@@ -13,6 +13,7 @@ import { toast } from 'sonner';
 import { taskService } from '@core/services/taskService';
 import { Button } from '@core/components/ui/button';
 import { cn } from '@core/lib/utils';
+import { navigateWithSlug } from '@core/utils/slug';
 
 const projectStatusLabels = {
   'active': 'Đang thực hiện',
@@ -386,7 +387,7 @@ export function DirectorDashboard() {
                   <div
                     key={project.id}
                     className="p-4 rounded-xl bg-muted/30 hover:bg-muted/50 transition-all duration-200 cursor-pointer border border-transparent hover:border-primary/20 hover:shadow-sm"
-                    onClick={() => navigate(`/projects/${project.id}`)}
+                    onClick={() => navigateWithSlug(navigate, '/projects', project)}
                   >
                     <div className="flex items-center justify-between mb-3">
                       <span className="text-sm font-medium truncate max-w-[180px]">

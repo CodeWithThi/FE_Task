@@ -57,9 +57,9 @@ export function AppHeader({ isMobile = false, onMenuClick }) {
     // Navigate based on type/related entity
     // TaskId, ProjectId
     if (notification.TaskId) {
-      navigate(`/tasks/${notification.TaskId}`);
+      navigate(`/tasks/${notification.TaskId}`, { state: { _resourceId: notification.TaskId } });
     } else if (notification.ProjectId) {
-      navigate(`/projects/${notification.ProjectId}`);
+      navigate(`/projects/${notification.ProjectId}`, { state: { _resourceId: notification.ProjectId } });
     }
   };
 

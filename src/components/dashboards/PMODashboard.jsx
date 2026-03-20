@@ -15,6 +15,7 @@ import { taskService } from '@core/services/taskService';
 import { accountService } from '@core/services/accountService';
 import { departmentService } from '@core/services/departmentService';
 import { cn } from '@core/lib/utils';
+import { navigateWithSlug } from '@core/utils/slug';
 
 // Premium Stat Card Component
 function PremiumStatCard({ title, value, icon: Icon, variant = 'default', subtitle, trend, onClick }) {
@@ -473,7 +474,7 @@ export function PMODashboard() {
                   <div
                     key={project.id}
                     className="p-4 rounded-xl bg-muted/30 hover:bg-muted/50 transition-all duration-200 cursor-pointer border border-transparent hover:border-primary/20 hover:shadow-sm"
-                    onClick={() => navigate(`/projects/${project.id}`)}
+                    onClick={() => navigateWithSlug(navigate, '/projects', project)}
                   >
                     <div className="flex items-center justify-between mb-3">
                       <span className="text-base font-semibold text-slate-800 dark:text-slate-100 truncate max-w-[180px]" title={project.name}>
@@ -510,7 +511,7 @@ export function PMODashboard() {
                 <div
                   key={item.id}
                   className="flex items-center justify-between p-4 rounded-xl bg-white/80 dark:bg-gray-900/50 border border-red-100 dark:border-red-900/30 hover:shadow-md transition-all duration-200 cursor-pointer"
-                  onClick={() => navigate(`/tasks/${item.id}`)}
+                  onClick={() => navigateWithSlug(navigate, '/tasks', { id: item.id, name: item.title })}
                 >
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 mb-1">

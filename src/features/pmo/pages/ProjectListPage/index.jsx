@@ -16,6 +16,7 @@ import { usePermissions } from '@core/contexts/AuthContext';
 import { projectService } from '@core/services/projectService';
 import { departmentService } from '@core/services/departmentService';
 import { projectStatusLabels, projectStatusStyles } from '@/models';
+import { navigateWithSlug } from '@core/utils/slug';
 
 const statusOptions = Object.entries(projectStatusLabels).map(([value, label]) => ({
     value,
@@ -360,7 +361,7 @@ export default function ProjectListPage() {
             keyExtractor={(project) => project.id}
             onRowClick={(project) => {
                 if (hiddenProjects.has(project.id)) return;
-                navigate(`/projects/${project.id}`);
+                navigateWithSlug(navigate, '/projects', project);
             }}
             rowClassName={(project) => hiddenProjects.has(project.id) ? 'bg-muted/30 !cursor-default' : ''}
             emptyMessage="Không có dự án nào"

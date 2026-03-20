@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useNavigate, useParams, useLocation } from 'react-router-dom';
 import { Card, CardContent } from '@core/components/ui/card';
 import { Button } from '@core/components/ui/button';
 import { Badge } from '@core/components/ui/badge';
@@ -48,8 +48,12 @@ const priorityLabels = {
 
 export default function WorkspacePage() {
   const navigate = useNavigate();
-  const { id } = useParams();
+  const { id: paramId } = useParams();
+  const location = useLocation();
   const permissions = usePermissions();
+
+  // Resolve slug to actual ID
+  const id = location.state?._resourceId || paramId;
 
   const [loading, setLoading] = useState(true);
   const [project, setProject] = useState(null);
